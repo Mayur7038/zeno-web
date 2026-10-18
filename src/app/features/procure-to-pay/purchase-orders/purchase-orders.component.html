@@ -1,0 +1,448 @@
+<div class="flex flex-col gap-5">
+  @if (viewMode === 'list') {
+    <!-- HEADER BAR -->
+    <div class="flex items-center justify-between mb-1">
+      <h1 class="text-xl font-bold text-surface-900 m-0">Purchase Orders</h1>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer" (click)="openCreateModal()">
+          <i class="pi pi-plus"></i> Create Purchase Order
+        </button>
+      </div>
+    </div>
+
+    <!-- TOOLBAR & TABLE CARD -->
+    <div class="bg-surface-0 border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+      <div class="p-4 border-b border-surface-200 flex flex-wrap items-center justify-between gap-4 bg-surface-0">
+        <div class="relative flex-1 min-w-[240px] max-w-sm">
+          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
+          <input
+            type="text"
+            class="w-full pl-9 pr-3 py-2 bg-surface-0 border border-surface-200 rounded-lg text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+            [(ngModel)]="searchQuery"
+            (input)="loadOrders()"
+            placeholder="Search purchase orders..."
+          />
+        </div>
+
+        <div class="flex items-center gap-3">
+          <select
+            class="px-3 py-2 bg-surface-0 border border-surface-200 rounded-lg text-sm text-surface-700 focus:outline-none focus:border-primary-600"
+            [(ngModel)]="selectedStatus"
+            (change)="filterStatus(selectedStatus)"
+          >
+            <option value="">All Orders</option>
+            <option value="PENDING">Pending</option>
+            <option value="PARTIALLY_CLEARED">Partially Cleared</option>
+            <option value="CLEARED">Cleared</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+
+          <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-medium rounded-lg border border-surface-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" (click)="exportOrders()" [disabled]="orders.length === 0" title="Export to CSV">
+            <i class="pi pi-download"></i> Export
+          </button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+            <tr>
+              <th class="px-4 py-3">Voucher No</th>
+              <th class="px-4 py-3">Order Date</th>
+              <th class="px-4 py-3">Vendor</th>
+              <th class="px-4 py-3">Branch</th>
+              <th class="px-4 py-3">Grand Total</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100">
+            @if (orders.length === 0) {
+              <tr>
+                <td colspan="7" class="px-4 py-10 text-center text-surface-500">
+                  No purchase orders found matching your filters.
+                </td>
+              </tr>
+            }
+            @for (po of orders; track po.id) {
+              <tr (click)="viewOrder(po.id)" class="hover:bg-surface-50/50 transition-colors cursor-pointer">
+                <td class="px-4 py-3 font-mono font-bold text-primary-700">{{ po.voucherNo }}</td>
+                <td class="px-4 py-3 text-surface-700">{{ po.orderDate }}</td>
+                <td class="px-4 py-3 font-bold text-surface-900">{{ po.vendorLedger?.name }}</td>
+                <td class="px-4 py-3 text-surface-700">{{ po.branch?.branchName }}</td>
+                <td class="px-4 py-3 font-mono font-bold text-surface-900">₹{{ po.grandTotal }}</td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
+                    [ngClass]="{
+                      'bg-blue-50 text-blue-800 border border-blue-200': po.status === 'PENDING',
+                      'bg-amber-50 text-amber-800 border border-amber-200': po.status === 'PARTIALLY_CLEARED',
+                      'bg-emerald-50 text-emerald-800 border border-emerald-200': po.status === 'CLEARED',
+                      'bg-red-50 text-red-800 border border-red-200': po.status === 'CANCELLED'
+                    }">
+                    @if (po.status === 'CLEARED') {
+                      <i class="pi pi-check-circle text-xs"></i>
+                    }
+                    {{ po.status }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <div class="flex items-center justify-end gap-1.5" (click)="$event.stopPropagation()">
+                    <button class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-primary-50 text-primary-700 border border-primary-200 hover:bg-primary-100 transition-colors cursor-pointer" title="View Order Details & Status" (click)="viewOrder(po.id)">
+                      <i class="pi pi-eye"></i> View
+                    </button>
+                    <button class="w-8 h-8 inline-flex items-center justify-center bg-surface-0 border border-surface-200 rounded-sm text-surface-600 hover:text-primary-600 hover:border-primary-300 transition-colors cursor-pointer" title="Print PO Voucher" (click)="viewOrder(po.id)">
+                      <i class="pi pi-print"></i>
+                    </button>
+                    @if (po.status === 'PENDING') {
+                      <button class="w-8 h-8 inline-flex items-center justify-center bg-surface-0 border border-surface-200 rounded-sm text-surface-600 hover:text-primary-600 hover:border-primary-300 transition-colors cursor-pointer" title="Edit Order" (click)="editOrder(po.id)">
+                        <i class="pi pi-pencil"></i>
+                      </button>
+                      <button class="w-8 h-8 inline-flex items-center justify-center bg-surface-0 border border-red-200 rounded-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer" title="Cancel Order" (click)="cancelOrder(po.id)">
+                        <i class="pi pi-times"></i>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  } @else if (viewMode === 'create') {
+    <!-- CREATE PO FULL PAGE VIEW -->
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-3">
+        <button class="w-[34px] h-[34px] inline-flex items-center justify-center bg-surface-100 hover:bg-surface-200 text-surface-700 rounded-sm border border-surface-300 transition-colors cursor-pointer" (click)="backToList()"><i class="pi pi-arrow-left"></i></button>
+        <h1 class="text-xl font-bold text-surface-900 m-0">New Purchase Order</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-semibold rounded-md border border-surface-200 transition-colors cursor-pointer" (click)="backToList()">Cancel</button>
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" (click)="submitCreatePO()" [disabled]="submitting || !isValidOrder()">
+          @if (submitting) {
+            <i class="pi pi-spin pi-spinner"></i> Generating Order...
+          } @else {
+            <i class="pi pi-check"></i> Save Purchase Order
+          }
+        </button>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-5">
+      @if (createError) {
+        <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md flex items-center gap-2 text-sm">
+          <i class="pi pi-exclamation-circle text-red-600"></i>
+          <span>{{ createError }}</span>
+        </div>
+      }
+
+      <!-- TOP SECTION: VENDOR & METADATA -->
+      <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Vendor (Sundry Creditor) <span class="text-red-500">*</span></label>
+            <zeno-searchable-select
+              [options]="vendors"
+              labelKey="name"
+              valueKey="id"
+              secondaryKey="gstin"
+              placeholder="Search Vendor (Name or GSTIN)..."
+              [(ngModel)]="form.vendorLedgerId"
+              (selectChange)="onVendorSelected()"
+            ></zeno-searchable-select>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Order Date <span class="text-red-500">*</span></label>
+            <input type="date" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" [(ngModel)]="form.orderDate" name="orderDate" required />
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Credit Days</label>
+            <input
+              type="number"
+              min="0"
+              class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+              [(ngModel)]="form.creditDays"
+              name="creditDays"
+              placeholder="e.g. 30"
+            />
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Expected Delivery Date</label>
+            <input type="date" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" [(ngModel)]="form.expectedDeliveryDate" name="expectedDeliveryDate" />
+          </div>
+        </div>
+      </div>
+
+      <!-- LINE ITEMS SECTION -->
+      <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs flex flex-col gap-4">
+
+        <!-- FAST ITEM ENTRY BAR -->
+        <zeno-item-fast-entry
+          [itemsList]="itemsList"
+          [showDiscount]="false"
+          [showGst]="false"
+          [isPurchase]="true"
+          [editData]="editingItemData"
+          (itemAdded)="onFastItemAdded($event)"
+          (itemUpdated)="onFastItemUpdated($event)"
+        ></zeno-item-fast-entry>
+
+        <div class="overflow-x-auto border border-surface-200 rounded-lg bg-surface-0">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+              <tr>
+                <th class="w-9 px-3 py-3 text-center">#</th>
+                <th class="min-w-[200px] px-4 py-3">Product / Item</th>
+                <th class="w-20 px-3 py-3 text-center">Qty</th>
+                <th class="w-20 px-3 py-3 text-center">Unit</th>
+                <th class="w-28 px-4 py-3">Rate (₹)</th>
+                <th class="w-32 px-4 py-3 text-right">Amount (₹)</th>
+                <th class="w-18 px-3 py-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-100">
+              @if (form.items.length === 0) {
+                <tr>
+                  <td colspan="7" class="px-4 py-8 text-center text-surface-500">
+                    <i class="pi pi-inbox text-2xl block mb-1 text-surface-400"></i>
+                    No items added yet. Use the Fast Item Entry Bar above to add items to this purchase order.
+                  </td>
+                </tr>
+              } @else {
+                @for (row of form.items; track $index; let i = $index) {
+                  <tr class="hover:bg-surface-50/50 transition-colors">
+                    <td class="px-3 py-2.5 text-center font-mono text-xs text-surface-400">{{ i + 1 }}</td>
+                    <td class="px-4 py-2.5">
+                      @if (row.itemId) {
+                        <span class="font-bold text-surface-900">{{ getItemName(row.itemId) }}</span>
+                      } @else {
+                        <zeno-searchable-select
+                          [options]="itemsList"
+                          labelKey="name"
+                          valueKey="id"
+                          secondaryKey="sku"
+                          placeholder="Select Product..."
+                          [(ngModel)]="row.itemId"
+                          (selectChange)="onItemSelect(row)"
+                        ></zeno-searchable-select>
+                      }
+                    </td>
+                    <td class="px-3 py-2.5 text-center">
+                      @if (row.itemId) {
+                        <span class="font-mono text-surface-900">{{ row.orderedQty }}</span>
+                      } @else {
+                        <input
+                          type="number"
+                          min="1"
+                          [(ngModel)]="row.orderedQty"
+                          (input)="recalculateTotals()"
+                          class="w-16 px-2 py-1 border border-surface-300 rounded text-center text-sm font-mono"
+                        />
+                      }
+                    </td>
+                    <td class="px-3 py-2.5 text-center">
+                      <span class="inline-block px-2 py-0.5 rounded bg-surface-100 text-surface-700 text-xs font-semibold">{{ getUnitCode(row) }}</span>
+                    </td>
+                    <td class="px-4 py-2.5 text-right">
+                      @if (row.itemId) {
+                        <span class="font-mono text-surface-900">₹{{ row.rate | number:'1.2-2' }}</span>
+                      } @else {
+                        <input
+                          type="number"
+                          step="any"
+                          [(ngModel)]="row.rate"
+                          (input)="recalculateTotals()"
+                          class="w-24 px-2 py-1 border border-surface-300 rounded text-right text-sm font-mono"
+                        />
+                      }
+                    </td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-surface-900">
+                      ₹{{ (Math.max(0, (row.orderedQty * row.rate) - (row.discount || 0))) | number:'1.2-2' }}
+                    </td>
+                    <td class="px-3 py-2.5 text-center">
+                      <div class="flex items-center justify-center gap-1">
+                        <button type="button" class="w-7 h-7 inline-flex items-center justify-center text-primary-600 hover:bg-primary-50 rounded cursor-pointer transition-colors" (click)="editItemRow(i)" title="Edit line item">
+                          <i class="pi pi-pencil"></i>
+                        </button>
+                        <button type="button" class="w-7 h-7 inline-flex items-center justify-center text-red-600 hover:bg-red-50 rounded cursor-pointer transition-colors" (click)="removeLine(i)" title="Delete line item">
+                          <i class="pi pi-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SUMMARY & TOTALS FOOTER SECTION -->
+      <div class="flex flex-col md:flex-row justify-between items-start gap-6 mt-1">
+        <div class="w-full md:max-w-lg flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700 flex items-center gap-1.5"><i class="pi pi-align-left"></i> Narration / Remarks</label>
+          <textarea
+            rows="3"
+            class="w-full p-2.5 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 resize-y"
+            placeholder="Enter transaction narration or purchase order notes..."
+            [(ngModel)]="form.notes"
+          ></textarea>
+        </div>
+
+        <div class="w-full md:w-80 bg-surface-50 border border-surface-200 rounded-lg p-4 flex justify-between items-center self-stretch md:self-auto">
+          <span class="text-sm font-semibold text-surface-700">Total Order Value:</span>
+          <strong class="text-primary-700 text-xl font-bold font-mono">₹{{ orderGrandTotal | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+    </div>
+  } @else if (viewMode === 'view' && viewingPo) {
+    <!-- VIEW / PRINT PO FULL PAGE VIEW -->
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-3">
+        <button class="w-[34px] h-[34px] inline-flex items-center justify-center bg-surface-100 hover:bg-surface-200 text-surface-700 rounded-sm border border-surface-300 transition-colors cursor-pointer" (click)="backToList()"><i class="pi pi-arrow-left"></i></button>
+        <h1 class="text-xl font-bold text-surface-900 m-0">Purchase Order: {{ viewingPo.voucherNo }}</h1>
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
+          [ngClass]="{
+            'bg-blue-50 text-blue-800 border border-blue-200': viewingPo.status === 'PENDING',
+            'bg-amber-50 text-amber-800 border border-amber-200': viewingPo.status === 'PARTIALLY_CLEARED',
+            'bg-emerald-50 text-emerald-800 border border-emerald-200': viewingPo.status === 'CLEARED',
+            'bg-red-50 text-red-800 border border-red-200': viewingPo.status === 'CANCELLED'
+          }">
+          @if (viewingPo.status === 'CLEARED') {
+            <i class="pi pi-check-circle"></i>
+          }
+          {{ viewingPo.status }}
+        </span>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-semibold rounded-md border border-surface-200 transition-colors cursor-pointer" (click)="backToList()">Back to Orders</button>
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer" onclick="window.print()">
+          <i class="pi pi-print"></i> Print Voucher
+        </button>
+      </div>
+    </div>
+
+    <div class="bg-surface-0 border border-surface-200 rounded-xl p-6 shadow-xs">
+      <div class="p-4 sm:p-6 bg-surface-0 border border-surface-200 rounded-lg">
+        <!-- STATUS FULFILLMENT BANNER -->
+        @if (viewingPo.status === 'CLEARED') {
+          <div class="mb-5 p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3 text-sm">
+            <i class="pi pi-check-circle text-lg text-emerald-600"></i>
+            <div>
+              <strong>Order 100% Cleared &amp; Fulfilled:</strong>
+              All ordered items under this purchase order have been fully received into warehouse inventory via Goods Receipt Note (GRN).
+            </div>
+          </div>
+        } @else if (viewingPo.status === 'PARTIALLY_CLEARED') {
+          <div class="mb-5 p-3.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 flex items-center gap-3 text-sm">
+            <i class="pi pi-hourglass text-lg text-amber-600"></i>
+            <div>
+              <strong>Partially Cleared:</strong>
+              Some quantities have been received into inventory. Remaining quantities are awaiting subsequent GRN receipts.
+            </div>
+          </div>
+        } @else if (viewingPo.status === 'PENDING') {
+          <div class="mb-5 p-3.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 flex items-center gap-3 text-sm">
+            <i class="pi pi-clock text-lg text-blue-600"></i>
+            <div>
+              <strong>Pending Fulfillment:</strong>
+              Purchase Order issued to vendor. No items have been received into warehouse stock yet.
+            </div>
+          </div>
+        }
+
+        <div class="flex justify-between items-start border-b-2 border-surface-200 pb-4 mb-5">
+          <div class="space-y-1">
+            <h2 class="text-xl font-bold text-primary-700 m-0">PURCHASE ORDER</h2>
+            <div class="font-mono text-sm"><strong>PO Voucher #: </strong>{{ viewingPo.voucherNo }}</div>
+            <div class="text-sm"><strong>Order Date: </strong>{{ viewingPo.orderDate }}</div>
+            <div class="text-sm"><strong>Branch: </strong>{{ viewingPo.branch?.branchName }}</div>
+          </div>
+          <div class="text-right space-y-1 text-sm text-surface-600">
+            <h3 class="font-bold text-base text-surface-900 m-0">{{ tenant.currentCompany()?.legalName }}</h3>
+            <div>{{ tenant.currentCompany()?.tradeName }}</div>
+            <div>GSTIN: <span class="font-mono text-surface-900">{{ tenant.currentCompany()?.gstin || 'N/A' }}</span></div>
+            <div>State: Maharashtra (27)</div>
+          </div>
+        </div>
+
+        <div class="bg-surface-50 border border-surface-200 rounded-lg p-4 mb-5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <span class="text-xs font-semibold uppercase text-surface-500 tracking-wider">Vendor / Supplier</span>
+              <div class="font-bold text-base text-surface-900 mt-1">{{ viewingPo.vendorLedger?.name }}</div>
+              <div class="text-sm text-surface-600">GSTIN: <span class="font-mono text-surface-900">{{ viewingPo.vendorLedger?.gstin || 'Unregistered' }}</span></div>
+            </div>
+            <div class="sm:text-right">
+              <span class="text-xs font-semibold uppercase text-surface-500 tracking-wider">Place of Supply</span>
+              <div class="text-sm text-surface-600 mt-1">State Code: <span class="font-mono text-surface-900">{{ viewingPo.vendorLedger?.stateCode || '27' }}</span></div>
+              <div class="text-sm text-surface-600">Fulfillment: <strong class="text-surface-900">{{ viewingPo.status }}</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FULFILLMENT LINE ITEMS TABLE -->
+        <div class="font-bold text-sm text-surface-800 mb-2">
+          Ordered Line Items &amp; Delivery Tracking
+        </div>
+        <div class="overflow-x-auto border border-surface-200 rounded-lg mb-5">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+              <tr>
+                <th class="px-3 py-2.5">#</th>
+                <th class="px-4 py-2.5">Item Description</th>
+                <th class="px-3 py-2.5 text-right">Ordered</th>
+                <th class="px-3 py-2.5 text-right">Received</th>
+                <th class="px-3 py-2.5 text-right">Pending</th>
+                <th class="px-3 py-2.5">Unit</th>
+                <th class="px-3 py-2.5 text-right">Rate</th>
+                <th class="px-3 py-2.5 text-right">GST %</th>
+                <th class="px-4 py-2.5 text-right">Total Amount</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-100">
+              @for (it of viewingPo.items; track it.id; let idx = $index) {
+                <tr class="hover:bg-surface-50/50">
+                  <td class="px-3 py-2.5 text-xs text-surface-400">{{ idx + 1 }}</td>
+                  <td class="px-4 py-2.5">
+                    <div class="font-bold text-surface-900">{{ it.item?.name }}</div>
+                    <div class="text-xs text-surface-500">SKU: {{ it.item?.sku || 'N/A' }}</div>
+                  </td>
+                  <td class="px-3 py-2.5 text-right font-mono font-bold text-surface-900">{{ it.orderedQty }}</td>
+                  <td class="px-3 py-2.5 text-right font-mono font-bold text-emerald-600">
+                    {{ it.receivedQty || 0 }}
+                  </td>
+                  <td class="px-3 py-2.5 text-right font-mono font-bold">
+                    @if ((it.orderedQty - (it.receivedQty || 0)) <= 0) {
+                      <span class="text-emerald-600"><i class="pi pi-check"></i> 0 (Cleared)</span>
+                    } @else {
+                      <span class="text-amber-600">{{ it.orderedQty - (it.receivedQty || 0) }}</span>
+                    }
+                  </td>
+                  <td class="px-3 py-2.5 text-surface-700">{{ it.unit?.code }}</td>
+                  <td class="px-3 py-2.5 text-right font-mono text-surface-700">₹{{ it.rate }}</td>
+                  <td class="px-3 py-2.5 text-right font-mono text-surface-700">{{ it.gstRate }}%</td>
+                  <td class="px-4 py-2.5 text-right font-mono font-bold text-surface-900">₹{{ it.totalAmount }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="ml-auto w-full sm:w-80 bg-surface-50 border border-surface-200 rounded-lg p-4 flex justify-between items-center">
+          <span class="text-sm font-semibold text-surface-700">Total Order Value:</span>
+          <strong class="text-primary-700 text-xl font-bold font-mono">₹{{ viewingPo.grandTotal }}</strong>
+        </div>
+
+        @if (viewingPo.notes) {
+          <div class="mt-4 p-3.5 rounded-lg bg-surface-50 border border-surface-200 text-sm">
+            <strong class="text-surface-800">Notes &amp; Instructions:</strong>
+            <p class="text-surface-600 mt-1 mb-0">{{ viewingPo.notes }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

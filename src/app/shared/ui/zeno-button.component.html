@@ -1,0 +1,21 @@
+<button
+  [type]="type"
+  [disabled]="disabled || loading"
+  [title]="title"
+  [class]="getBtnClasses()"
+  (click)="handleClick($event)"
+>
+  @if (loading) {
+    <i class="pi pi-spin pi-spinner mr-1"></i>
+  } @else if (icon && iconPos === 'left') {
+    <i [class]="icon"></i>
+  }
+
+  <span class="inline-flex items-center gap-1.5">
+    <ng-content></ng-content>
+  </span>
+
+  @if (!loading && icon && iconPos === 'right') {
+    <i [class]="icon"></i>
+  }
+</button>

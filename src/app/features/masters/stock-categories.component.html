@@ -1,0 +1,119 @@
+<div class="flex flex-col gap-5">
+  <zeno-page-header title="Stock Category" subtitle="Organize inventory items into sub-categories and brand lines.">
+    <div actions>
+      <zeno-button variant="primary" icon="pi pi-plus" (btnClick)="openCreateModal()">
+        New Stock Category
+      </zeno-button>
+    </div>
+  </zeno-page-header>
+
+  <!-- TABLE & LIST CONTAINER -->
+  <zeno-table
+    [loading]="loading"
+    [empty]="filteredCategories.length === 0"
+    loadingMessage="Loading stock categories..."
+    emptyMessage="No stock categories found. Click 'New Stock Category' to create one."
+  >
+    <div toolbar-left>
+      <zeno-search
+        [(ngModel)]="searchQuery"
+        (searchChange)="filterCategories()"
+      ></zeno-search>
+    </div>
+    <div toolbar-right>
+      <div class="min-w-[220px]">
+        <zeno-select
+          [(ngModel)]="groupFilter"
+          [options]="groupFilterOptions"
+          (selectChange)="filterCategories()"
+        ></zeno-select>
+      </div>
+    </div>
+
+    <table class="w-full text-left border-collapse text-sm">
+      <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+        <tr>
+          <th class="px-4 py-3">Category Name</th>
+          <th class="px-4 py-3">Parent Stock Group</th>
+          @if (isGstAtCategoryLevel) {
+            <th class="px-4 py-3 text-right">GST Rate</th>
+          }
+          <th class="px-4 py-3 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-surface-100">
+        @for (c of filteredCategories; track c.id) {
+          <tr class="hover:bg-surface-50/50 transition-colors">
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2.5">
+                <i class="pi pi-tag text-primary-600"></i>
+                <strong class="text-surface-900">{{ c.name }}</strong>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <zeno-badge variant="primary" icon="pi pi-folder">
+                {{ c.itemGroup?.name || 'Unassigned' }}
+              </zeno-badge>
+            </td>
+            @if (isGstAtCategoryLevel) {
+              <td class="px-4 py-3 text-right font-mono font-bold" [class.text-blue-700]="c.gstRate > 0" [class.text-slate-500]="c.gstRate === 0">
+                {{ getCategoryGstDisplay(c) }}
+              </td>
+            }
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <zeno-button variant="icon" icon="pi pi-pencil" title="Edit Category" (btnClick)="openEditModal(c)"></zeno-button>
+                <zeno-button variant="icon" icon="pi pi-trash" title="Delete Category" (btnClick)="deleteCategory(c)" class="text-red-600"></zeno-button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </zeno-table>
+
+  <!-- CREATE / EDIT MODAL -->
+  <zeno-modal
+    [isOpen]="showModal"
+    [title]="editingCategory ? 'Edit Stock Category' : 'New Stock Category'"
+    size="md"
+    (close)="closeModal()"
+  >
+    @if (errorMessage) {
+      <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md flex items-center gap-2 text-sm mb-4">
+        <i class="pi pi-exclamation-circle text-red-600"></i> {{ errorMessage }}
+      </div>
+    }
+
+    <div class="grid grid-cols-1 gap-4">
+      <zeno-form-group label="Parent Stock Group" [required]="true">
+        <zeno-select
+          [(ngModel)]="formData.itemGroupId"
+          [options]="stockGroupOptions"
+          [allowEmpty]="true"
+          emptyLabel="-- Select Stock Group --"
+        ></zeno-select>
+      </zeno-form-group>
+
+      <zeno-form-group label="Category Name" [required]="true">
+        <zeno-input [(ngModel)]="formData.name"></zeno-input>
+      </zeno-form-group>
+
+      @if (isGstAtCategoryLevel) {
+        <zeno-form-group label="Category-Level GST Rate (%)" [required]="true">
+          <zeno-select
+            [(ngModel)]="formData.gstRate"
+            [options]="gstRateOptions"
+          ></zeno-select>
+        </zeno-form-group>
+      }
+    </div>
+
+    <div footer class="flex items-center justify-end gap-2.5">
+      <zeno-button variant="secondary" (btnClick)="closeModal()">Cancel</zeno-button>
+      <zeno-button variant="primary" icon="pi pi-check" [loading]="saving" (btnClick)="saveCategory()">
+        {{ editingCategory ? 'Update Category' : 'Create Category' }}
+      </zeno-button>
+    </div>
+  </zeno-modal>
+</div>

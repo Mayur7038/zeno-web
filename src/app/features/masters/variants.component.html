@@ -1,0 +1,174 @@
+<div class="flex flex-col gap-5">
+  <zeno-page-header title="Variant Master" subtitle="Manage item variant definitions, attributes, and options (Size, Color, Material).">
+    <div actions>
+      <zeno-button variant="primary" icon="pi pi-plus" (btnClick)="openCreateModal()">
+        New Variant
+      </zeno-button>
+    </div>
+  </zeno-page-header>
+
+  <!-- TABLE & LIST CONTAINER -->
+  <zeno-table
+    [loading]="loading"
+    [empty]="filteredVariants.length === 0"
+    loadingMessage="Loading variant master..."
+    emptyMessage="No variants defined yet. Click 'New Variant' to configure variant dimensions."
+  >
+    <div toolbar-left>
+      <zeno-search
+        [(ngModel)]="searchQuery"
+        (searchChange)="filterVariants()"
+      ></zeno-search>
+    </div>
+    <div toolbar-right class="flex items-center gap-2.5 flex-wrap">
+      <div class="min-w-[140px]">
+        <zeno-select
+          [(ngModel)]="typeFilter"
+          [options]="typeFilterOptions"
+          (selectChange)="filterVariants()"
+        ></zeno-select>
+      </div>
+      <div class="min-w-[130px]">
+        <zeno-select
+          [(ngModel)]="statusFilter"
+          [options]="statusFilterOptions"
+          (selectChange)="filterVariants()"
+        ></zeno-select>
+      </div>
+      <zeno-button
+        variant="secondary"
+        icon="pi pi-download"
+        [disabled]="filteredVariants.length === 0"
+        (btnClick)="exportVariants()"
+        title="Export Variants"
+      >
+        Export
+      </zeno-button>
+    </div>
+
+    <table class="w-full text-left border-collapse text-sm">
+      <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+        <tr>
+          <th class="px-4 py-3">Variant Name</th>
+          <th class="px-4 py-3">Data Type</th>
+          <th class="px-4 py-3">Status</th>
+          <th class="px-4 py-3 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-surface-100">
+        @for (v of filteredVariants; track v.id) {
+          <tr class="hover:bg-surface-50/50 transition-colors">
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-8 rounded-lg flex items-center justify-center text-sm" [ngClass]="getTypeIconBoxClass(v.type)">
+                  <i [class]="getTypeIcon(v.type)"></i>
+                </span>
+                <strong class="text-surface-900 text-sm font-semibold">{{ v.name }}</strong>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border" [ngClass]="getTypeBadgeClass(v.type)">
+                {{ formatTypeName(v.type) }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              @if (v.isActive) {
+                <zeno-badge variant="success" icon="pi pi-check">Active</zeno-badge>
+              } @else {
+                <zeno-badge variant="danger">Inactive</zeno-badge>
+              }
+            </td>
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <zeno-button variant="icon" icon="pi pi-pencil" title="Edit Variant" (btnClick)="openEditModal(v)"></zeno-button>
+                <zeno-button variant="icon" icon="pi pi-trash" title="Delete Variant" (btnClick)="deleteVariant(v)" class="text-red-600"></zeno-button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </zeno-table>
+
+  <!-- CREATE / EDIT MODAL -->
+  <zeno-modal
+    [isOpen]="showModal"
+    [title]="editingVariant ? 'Edit Variant Master' : 'Create Variant Master'"
+    size="md"
+    (close)="closeModal()"
+  >
+    @if (errorMessage) {
+      <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md flex items-center gap-2 text-sm mb-4">
+        <i class="pi pi-exclamation-circle text-red-600"></i> {{ errorMessage }}
+      </div>
+    }
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <zeno-form-group label="Variant Name" [required]="true" [span]="2">
+        <zeno-input
+          [(ngModel)]="formData.name"
+          (inputChange)="onNameChanged()"
+        ></zeno-input>
+      </zeno-form-group>
+
+      <zeno-form-group label="Variant Type" [required]="true" [span]="2">
+        <zeno-select
+          [(ngModel)]="formData.type"
+          [options]="typeOptions"
+          (selectChange)="onTypeChanged()"
+        ></zeno-select>
+      </zeno-form-group>
+
+      <!-- DROPDOWN FIXED VALUES CONFIGURATION -->
+      @if (formData.type === 'DROPDOWN') {
+        <div class="col-span-full bg-surface-50 border border-surface-200 rounded-lg p-3.5 flex flex-col gap-3">
+          <div class="flex justify-between items-start">
+            <label class="text-xs font-bold text-surface-700">Fixed Dropdown Values <span class="text-red-500">*</span></label>
+          </div>
+
+          <!-- Input to add new value -->
+          <div class="flex gap-2">
+            <zeno-input
+              class="flex-1"
+              [(ngModel)]="newOptionValue"
+              (keydown.enter)="$event.preventDefault(); addOptionValue()"
+            ></zeno-input>
+            <zeno-button variant="primary" icon="pi pi-plus" [disabled]="!newOptionValue.trim()" (btnClick)="addOptionValue()">
+              Add Value
+            </zeno-button>
+          </div>
+
+          <!-- Options list chips -->
+          <div class="flex flex-wrap gap-2 min-h-12 bg-white p-2.5 border border-surface-200 rounded-md items-center">
+            @for (opt of formData.options; track $index; let idx = $index) {
+              <div class="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-800 border border-indigo-200 px-2.5 py-1 rounded-full text-xs font-semibold">
+                <span>{{ opt }}</span>
+                <button type="button" class="text-indigo-500 hover:text-red-600 font-bold leading-none cursor-pointer p-0" (click)="removeOptionValue(idx)" title="Remove value">
+                  &times;
+                </button>
+              </div>
+            }
+            @if (formData.options.length === 0) {
+              <div class="text-xs text-surface-400 italic w-full text-center">
+                No values added yet. Type a value above to configure options for this dropdown.
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <div footer class="flex items-center justify-end gap-2.5">
+      <zeno-button variant="secondary" (btnClick)="closeModal()">Cancel</zeno-button>
+      <zeno-button
+        variant="primary"
+        icon="pi pi-check"
+        [loading]="saving"
+        [disabled]="saving || !formData.name"
+        (btnClick)="saveVariant()"
+      >
+        {{ editingVariant ? 'Update Variant' : 'Create Variant' }}
+      </zeno-button>
+    </div>
+  </zeno-modal>
+</div>

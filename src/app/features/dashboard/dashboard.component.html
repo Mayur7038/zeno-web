@@ -1,0 +1,556 @@
+<div class="flex flex-col gap-5 max-w-[1600px] mx-auto pb-10">
+  <!-- DATE FILTER TOOLBAR -->
+  <div class="bg-surface-0 border border-surface-200 rounded-xl p-3 sm:px-4.5 flex items-center justify-between flex-wrap gap-3 shadow-xs">
+    <div class="flex items-center gap-1.5 flex-wrap">
+      <button
+        type="button"
+        class="px-3.5 py-1.5 rounded-full text-[13px] font-semibold cursor-pointer transition-all duration-150"
+        [ngClass]="activeDateFilter === 'TODAY' ? 'bg-primary-600 text-white shadow-xs' : 'bg-surface-50 border border-surface-200 text-surface-600 hover:bg-surface-100 hover:text-surface-900'"
+        (click)="setDateFilter('TODAY')"
+      >
+        Today
+      </button>
+      <button
+        type="button"
+        class="px-3.5 py-1.5 rounded-full text-[13px] font-semibold cursor-pointer transition-all duration-150"
+        [ngClass]="activeDateFilter === 'YESTERDAY' ? 'bg-primary-600 text-white shadow-xs' : 'bg-surface-50 border border-surface-200 text-surface-600 hover:bg-surface-100 hover:text-surface-900'"
+        (click)="setDateFilter('YESTERDAY')"
+      >
+        Yesterday
+      </button>
+      <button
+        type="button"
+        class="px-3.5 py-1.5 rounded-full text-[13px] font-semibold cursor-pointer transition-all duration-150"
+        [ngClass]="activeDateFilter === 'THIS_WEEK' ? 'bg-primary-600 text-white shadow-xs' : 'bg-surface-50 border border-surface-200 text-surface-600 hover:bg-surface-100 hover:text-surface-900'"
+        (click)="setDateFilter('THIS_WEEK')"
+      >
+        This Week
+      </button>
+      <button
+        type="button"
+        class="px-3.5 py-1.5 rounded-full text-[13px] font-semibold cursor-pointer transition-all duration-150"
+        [ngClass]="activeDateFilter === 'THIS_MONTH' ? 'bg-primary-600 text-white shadow-xs' : 'bg-surface-50 border border-surface-200 text-surface-600 hover:bg-surface-100 hover:text-surface-900'"
+        (click)="setDateFilter('THIS_MONTH')"
+      >
+        This Month
+      </button>
+      <button
+        type="button"
+        class="px-3.5 py-1.5 rounded-full text-[13px] font-semibold cursor-pointer transition-all duration-150"
+        [ngClass]="activeDateFilter === 'THIS_YEAR' ? 'bg-primary-600 text-white shadow-xs' : 'bg-surface-50 border border-surface-200 text-surface-600 hover:bg-surface-100 hover:text-surface-900'"
+        (click)="setDateFilter('THIS_YEAR')"
+      >
+        This Year
+      </button>
+      <button
+        type="button"
+        class="px-3.5 py-1.5 rounded-full text-[13px] font-semibold cursor-pointer transition-all duration-150"
+        [ngClass]="activeDateFilter === 'CUSTOM' ? 'bg-primary-600 text-white shadow-xs' : 'bg-surface-50 border border-surface-200 text-surface-600 hover:bg-surface-100 hover:text-surface-900'"
+        (click)="setDateFilter('CUSTOM')"
+      >
+        Custom Date
+      </button>
+    </div>
+
+    @if (activeDateFilter === 'CUSTOM') {
+      <div class="flex items-center gap-2.5">
+        <div class="flex items-center gap-1.5">
+          <label class="text-xs font-semibold text-surface-500">From:</label>
+          <input type="date" [(ngModel)]="customStartDate" (change)="onCustomDateChange()" class="py-1 px-2.5 rounded-md border border-surface-300 text-[13px] outline-none focus:border-primary-500" />
+        </div>
+        <div class="flex items-center gap-1.5">
+          <label class="text-xs font-semibold text-surface-500">To:</label>
+          <input type="date" [(ngModel)]="customEndDate" (change)="onCustomDateChange()" class="py-1 px-2.5 rounded-md border border-surface-300 text-[13px] outline-none focus:border-primary-500" />
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- 2. MAIN KPI CARDS (8 KEY METRICS) -->
+  <section class="w-full">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      @for (card of kpiCards; track card.id) {
+        <div class="bg-surface-0 border border-surface-200 hover:border-surface-300 rounded-xl p-4 sm:px-4.5 flex flex-col gap-2 shadow-xs hover:shadow-md transition-all duration-150">
+          <div class="flex items-center justify-between">
+            <span class="text-[13px] font-semibold text-surface-500 uppercase tracking-wider">{{ card.title }}</span>
+            <div [class]="'w-8 h-8 rounded-lg flex items-center justify-center text-sm font-semibold ' + getKpiIconClass(card.colorClass)">
+              <i [class]="'pi ' + card.icon"></i>
+            </div>
+          </div>
+
+          <div class="text-2xl font-extrabold text-surface-900 leading-tight font-mono">
+            {{ card.value }}
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span
+              class="inline-flex items-center gap-0.5 text-[11px] font-bold px-1.5 py-0.5 rounded"
+              [ngClass]="card.isPositive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'"
+            >
+              <i [class]="card.isPositive ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"></i>
+              {{ card.changePercent }}
+            </span>
+            <span class="text-xs text-surface-400">{{ card.comparison }}</span>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- 11. NEEDS YOUR ATTENTION (BUSINESS ALERTS) -->
+  @if (businessAlerts.length > 0) {
+    <section class="bg-surface-0 border border-rose-200 rounded-xl p-4 sm:px-5 flex flex-col gap-3.5 shadow-xs">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-rose-500 ring-4 ring-rose-500/20 animate-pulse"></span>
+          <h3 class="text-[15px] font-bold text-rose-800 m-0">Needs Your Attention</h3>
+          <span class="bg-rose-100 text-rose-700 text-[11px] font-bold px-2 py-0.5 rounded-full">{{ businessAlerts.length }} Critical Alerts</span>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+        @for (alert of businessAlerts; track alert.id) {
+          <div [class]="'flex items-center gap-3 px-3.5 py-2.5 rounded-lg border ' + getAlertCardClass(alert.type)">
+            <div [class]="'text-lg ' + getAlertIconClass(alert.type)">
+              <i [class]="'pi ' + alert.icon"></i>
+            </div>
+            <div class="flex-1">
+              <span class="text-[13px] font-semibold text-surface-800">{{ alert.title }}</span>
+            </div>
+            <div>
+              <a [routerLink]="alert.route" class="text-xs font-bold text-primary-600 hover:text-primary-700 inline-flex items-center gap-1 whitespace-nowrap hover:underline">
+                {{ alert.actionText }} <i class="pi pi-arrow-right text-[10px]"></i>
+              </a>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- 3. SALES OVERVIEW WITH SWITCHABLE CHART -->
+  <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 flex flex-col gap-4 shadow-xs">
+    <div class="flex items-center justify-between flex-wrap gap-2.5">
+      <div class="flex flex-col">
+        <h3 class="text-[17px] font-bold text-surface-900 tracking-tight m-0">Sales Overview</h3>
+        <span class="text-xs text-surface-500 mt-0.5">Trend breakdown for {{ activePeriodLabel }}</span>
+      </div>
+      <div class="flex items-center gap-1 bg-surface-100 p-1 rounded-lg">
+        <button
+          type="button"
+          class="px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all duration-150"
+          [ngClass]="activeChartMetric === 'SALES' ? 'bg-surface-0 text-primary-600 shadow-xs' : 'text-surface-600 hover:text-surface-900'"
+          (click)="setChartMetric('SALES')"
+        >
+          Sales (₹)
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all duration-150"
+          [ngClass]="activeChartMetric === 'PROFIT' ? 'bg-surface-0 text-primary-600 shadow-xs' : 'text-surface-600 hover:text-surface-900'"
+          (click)="setChartMetric('PROFIT')"
+        >
+          Profit (₹)
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all duration-150"
+          [ngClass]="activeChartMetric === 'BILLS' ? 'bg-surface-0 text-primary-600 shadow-xs' : 'text-surface-600 hover:text-surface-900'"
+          (click)="setChartMetric('BILLS')"
+        >
+          No. of Bills
+        </button>
+      </div>
+    </div>
+
+    <!-- Metric Summary Row -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+      <div class="p-2.5 px-3.5 bg-surface-50 border border-surface-200 rounded-lg flex flex-col gap-0.5">
+        <span class="text-[11px] font-semibold text-surface-500 uppercase">Total Sales</span>
+        <span class="text-[17px] font-bold text-surface-900 font-mono">₹{{ formatCurrency(salesSummary.totalSales) }}</span>
+      </div>
+      <div class="p-2.5 px-3.5 bg-surface-50 border border-surface-200 rounded-lg flex flex-col gap-0.5">
+        <span class="text-[11px] font-semibold text-surface-500 uppercase">Sales Return</span>
+        <span class="text-[17px] font-bold text-orange-600 font-mono">₹{{ formatCurrency(salesSummary.salesReturn) }}</span>
+      </div>
+      <div class="p-2.5 px-3.5 bg-blue-50/70 border border-blue-200 rounded-lg flex flex-col gap-0.5">
+        <span class="text-[11px] font-semibold text-surface-500 uppercase">Net Sales</span>
+        <span class="text-[17px] font-bold text-blue-600 font-mono">₹{{ formatCurrency(salesSummary.netSales) }}</span>
+      </div>
+      <div class="p-2.5 px-3.5 bg-emerald-50/70 border border-emerald-200 rounded-lg flex flex-col gap-0.5">
+        <span class="text-[11px] font-semibold text-surface-500 uppercase">Gross Profit</span>
+        <span class="text-[17px] font-bold text-emerald-600 font-mono">₹{{ formatCurrency(salesSummary.grossProfit) }}</span>
+      </div>
+    </div>
+
+    <!-- Modern SVG Interactive Chart -->
+    <div class="w-full h-60 relative">
+      <div class="w-full h-full relative chart-canvas">
+        <!-- SVG Bars -->
+        <svg viewBox="0 0 700 240" preserveAspectRatio="none" class="w-full h-full">
+          <!-- Horizontal Gridlines -->
+          <line x1="40" y1="30" x2="680" y2="30" stroke="#f1f5f9" stroke-dasharray="4" />
+          <line x1="40" y1="80" x2="680" y2="80" stroke="#f1f5f9" stroke-dasharray="4" />
+          <line x1="40" y1="130" x2="680" y2="130" stroke="#f1f5f9" stroke-dasharray="4" />
+          <line x1="40" y1="180" x2="680" y2="180" stroke="#e2e8f0" />
+
+          <!-- Bars & Points -->
+          @for (pt of chartPoints; track pt.label; let idx = $index) {
+            <g class="cursor-pointer" (mouseenter)="onBarHover(pt, $event)" (mouseleave)="onBarLeave()">
+              <!-- Background column touch zone -->
+              <rect
+                [attr.x]="60 + idx * barSpacing - 18"
+                y="20"
+                [attr.width]="36"
+                height="160"
+                fill="transparent"
+              />
+              <!-- Bar -->
+              <rect
+                [attr.x]="60 + idx * barSpacing - 14"
+                [attr.y]="getBarY(pt)"
+                width="28"
+                [attr.height]="getBarHeight(pt)"
+                rx="4"
+                [attr.fill]="getBarColor()"
+                class="transition-opacity duration-150 hover:opacity-85"
+              />
+              <!-- Axis Label -->
+              <text
+                [attr.x]="60 + idx * barSpacing"
+                y="205"
+                text-anchor="middle"
+                class="text-[11px] fill-surface-500 font-medium"
+              >
+                {{ pt.label }}
+              </text>
+            </g>
+          }
+        </svg>
+
+        <!-- Floating Hover Tooltip -->
+        @if (hoveredPoint) {
+          <div
+            class="absolute bg-surface-900 text-white px-2.5 py-1.5 rounded-md text-xs pointer-events-none shadow-lg flex flex-col gap-0.5 -translate-x-1/2 -translate-y-full z-10 whitespace-nowrap"
+            [style.left.px]="tooltipX"
+            [style.top.px]="tooltipY"
+          >
+            <span class="text-surface-400 text-[11px]">{{ hoveredPoint.label }}</span>
+            <span class="font-bold text-[13px] font-mono">
+              @if (activeChartMetric === 'SALES') {
+                ₹{{ formatCurrency(hoveredPoint.sales) }}
+              } @else if (activeChartMetric === 'PROFIT') {
+                ₹{{ formatCurrency(hoveredPoint.profit) }}
+              } @else {
+                {{ hoveredPoint.bills }} Bills
+              }
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- HORIZONTAL ROW: MONEY POSITION, INVENTORY ALERTS & PROFIT SUMMARY -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <!-- 4. MONEY SUMMARY / MONEY POSITION -->
+    <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 flex flex-col gap-4 shadow-xs">
+      <div class="flex items-center justify-between flex-wrap gap-2.5">
+        <div class="flex flex-col">
+          <h3 class="text-[17px] font-bold text-surface-900 tracking-tight m-0">Money Position</h3>
+          <span class="text-xs text-surface-500 mt-0.5">Live cash, bank & liquidity status</span>
+        </div>
+        <span class="bg-emerald-50 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1.5 border border-emerald-200">
+          <i class="pi pi-wallet"></i> Total Liquid: ₹{{ formatCurrency(moneySummary.totalLiquid) }}
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="p-3 px-3.5 rounded-lg flex flex-col gap-0.5 bg-teal-50 border border-teal-200 text-teal-800">
+          <span class="text-[11px] font-bold uppercase flex items-center gap-1.5"><i class="pi pi-money-bill"></i> Cash Balance</span>
+          <span class="text-lg font-extrabold font-mono my-0.5">₹{{ formatCurrency(moneySummary.cashBalance) }}</span>
+          <span class="text-[10px] opacity-80">Petty cash on hand</span>
+        </div>
+
+        <div class="p-3 px-3.5 rounded-lg flex flex-col gap-0.5 bg-blue-50 border border-blue-200 text-blue-800">
+          <span class="text-[11px] font-bold uppercase flex items-center gap-1.5"><i class="pi pi-building"></i> Bank Balance</span>
+          <span class="text-lg font-extrabold font-mono my-0.5">₹{{ formatCurrency(moneySummary.bankBalance) }}</span>
+          <span class="text-[10px] opacity-80">Across active current accounts</span>
+        </div>
+
+        <div class="p-3 px-3.5 rounded-lg flex flex-col gap-0.5 bg-emerald-50 border border-emerald-200 text-emerald-800">
+          <span class="text-[11px] font-bold uppercase flex items-center gap-1.5"><i class="pi pi-download"></i> Customer Collection</span>
+          <span class="text-lg font-extrabold font-mono my-0.5">₹{{ formatCurrency(moneySummary.customerCollection) }}</span>
+          <span class="text-[10px] opacity-80">Receipts collected {{ activePeriodLabel }}</span>
+        </div>
+
+        <div class="p-3 px-3.5 rounded-lg flex flex-col gap-0.5 bg-purple-50 border border-purple-200 text-purple-800">
+          <span class="text-[11px] font-bold uppercase flex items-center gap-1.5"><i class="pi pi-upload"></i> Supplier Payments</span>
+          <span class="text-lg font-extrabold font-mono my-0.5">₹{{ formatCurrency(moneySummary.supplierPayments) }}</span>
+          <span class="text-[10px] opacity-80">Disbursements cleared {{ activePeriodLabel }}</span>
+        </div>
+      </div>
+
+      <!-- Net Flow Progress Indicator -->
+      <div class="pt-2.5 border-t border-dashed border-surface-200 flex flex-col gap-1.5">
+        <div class="flex justify-between text-xs font-semibold text-surface-600">
+          <span>Net Cash Movement</span>
+          <span class="font-mono font-bold text-emerald-600">+₹{{ formatCurrency(moneySummary.netCashFlow) }}</span>
+        </div>
+        <div class="h-1.5 bg-surface-200 rounded-full overflow-hidden">
+          <div
+            class="h-full bg-emerald-500 rounded-full transition-all duration-300"
+            [style.width.%]="getCashFlowRatio()"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. INVENTORY ALERTS -->
+    <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 flex flex-col gap-4 shadow-xs">
+      <div class="flex items-center justify-between flex-wrap gap-2.5">
+        <div class="flex flex-col">
+          <h3 class="text-[17px] font-bold text-surface-900 tracking-tight m-0">Inventory Alerts</h3>
+          <span class="text-xs text-surface-500 mt-0.5">Actionable stock levels requiring reorder</span>
+        </div>
+        <a routerLink="/inventory/price-list" class="text-[13px] font-semibold text-primary-600 hover:underline inline-flex items-center gap-1">
+          Stock List <i class="pi pi-arrow-right text-xs"></i>
+        </a>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <a routerLink="/masters/items" class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg bg-surface-50 border border-surface-200 border-l-[3px] border-l-rose-500 hover:bg-surface-0 hover:translate-x-0.5 shadow-xs transition-all duration-150">
+          <div class="w-7 h-7 rounded-md flex items-center justify-center text-sm bg-rose-100 text-rose-600">
+            <i class="pi pi-times-circle"></i>
+          </div>
+          <div class="flex-1 flex items-baseline gap-2">
+            <span class="text-[17px] font-extrabold text-surface-900 font-mono">{{ inventoryAlerts.outOfStock }}</span>
+            <span class="text-[13px] text-surface-600 font-semibold">Out of Stock</span>
+          </div>
+          <i class="pi pi-chevron-right text-xs text-surface-400"></i>
+        </a>
+
+        <a routerLink="/masters/items" class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg bg-surface-50 border border-surface-200 border-l-[3px] border-l-amber-500 hover:bg-surface-0 hover:translate-x-0.5 shadow-xs transition-all duration-150">
+          <div class="w-7 h-7 rounded-md flex items-center justify-center text-sm bg-amber-100 text-amber-600">
+            <i class="pi pi-exclamation-triangle"></i>
+          </div>
+          <div class="flex-1 flex items-baseline gap-2">
+            <span class="text-[17px] font-extrabold text-surface-900 font-mono">{{ inventoryAlerts.lowStock }}</span>
+            <span class="text-[13px] text-surface-600 font-semibold">Low Stock</span>
+          </div>
+          <i class="pi pi-chevron-right text-xs text-surface-400"></i>
+        </a>
+
+        <a routerLink="/procure-to-pay/purchase-orders" class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg bg-surface-50 border border-surface-200 border-l-[3px] border-l-orange-500 hover:bg-surface-0 hover:translate-x-0.5 shadow-xs transition-all duration-150">
+          <div class="w-7 h-7 rounded-md flex items-center justify-center text-sm bg-orange-100 text-orange-600">
+            <i class="pi pi-shopping-bag"></i>
+          </div>
+          <div class="flex-1 flex items-baseline gap-2">
+            <span class="text-[17px] font-extrabold text-surface-900 font-mono">{{ inventoryAlerts.reorderRequired }}</span>
+            <span class="text-[13px] text-surface-600 font-semibold">Reorder Required</span>
+          </div>
+          <i class="pi pi-chevron-right text-xs text-surface-400"></i>
+        </a>
+
+        <a routerLink="/inventory/price-list" class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg bg-surface-50 border border-surface-200 border-l-[3px] border-l-purple-500 hover:bg-surface-0 hover:translate-x-0.5 shadow-xs transition-all duration-150">
+          <div class="w-7 h-7 rounded-md flex items-center justify-center text-sm bg-purple-100 text-purple-600">
+            <i class="pi pi-calendar-times"></i>
+          </div>
+          <div class="flex-1 flex items-baseline gap-2">
+            <span class="text-[17px] font-extrabold text-surface-900 font-mono">{{ inventoryAlerts.expiringSoon }}</span>
+            <span class="text-[13px] text-surface-600 font-semibold">Expiring Soon (30d)</span>
+          </div>
+          <i class="pi pi-chevron-right text-xs text-surface-400"></i>
+        </a>
+
+        <a routerLink="/inventory/price-list" class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg bg-surface-50 border border-surface-200 border-l-[3px] border-l-slate-500 hover:bg-surface-0 hover:translate-x-0.5 shadow-xs transition-all duration-150">
+          <div class="w-7 h-7 rounded-md flex items-center justify-center text-sm bg-slate-100 text-slate-600">
+            <i class="pi pi-history"></i>
+          </div>
+          <div class="flex-1 flex items-baseline gap-2">
+            <span class="text-[17px] font-extrabold text-surface-900 font-mono">{{ inventoryAlerts.nonMovingStock }}</span>
+            <span class="text-[13px] text-surface-600 font-semibold">Non-Moving (90d+)</span>
+          </div>
+          <i class="pi pi-chevron-right text-xs text-surface-400"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- 10. PROFIT SUMMARY (WATERFALL CALCULATION) -->
+    <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 flex flex-col gap-4 shadow-xs">
+      <div class="flex items-center justify-between flex-wrap gap-2.5">
+        <div class="flex flex-col">
+          <h3 class="text-[17px] font-bold text-surface-900 tracking-tight m-0">Profit Summary</h3>
+          <span class="text-xs text-surface-500 mt-0.5">P&L estimation for {{ activePeriodLabel }}</span>
+        </div>
+        <span class="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded-md border border-blue-200">
+          Net Margin: {{ profitSummary.netMarginPercent }}%
+        </span>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between px-3 py-2 rounded-md text-[13px] bg-surface-50">
+          <div class="flex items-center gap-2 text-surface-700">
+            <span class="w-5 h-5 rounded-full bg-surface-300 text-surface-900 text-[10px] font-bold flex items-center justify-center">1</span>
+            <span>Gross Sales</span>
+          </div>
+          <span class="font-mono font-medium">₹{{ formatCurrency(profitSummary.sales) }}</span>
+        </div>
+
+        <div class="flex items-center justify-between px-3 py-2 rounded-md text-[13px] bg-rose-50/40">
+          <div class="flex items-center gap-2 text-surface-700">
+            <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold flex items-center justify-center">-</span>
+            <span>Cost of Goods Sold (Purchase Cost)</span>
+          </div>
+          <span class="font-mono text-rose-600 font-medium">- ₹{{ formatCurrency(profitSummary.purchaseCost) }}</span>
+        </div>
+
+        <div class="flex items-center justify-between px-3 py-2 rounded-md text-[13px] bg-emerald-50/60 border border-dashed border-emerald-300">
+          <div class="flex items-center gap-2 text-surface-700">
+            <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold flex items-center justify-center">=</span>
+            <span class="font-bold">Gross Profit ({{ profitSummary.grossMarginPercent }}%)</span>
+          </div>
+          <span class="font-mono font-bold text-emerald-600">₹{{ formatCurrency(profitSummary.grossProfit) }}</span>
+        </div>
+
+        <div class="flex items-center justify-between px-3 py-2 rounded-md text-[13px] bg-rose-50/40">
+          <div class="flex items-center gap-2 text-surface-700">
+            <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold flex items-center justify-center">-</span>
+            <span>Operating Expenses</span>
+          </div>
+          <span class="font-mono text-rose-600 font-medium">- ₹{{ formatCurrency(profitSummary.expenses) }}</span>
+        </div>
+
+        <div class="flex items-center justify-between p-2.5 sm:px-3 rounded-md text-[13px] bg-blue-50/70 border border-blue-200 mt-1">
+          <div class="flex items-center gap-2">
+            <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold flex items-center justify-center"><i class="pi pi-check text-[9px]"></i></span>
+            <span class="font-bold text-surface-900">Estimated Net Profit</span>
+          </div>
+          <span class="font-mono font-extrabold text-blue-700 text-sm sm:text-base">₹{{ formatCurrency(profitSummary.netProfit) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OUTSTANDING RECEIVABLES & TOP SELLING PRODUCTS -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+    <!-- 5. CUSTOMER OUTSTANDING (RECEIVABLES) -->
+    <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 flex flex-col gap-4 shadow-xs">
+      <div class="flex items-center justify-between flex-wrap gap-2.5">
+        <div class="flex flex-col">
+          <h3 class="text-[17px] font-bold text-surface-900 tracking-tight m-0">Outstanding Receivables</h3>
+          <span class="text-xs text-surface-500 mt-0.5">Customer payments pending & overdue</span>
+        </div>
+        <a routerLink="/sales/sales-invoices" class="text-[13px] font-semibold text-primary-600 hover:underline inline-flex items-center gap-1">
+          View All <i class="pi pi-arrow-right text-xs"></i>
+        </a>
+      </div>
+
+      <!-- Receivables Overview Badges -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <div class="p-2.5 px-3 rounded-lg bg-surface-50 border border-surface-200 flex flex-col gap-0.5">
+          <span class="text-[11px] text-surface-500 font-semibold">Total Receivable</span>
+          <span class="text-base font-bold text-surface-900 font-mono">₹{{ formatCurrency(receivablesSummary.total) }}</span>
+        </div>
+        <div class="p-2.5 px-3 rounded-lg bg-surface-50 border border-surface-200 border-l-[3px] border-l-rose-500 flex flex-col gap-0.5">
+          <span class="text-[11px] text-surface-500 font-semibold">Overdue Amount</span>
+          <span class="text-base font-bold text-rose-600 font-mono">₹{{ formatCurrency(receivablesSummary.overdue) }}</span>
+        </div>
+        <div class="p-2.5 px-3 rounded-lg bg-surface-50 border border-surface-200 border-l-[3px] border-l-amber-500 flex flex-col gap-0.5">
+          <span class="text-[11px] text-surface-500 font-semibold">Due Today</span>
+          <span class="text-base font-bold text-amber-600 font-mono">₹{{ formatCurrency(receivablesSummary.dueToday) }}</span>
+        </div>
+        <div class="p-2.5 px-3 rounded-lg bg-surface-50 border border-surface-200 flex flex-col gap-0.5">
+          <span class="text-[11px] text-surface-500 font-semibold">Due This Week</span>
+          <span class="text-base font-bold text-surface-900 font-mono">₹{{ formatCurrency(receivablesSummary.dueThisWeek) }}</span>
+        </div>
+      </div>
+
+      <!-- Customer Table -->
+      <div class="w-full overflow-x-auto">
+        <table class="w-full border-collapse text-[13px]">
+          <thead>
+            <tr>
+              <th class="text-left px-3 py-2.5 text-[11px] font-bold text-surface-500 uppercase tracking-wider border-b border-surface-200 bg-surface-50 whitespace-nowrap">Customer Name</th>
+              <th class="text-left px-3 py-2.5 text-[11px] font-bold text-surface-500 uppercase tracking-wider border-b border-surface-200 bg-surface-50 whitespace-nowrap">Invoice No</th>
+              <th class="text-left px-3 py-2.5 text-[11px] font-bold text-surface-500 uppercase tracking-wider border-b border-surface-200 bg-surface-50 whitespace-nowrap">Due Date</th>
+              <th class="text-left px-3 py-2.5 text-[11px] font-bold text-surface-500 uppercase tracking-wider border-b border-surface-200 bg-surface-50 whitespace-nowrap">Amount</th>
+              <th class="text-left px-3 py-2.5 text-[11px] font-bold text-surface-500 uppercase tracking-wider border-b border-surface-200 bg-surface-50 whitespace-nowrap">Overdue Days</th>
+              <th class="text-left px-3 py-2.5 text-[11px] font-bold text-surface-500 uppercase tracking-wider border-b border-surface-200 bg-surface-50 whitespace-nowrap">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (cust of outstandingCustomers; track cust.invoiceNo) {
+              <tr class="hover:bg-surface-50/70 border-b border-surface-100 last:border-b-0">
+                <td class="px-3 py-2.5 font-bold text-surface-900 whitespace-nowrap align-middle">{{ cust.customerName }}</td>
+                <td class="px-3 py-2.5 font-mono text-surface-700 whitespace-nowrap align-middle">{{ cust.invoiceNo }}</td>
+                <td class="px-3 py-2.5 text-surface-700 whitespace-nowrap align-middle">{{ cust.dueDate }}</td>
+                <td class="px-3 py-2.5 font-mono font-bold text-surface-900 whitespace-nowrap align-middle">₹{{ formatCurrency(cust.amount) }}</td>
+                <td class="px-3 py-2.5 text-surface-700 whitespace-nowrap align-middle">
+                  @if (cust.overdueDays > 0) {
+                    <span class="text-rose-600 font-semibold">{{ cust.overdueDays }} days late</span>
+                  } @else if (cust.overdueDays === 0) {
+                    <span class="text-amber-600 font-semibold">Today</span>
+                  } @else {
+                    <span class="text-surface-400">{{ -cust.overdueDays }} days left</span>
+                  }
+                </td>
+                <td class="px-3 py-2.5 whitespace-nowrap align-middle">
+                  <span [class]="'text-[11px] font-bold px-2 py-0.5 rounded-full inline-block ' + getStatusPillClass(cust.status)">
+                    {{ cust.status }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 7. TOP SELLING PRODUCTS -->
+    <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 flex flex-col gap-4 shadow-xs">
+      <div class="flex items-center justify-between flex-wrap gap-2.5">
+        <div class="flex flex-col">
+          <h3 class="text-[17px] font-bold text-surface-900 tracking-tight m-0">Top Selling Products</h3>
+          <span class="text-xs text-surface-500 mt-0.5">Best performing items by revenue & margin</span>
+        </div>
+        <a routerLink="/masters/items" class="text-[13px] font-semibold text-primary-600 hover:underline inline-flex items-center gap-1">
+          View Inventory <i class="pi pi-arrow-right text-xs"></i>
+        </a>
+      </div>
+
+      <div class="w-full overflow-x-auto">
+        <table class="w-full border-collapse text-[13px]">
+          <thead>
+            <tr>
+              <th class="text-left px-3 py-2.5 text-[11px] font-bold text-surface-500 uppercase tracking-wider border-b border-surface-200 bg-surface-50 whitespace-nowrap">Product</th>
+              <th class="text-left px-3 py-2.5 text-[11px] font-bold text-surface-500 uppercase tracking-wider border-b border-surface-200 bg-surface-50 whitespace-nowrap">Qty Sold</th>
+              <th class="text-left px-3 py-2.5 text-[11px] font-bold text-surface-500 uppercase tracking-wider border-b border-surface-200 bg-surface-50 whitespace-nowrap">Sales Amount</th>
+              <th class="text-left px-3 py-2.5 text-[11px] font-bold text-surface-500 uppercase tracking-wider border-b border-surface-200 bg-surface-50 whitespace-nowrap">Profit</th>
+              <th class="text-left px-3 py-2.5 text-[11px] font-bold text-surface-500 uppercase tracking-wider border-b border-surface-200 bg-surface-50 whitespace-nowrap">Margin</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (prod of topProducts; track prod.sku) {
+              <tr class="hover:bg-surface-50/70 border-b border-surface-100 last:border-b-0">
+                <td class="px-3 py-2.5 whitespace-nowrap align-middle">
+                  <div class="flex flex-col">
+                    <span class="font-bold text-surface-900">{{ prod.name }}</span>
+                    <span class="text-[11px] font-mono text-surface-400">{{ prod.sku }} &bull; {{ prod.category }}</span>
+                  </div>
+                </td>
+                <td class="px-3 py-2.5 font-semibold text-surface-700 whitespace-nowrap align-middle">{{ prod.quantitySold }} {{ prod.unit }}</td>
+                <td class="px-3 py-2.5 font-mono font-bold text-surface-900 whitespace-nowrap align-middle">₹{{ formatCurrency(prod.salesAmount) }}</td>
+                <td class="px-3 py-2.5 font-mono text-emerald-600 font-semibold whitespace-nowrap align-middle">₹{{ formatCurrency(prod.profit) }}</td>
+                <td class="px-3 py-2.5 whitespace-nowrap align-middle">
+                  <span class="bg-emerald-50 text-emerald-700 font-bold text-xs px-1.5 py-0.5 rounded">
+                    {{ prod.marginPercent }}%
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

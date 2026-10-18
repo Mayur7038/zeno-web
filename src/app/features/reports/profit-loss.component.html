@@ -1,0 +1,173 @@
+<div class="flex flex-col gap-5">
+  <div class="flex justify-between items-start flex-wrap gap-3">
+    <div class="flex items-center gap-3">
+      <button class="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-surface-300 bg-white hover:bg-surface-50 text-surface-700 transition-colors cursor-pointer" routerLink="/reports">
+        <i class="pi pi-arrow-left"></i>
+      </button>
+      <div>
+        <h1 class="text-2xl font-bold text-surface-900">Profit &amp; Loss Account</h1>
+        <p class="text-xs text-surface-500 mt-0.5">Income &amp; Expenditure Statement</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 bg-white border border-surface-200 rounded-xl px-3.5 py-2 shadow-xs">
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-bold text-surface-500 uppercase tracking-wider">From</label>
+          <input type="date" [(ngModel)]="startDate" (change)="load()" class="border border-surface-300 rounded-md px-2 py-1 text-sm bg-white focus:outline-none focus:border-primary-600" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-bold text-surface-500 uppercase tracking-wider">To</label>
+          <input type="date" [(ngModel)]="endDate" (change)="load()" class="border border-surface-300 rounded-md px-2 py-1 text-sm bg-white focus:outline-none focus:border-primary-600" />
+        </div>
+      </div>
+      <button class="inline-flex items-center gap-1.5 px-3.5 py-2 border border-surface-300 bg-white hover:bg-surface-50 text-surface-700 rounded-lg text-sm font-semibold transition-colors cursor-pointer" onclick="window.print()">
+        <i class="pi pi-print"></i> Print
+      </button>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="py-16 text-center text-surface-500 text-sm flex items-center justify-center gap-2">
+      <i class="pi pi-spin pi-spinner"></i> Computing P&L from GL entries...
+    </div>
+  }
+
+  @if (error) {
+    <div class="p-8 text-center text-red-700 bg-red-50 border border-red-200 rounded-xl mt-4">
+      <i class="pi pi-exclamation-triangle text-3xl mb-2 block text-red-500"></i>
+      <h3 class="text-base font-bold">Failed to load report</h3>
+      <p class="text-sm mt-1">Could not connect to the backend server. Please ensure the API server (Port 4000) is running.</p>
+    </div>
+  }
+
+  @if (!loading && !error && data) {
+    <!-- Unified Trading & P&L Account -->
+    <div class="bg-white border border-surface-200 rounded-xl shadow-xs overflow-hidden flex flex-col md:flex-row min-h-[400px]">
+      <!-- LEFT SIDE (EXPENDITURE) -->
+      <div class="flex-1 flex flex-col border-b md:border-b-0 md:border-r border-surface-200">
+        <div class="p-3.5 font-bold text-sm text-center border-b border-surface-200 bg-red-50 text-red-700 tracking-wider">
+          <i class="pi pi-arrow-up-right mr-2"></i> EXPENDITURE
+        </div>
+        <div class="flex-1 overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+              <tr>
+                <th class="px-4 py-2.5">Particulars</th>
+                <th class="px-4 py-2.5 text-right w-36">Amount (₹)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-100">
+              <!-- Trading Part -->
+              @if (tradingExpenses.length > 0 || grossProfit > 0) {
+                <tr class="bg-surface-50"><td colspan="2" class="px-4 py-1.5 font-bold text-surface-600 text-xs uppercase tracking-wider">Direct Expenses</td></tr>
+              }
+              @for (row of tradingExpenses; track row.ledgerId) {
+                <tr class="hover:bg-surface-50/50">
+                  <td class="px-4 py-2 font-bold text-surface-900">
+                    {{ row.ledgerName }}
+                    <span class="text-surface-500 text-xs font-normal ml-2">{{row.groupName}}</span>
+                  </td>
+                  <td class="px-4 py-2 text-right font-mono text-red-600 font-bold">₹{{ row.amount.toFixed(2) }}</td>
+                </tr>
+              }
+              @if (grossProfit > 0) {
+                <tr class="bg-surface-50/60"><td class="px-4 py-2 font-bold text-surface-700">Gross Profit (c/o)</td><td class="px-4 py-2 text-right font-mono font-bold text-emerald-700">₹{{ grossProfit.toFixed(2) }}</td></tr>
+              }
+              <tr class="bg-surface-100/70 border-t border-b border-surface-300">
+                <td class="px-4 py-2 font-bold text-right text-xs uppercase text-surface-700">TOTAL</td>
+                <td class="px-4 py-2 text-right font-mono font-bold text-surface-900">₹{{ Math.max(totalTradingIncome, totalTradingExpense).toFixed(2) }}</td>
+              </tr>
+
+              <!-- P&L Part -->
+              @if (plExpenses.length > 0 || grossLoss > 0) {
+                <tr class="bg-surface-50"><td colspan="2" class="px-4 py-1.5 font-bold text-surface-600 text-xs uppercase tracking-wider">Indirect Expenses</td></tr>
+              }
+              @if (grossLoss > 0) {
+                <tr class="hover:bg-surface-50/50"><td class="px-4 py-2 font-bold text-surface-800">Gross Loss (b/f)</td><td class="px-4 py-2 text-right font-mono text-red-600">₹{{ grossLoss.toFixed(2) }}</td></tr>
+              }
+              @for (row of plExpenses; track row.ledgerId) {
+                <tr class="hover:bg-surface-50/50">
+                  <td class="px-4 py-2 font-bold text-surface-900">
+                    {{ row.ledgerName }}
+                    <span class="text-surface-500 text-xs font-normal ml-2">{{row.groupName}}</span>
+                  </td>
+                  <td class="px-4 py-2 text-right font-mono text-red-600 font-bold">₹{{ row.amount.toFixed(2) }}</td>
+                </tr>
+              }
+              @if (netProfit > 0) {
+                <tr class="bg-surface-50/60"><td class="px-4 py-2 font-bold text-surface-700">Net Profit (transferred to Capital)</td><td class="px-4 py-2 text-right font-mono font-bold text-emerald-700">₹{{ netProfit.toFixed(2) }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-auto flex justify-between items-center p-4 bg-surface-50 border-t-2 border-surface-300 border-b-4 border-double border-surface-400">
+          <div class="font-bold text-sm text-surface-800 uppercase">GRAND TOTAL</div>
+          <div class="font-extrabold text-base text-surface-900 font-mono">₹{{ Math.max(totalPlIncome + grossProfit, totalPlExpense + grossLoss).toFixed(2) }}</div>
+        </div>
+      </div>
+
+      <!-- RIGHT SIDE (INCOME) -->
+      <div class="flex-1 flex flex-col">
+        <div class="p-3.5 font-bold text-sm text-center border-b border-surface-200 bg-emerald-50 text-emerald-700 tracking-wider">
+          <i class="pi pi-arrow-down-left mr-2"></i> INCOME
+        </div>
+        <div class="flex-1 overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+              <tr>
+                <th class="px-4 py-2.5">Particulars</th>
+                <th class="px-4 py-2.5 text-right w-36">Amount (₹)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-100">
+              <!-- Trading Part -->
+              @if (tradingIncomes.length > 0 || grossLoss > 0) {
+                <tr class="bg-surface-50"><td colspan="2" class="px-4 py-1.5 font-bold text-surface-600 text-xs uppercase tracking-wider">Direct Incomes</td></tr>
+              }
+              @for (row of tradingIncomes; track row.ledgerId) {
+                <tr class="hover:bg-surface-50/50">
+                  <td class="px-4 py-2 font-bold text-surface-900">
+                    {{ row.ledgerName }}
+                    <span class="text-surface-500 text-xs font-normal ml-2">{{row.groupName}}</span>
+                  </td>
+                  <td class="px-4 py-2 text-right font-mono text-emerald-600 font-bold">₹{{ row.amount.toFixed(2) }}</td>
+                </tr>
+              }
+              @if (grossLoss > 0) {
+                <tr class="bg-surface-50/60"><td class="px-4 py-2 font-bold text-surface-700">Gross Loss (c/o)</td><td class="px-4 py-2 text-right font-mono font-bold text-red-600">₹{{ grossLoss.toFixed(2) }}</td></tr>
+              }
+              <tr class="bg-surface-100/70 border-t border-b border-surface-300">
+                <td class="px-4 py-2 font-bold text-right text-xs uppercase text-surface-700">TOTAL</td>
+                <td class="px-4 py-2 text-right font-mono font-bold text-surface-900">₹{{ Math.max(totalTradingIncome, totalTradingExpense).toFixed(2) }}</td>
+              </tr>
+
+              <!-- P&L Part -->
+              @if (plIncomes.length > 0 || grossProfit > 0) {
+                <tr class="bg-surface-50"><td colspan="2" class="px-4 py-1.5 font-bold text-surface-600 text-xs uppercase tracking-wider">Indirect Incomes</td></tr>
+              }
+              @if (grossProfit > 0) {
+                <tr class="hover:bg-surface-50/50"><td class="px-4 py-2 font-bold text-surface-800">Gross Profit (b/f)</td><td class="px-4 py-2 text-right font-mono text-emerald-600">₹{{ grossProfit.toFixed(2) }}</td></tr>
+              }
+              @for (row of plIncomes; track row.ledgerId) {
+                <tr class="hover:bg-surface-50/50">
+                  <td class="px-4 py-2 font-bold text-surface-900">
+                    {{ row.ledgerName }}
+                    <span class="text-surface-500 text-xs font-normal ml-2">{{row.groupName}}</span>
+                  </td>
+                  <td class="px-4 py-2 text-right font-mono text-emerald-600 font-bold">₹{{ row.amount.toFixed(2) }}</td>
+                </tr>
+              }
+              @if (netLoss > 0) {
+                <tr class="bg-surface-50/60"><td class="px-4 py-2 font-bold text-surface-700">Net Loss (transferred from Capital)</td><td class="px-4 py-2 text-right font-mono font-bold text-red-600">₹{{ netLoss.toFixed(2) }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-auto flex justify-between items-center p-4 bg-surface-50 border-t-2 border-surface-300 border-b-4 border-double border-surface-400">
+          <div class="font-bold text-sm text-surface-800 uppercase">GRAND TOTAL</div>
+          <div class="font-extrabold text-base text-surface-900 font-mono">₹{{ Math.max(totalPlIncome + grossProfit, totalPlExpense + grossLoss).toFixed(2) }}</div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

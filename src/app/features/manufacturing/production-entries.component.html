@@ -1,0 +1,505 @@
+<div class="flex flex-col gap-5">
+  @if (viewMode === 'list') {
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-surface-900">Production</h1>
+      <div class="flex gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-semibold shadow-xs transition-colors cursor-pointer" (click)="openCreatePage()">
+          <i class="pi pi-plus"></i> Record Assembly Run
+        </button>
+      </div>
+    </div>
+
+    <!-- FILTER & TOOLBAR -->
+    <div class="bg-white border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+      <div class="p-4 flex justify-between items-center border-b border-surface-200 gap-4 flex-wrap">
+        <div class="relative flex-1 max-w-md">
+          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
+          <input
+            type="text"
+            placeholder="Search assembly runs..."
+            [(ngModel)]="searchQuery"
+            (input)="filterEntries()"
+            class="w-full pl-9 pr-3 py-2 border border-surface-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+          />
+        </div>
+        <div class="flex items-center gap-2.5">
+          <select [(ngModel)]="statusFilter" (change)="filterEntries()" class="px-3 py-2 border border-surface-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary-600 min-w-[150px]">
+            <option value="ALL">All Statuses</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+          <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-surface-300 hover:bg-surface-50 text-surface-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50" (click)="exportEntries()" [disabled]="filteredEntries.length === 0" title="Export to CSV">
+            <i class="pi pi-download"></i> Export
+          </button>
+        </div>
+      </div>
+
+      <!-- PRODUCTION ENTRIES TABLE -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+            <tr>
+              <th class="px-4 py-3">Voucher No</th>
+              <th class="px-4 py-3">Date</th>
+              <th class="px-4 py-3">Finished Product</th>
+              <th class="px-4 py-3">BOM Recipe</th>
+              <th class="px-4 py-3 text-right">Qty Assembled</th>
+              <th class="px-4 py-3">Source Godown</th>
+              <th class="px-4 py-3">Target Godown</th>
+              <th class="px-4 py-3 text-right">Total Cost</th>
+              <th class="px-4 py-3 text-right">Unit Cost</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100">
+            @if (loading) {
+              <tr>
+                <td colspan="11" class="text-center py-10 text-surface-500">
+                  <i class="pi pi-spin pi-spinner mr-2"></i> Loading assembly runs...
+                </td>
+              </tr>
+            } @else if (filteredEntries.length === 0) {
+              <tr>
+                <td colspan="11" class="text-center py-10 text-surface-500">
+                  No assembly runs found. Click "Record Assembly Run" to convert raw materials into finished goods.
+                </td>
+              </tr>
+            } @else {
+              @for (entry of filteredEntries; track entry.id) {
+                <tr class="hover:bg-surface-50/75 transition-colors">
+                  <td class="px-4 py-3 font-mono font-bold text-surface-900">
+                    <span class="inline-block px-2 py-0.5 rounded text-xs bg-purple-50 text-purple-700 border border-purple-200 font-mono font-bold">{{ entry.voucherNo }}</span>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap text-surface-700">{{ entry.entryDate | date:'mediumDate' }}</td>
+                  <td class="px-4 py-3">
+                    <div class="font-bold text-surface-900">{{ entry.finishedItem?.name || 'Product' }}</div>
+                    @if (entry.finishedVariant) {
+                      <div class="text-surface-500 text-xs">{{ entry.finishedVariant?.name }}</div>
+                    }
+                  </td>
+                  <td class="px-4 py-3">
+                    @if (entry.bom) {
+                      <span class="inline-block px-2 py-0.5 rounded text-xs bg-blue-50 text-blue-700 border border-blue-200 font-semibold">{{ entry.bom?.name }}</span>
+                    } @else {
+                      <span class="text-surface-400 text-xs italic">Custom Assembly</span>
+                    }
+                  </td>
+                  <td class="px-4 py-3 text-right font-mono font-bold text-surface-900">
+                    {{ entry.assembledQty }} {{ entry.finishedItem?.unit?.code || '' }}
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-surface-100 text-surface-700 border border-surface-200">
+                      <i class="pi pi-box text-xs"></i> {{ entry.sourceGodown?.name || 'Raw Godown' }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      <i class="pi pi-check-circle text-xs"></i> {{ entry.targetGodown?.name || 'FG Godown' }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-right font-mono font-bold text-surface-900">
+                    ₹{{ entry.totalCost | number:'1.2-2' }}
+                  </td>
+                  <td class="px-4 py-3 text-right font-mono font-bold text-emerald-700">
+                    ₹{{ entry.unitCost | number:'1.2-2' }}
+                  </td>
+                  <td class="px-4 py-3">
+                    <span
+                      class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                      [class.bg-emerald-50]="entry.status === 'COMPLETED'"
+                      [class.text-emerald-800]="entry.status === 'COMPLETED'"
+                      [class.border]="entry.status === 'COMPLETED'"
+                      [class.border-emerald-200]="entry.status === 'COMPLETED'"
+                      [class.bg-red-50]="entry.status === 'CANCELLED'"
+                      [class.text-red-800]="entry.status === 'CANCELLED'"
+                      [class.border-red-200]="entry.status === 'CANCELLED'"
+                    >
+                      {{ entry.status }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <button
+                        type="button"
+                        class="p-1.5 text-surface-500 hover:text-surface-900 hover:bg-surface-100 rounded transition-colors cursor-pointer"
+                        title="View Details"
+                        (click)="viewEntryDetails(entry)"
+                      >
+                        <i class="pi pi-eye"></i>
+                      </button>
+                      @if (entry.status === 'COMPLETED') {
+                        <button
+                          type="button"
+                          class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                          title="Reverse Assembly Run"
+                          (click)="reverseEntry(entry)"
+                        >
+                          <i class="pi pi-undo"></i>
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  } @else if (viewMode === 'create') {
+    <!-- FULL PAGE RECORD ASSEMBLY -->
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center gap-3">
+        <button class="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-surface-300 bg-white hover:bg-surface-50 text-surface-700 transition-colors cursor-pointer" (click)="backToList()"><i class="pi pi-arrow-left"></i></button>
+        <h1 class="text-2xl font-bold text-surface-900">Record Assembly Run</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="px-4 py-2 border border-surface-300 bg-white hover:bg-surface-100 text-surface-700 rounded-lg text-sm font-semibold transition-colors cursor-pointer" (click)="backToList()">Cancel</button>
+        <button class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-2" (click)="saveProductionEntry()" [disabled]="saving">
+          @if (saving) {
+            <i class="pi pi-spin pi-spinner"></i> Processing Assembly...
+          } @else {
+            <i class="pi pi-check-circle"></i> Execute Assembly Run
+          }
+        </button>
+      </div>
+    </div>
+
+    <div class="bg-white border border-surface-200 rounded-xl p-6 shadow-xs flex flex-col gap-5">
+      @if (errorMessage) {
+        <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md flex items-center gap-2 text-sm">
+          <i class="pi pi-exclamation-triangle text-red-600"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+      }
+
+      <!-- RECIPE & PRODUCT SELECTION -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Apply BOM Recipe</label>
+          <select [(ngModel)]="selectedBomId" (change)="onBomSelected()" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600">
+            <option value="">-- Manual / Custom Run --</option>
+            @for (b of boms; track b.id) {
+              <option [value]="b.id">{{ b.name }} (Yield: {{ b.producedQty }})</option>
+            }
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Finished Product <span class="text-red-500">*</span></label>
+          <select [(ngModel)]="formData.finishedItemId" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600 disabled:opacity-75 disabled:bg-surface-50" [disabled]="!!selectedBomId">
+            <option value="">-- Select Finished Product --</option>
+            @for (it of items; track it.id) {
+              <option [value]="it.id">{{ it.name }} (SKU: {{ it.sku || 'N/A' }})</option>
+            }
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Qty to Assemble <span class="text-red-500">*</span></label>
+          <input
+            type="number"
+            min="0.001"
+            step="any"
+            [(ngModel)]="formData.assembledQty"
+            (input)="onAssembledQtyChange()"
+            class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white font-mono font-bold focus:outline-none focus:border-primary-600"
+          />
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Production Date <span class="text-red-500">*</span></label>
+          <input type="date" [(ngModel)]="formData.entryDate" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600" />
+        </div>
+      </div>
+
+      <!-- WAREHOUSES ROW -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Source Godown (Raw Materials) <span class="text-red-500">*</span></label>
+          <select [(ngModel)]="formData.sourceGodownId" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600">
+            <option value="">-- Select Source Godown --</option>
+            @for (g of godowns; track g.id) {
+              <option [value]="g.id">{{ g.name }} ({{ g.code || 'Main' }})</option>
+            }
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Target Godown (Finished Goods) <span class="text-red-500">*</span></label>
+          <select [(ngModel)]="formData.targetGodownId" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600">
+            <option value="">-- Select Target Godown --</option>
+            @for (g of godowns; track g.id) {
+              <option [value]="g.id">{{ g.name }} ({{ g.code || 'Main' }})</option>
+            }
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Voucher No</label>
+          <input
+            type="text"
+            [(ngModel)]="formData.voucherNo"
+            class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white font-mono focus:outline-none focus:border-primary-600"
+          />
+        </div>
+      </div>
+
+      <!-- RAW MATERIALS CONSUMPTION TABLE -->
+      <div class="flex justify-between items-center pt-3 border-b-2 border-surface-100 pb-2">
+        <span class="text-sm font-bold text-surface-800">Raw Materials Consumed (Stock Deducted)</span>
+        <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-primary-600 text-primary-600 hover:bg-primary-50 rounded text-xs font-semibold transition-colors cursor-pointer" (click)="addComponentLine()">
+          <i class="pi pi-plus"></i> Add Extra Material
+        </button>
+      </div>
+
+      <div class="border border-surface-200 rounded-lg overflow-hidden">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-surface-50 text-surface-700 font-bold border-b border-surface-200">
+            <tr>
+              <th class="p-2.5 w-[40%]">Raw Material Item</th>
+              <th class="p-2.5 w-[18%] text-right">Consumed Qty</th>
+              <th class="p-2.5 w-[18%] text-right">Unit Rate ₹</th>
+              <th class="p-2.5 w-[18%] text-right">Amount ₹</th>
+              <th class="p-2.5 w-[6%] text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100">
+            @if (lines.length === 0) {
+              <tr>
+                <td colspan="5" class="p-6 text-center text-surface-500 text-xs">
+                  No raw material components added. Select a BOM Recipe or click "Add Extra Material".
+                </td>
+              </tr>
+            }
+            @for (line of lines; track $index; let idx = $index) {
+              <tr>
+                <td class="p-2">
+                  <select [(ngModel)]="line.itemId" (change)="onItemSelect(line)" class="w-full px-2.5 py-1.5 border border-surface-300 rounded text-xs bg-white focus:outline-none focus:border-primary-600">
+                    <option value="">-- Select Material Item --</option>
+                    @for (it of items; track it.id) {
+                      <option [value]="it.id">{{ it.name }} (Current Stock: {{ it.currentStock || 0 }})</option>
+                    }
+                  </select>
+                </td>
+                <td class="p-2">
+                  <input
+                    type="number"
+                    min="0.001"
+                    step="any"
+                    [(ngModel)]="line.consumedQty"
+                    (input)="updateLineTotal(line)"
+                    class="w-full px-2.5 py-1.5 border border-surface-300 rounded text-xs text-right font-mono focus:outline-none focus:border-primary-600"
+                  />
+                </td>
+                <td class="p-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    [(ngModel)]="line.unitRate"
+                    (input)="updateLineTotal(line)"
+                    class="w-full px-2.5 py-1.5 border border-surface-300 rounded text-xs text-right font-mono focus:outline-none focus:border-primary-600"
+                  />
+                </td>
+                <td class="p-2 text-right font-mono font-bold text-surface-900 text-xs">
+                  ₹{{ line.amount | number:'1.2-2' }}
+                </td>
+                <td class="p-2 text-center">
+                  <button type="button" class="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded cursor-pointer transition-colors" (click)="removeComponentLine(idx)">
+                    <i class="pi pi-trash text-xs"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ADDITIONAL OVERHEADS & TOTALS -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Additional Labor Cost (₹)</label>
+          <input
+            type="number"
+            min="0"
+            step="any"
+            [(ngModel)]="formData.additionalLaborCost"
+            (input)="recalculateTotals()"
+            class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white font-mono focus:outline-none focus:border-primary-600"
+          />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Additional Overhead Cost (₹)</label>
+          <input
+            type="number"
+            min="0"
+            step="any"
+            [(ngModel)]="formData.additionalOverheadCost"
+            (input)="recalculateTotals()"
+            class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white font-mono focus:outline-none focus:border-primary-600"
+          />
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-semibold text-surface-700">Production Notes & Observations</label>
+        <textarea
+          [(ngModel)]="formData.notes"
+          rows="2"
+          class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600"
+        ></textarea>
+      </div>
+
+      <!-- LIVE COST SUMMARY BOX -->
+      <div class="bg-surface-50 border border-surface-200 rounded-lg p-4 flex justify-between items-center flex-wrap gap-4">
+        <div class="flex flex-col gap-0.5">
+          <span class="text-[11px] font-bold uppercase text-surface-500">Raw Material Total:</span>
+          <span class="text-sm font-semibold text-surface-800">₹{{ rawMaterialTotal | number:'1.2-2' }}</span>
+        </div>
+        <div class="flex flex-col gap-0.5">
+          <span class="text-[11px] font-bold uppercase text-surface-500">Labor Cost:</span>
+          <span class="text-sm font-semibold text-surface-800">₹{{ (formData.additionalLaborCost || 0) | number:'1.2-2' }}</span>
+        </div>
+        <div class="flex flex-col gap-0.5">
+          <span class="text-[11px] font-bold uppercase text-surface-500">Overheads:</span>
+          <span class="text-sm font-semibold text-surface-800">₹{{ (formData.additionalOverheadCost || 0) | number:'1.2-2' }}</span>
+        </div>
+        <div class="flex flex-col gap-0.5">
+          <span class="text-[11px] font-bold uppercase text-surface-500">Total Production Cost:</span>
+          <span class="text-base font-extrabold text-blue-700">₹{{ grandTotalCost | number:'1.2-2' }}</span>
+        </div>
+        <div class="flex flex-col gap-0.5">
+          <span class="text-[11px] font-bold uppercase text-surface-500">Output Unit Cost:</span>
+          <span class="text-base font-extrabold font-mono text-emerald-700">
+            ₹{{ (grandTotalCost / (formData.assembledQty || 1)) | number:'1.2-2' }}
+          </span>
+        </div>
+      </div>
+    </div>
+  } @else if (viewMode === 'view' && selectedEntry) {
+    <!-- FULL PAGE VIEW ASSEMBLY VOUCHER -->
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center gap-3">
+        <button class="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-surface-300 bg-white hover:bg-surface-50 text-surface-700 transition-colors cursor-pointer" (click)="backToList()"><i class="pi pi-arrow-left"></i></button>
+        <h1 class="text-2xl font-bold text-surface-900">Assembly Voucher: {{ selectedEntry.voucherNo }}</h1>
+        <span
+          class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold ml-1.5"
+          [class.bg-emerald-50]="selectedEntry.status === 'COMPLETED'"
+          [class.text-emerald-800]="selectedEntry.status === 'COMPLETED'"
+          [class.border]="selectedEntry.status === 'COMPLETED'"
+          [class.border-emerald-200]="selectedEntry.status === 'COMPLETED'"
+          [class.bg-red-50]="selectedEntry.status === 'CANCELLED'"
+          [class.text-red-800]="selectedEntry.status === 'CANCELLED'"
+          [class.border-red-200]="selectedEntry.status === 'CANCELLED'"
+        >
+          {{ selectedEntry.status }}
+        </span>
+      </div>
+      <div class="flex items-center gap-2.5">
+        @if (selectedEntry.status === 'COMPLETED') {
+          <button
+            class="px-4 py-2 border border-red-300 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-sm font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5"
+            (click)="reverseEntry(selectedEntry)"
+          >
+            <i class="pi pi-undo"></i> Reverse Assembly
+          </button>
+        }
+        <button class="px-4 py-2 border border-surface-300 bg-white hover:bg-surface-100 text-surface-700 rounded-lg text-sm font-semibold transition-colors cursor-pointer" (click)="backToList()">Back to List</button>
+        <button class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5" onclick="window.print()"><i class="pi pi-print"></i> Print Voucher</button>
+      </div>
+    </div>
+
+    <div class="bg-white border border-surface-200 rounded-xl p-6 shadow-xs flex flex-col gap-5">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-surface-50 border border-surface-200 p-4 rounded-lg">
+        <div class="flex flex-col gap-1">
+          <span class="text-[11px] font-bold uppercase text-surface-500">Date</span>
+          <span class="text-sm text-surface-900">{{ selectedEntry.entryDate | date:'mediumDate' }}</span>
+        </div>
+        <div class="flex flex-col gap-1">
+          <span class="text-[11px] font-bold uppercase text-surface-500">Finished Product</span>
+          <span class="text-sm font-bold text-surface-900">{{ selectedEntry.finishedItem?.name }}</span>
+        </div>
+        <div class="flex flex-col gap-1">
+          <span class="text-[11px] font-bold uppercase text-surface-500">Assembled Qty</span>
+          <span class="text-sm font-mono font-bold text-surface-900">
+            {{ selectedEntry.assembledQty }} {{ selectedEntry.finishedItem?.unit?.code || 'Units' }}
+          </span>
+        </div>
+        <div class="flex flex-col gap-1">
+          <span class="text-[11px] font-bold uppercase text-surface-500">Unit Cost</span>
+          <span class="text-sm font-mono font-bold text-emerald-700">
+            ₹{{ selectedEntry.unitCost | number:'1.2-2' }}
+          </span>
+        </div>
+        <div class="flex flex-col gap-1">
+          <span class="text-[11px] font-bold uppercase text-surface-500">Source Godown</span>
+          <span class="text-sm text-surface-900">{{ selectedEntry.sourceGodown?.name || 'Main Godown' }}</span>
+        </div>
+        <div class="flex flex-col gap-1">
+          <span class="text-[11px] font-bold uppercase text-surface-500">Target Godown</span>
+          <span class="text-sm text-surface-900">{{ selectedEntry.targetGodown?.name || 'FG Godown' }}</span>
+        </div>
+        <div class="flex flex-col gap-1">
+          <span class="text-[11px] font-bold uppercase text-surface-500">Recipe Used</span>
+          <span class="text-sm text-surface-900">{{ selectedEntry.bom?.name || 'Custom Assembly' }}</span>
+        </div>
+        <div class="flex flex-col gap-1">
+          <span class="text-[11px] font-bold uppercase text-surface-500">Total Batch Cost</span>
+          <span class="text-sm font-mono font-bold text-blue-700">
+            ₹{{ selectedEntry.totalCost | number:'1.2-2' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="pt-3 border-b-2 border-surface-100 pb-2">
+        <span class="text-sm font-bold text-surface-800">Raw Materials Consumed</span>
+      </div>
+
+      <div class="border border-surface-200 rounded-lg overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-surface-50 text-surface-700 font-bold border-b border-surface-200">
+            <tr>
+              <th class="p-3">Component Name</th>
+              <th class="p-3 text-right">Consumed Qty</th>
+              <th class="p-3 text-right">Unit Rate ₹</th>
+              <th class="p-3 text-right">Total Amount ₹</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100">
+            @for (it of selectedEntry.items; track it.id) {
+              <tr class="hover:bg-surface-50/50">
+                <td class="p-3 font-bold text-surface-900">{{ it.item?.name }}</td>
+                <td class="p-3 text-right font-mono text-surface-700">
+                  {{ it.consumedQty }} {{ it.item?.unit?.code || '' }}
+                </td>
+                <td class="p-3 text-right font-mono text-surface-700">₹{{ it.unitRate | number:'1.2-2' }}</td>
+                <td class="p-3 text-right font-mono font-bold text-surface-900">₹{{ it.amount | number:'1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="bg-surface-50 border border-surface-200 rounded-lg p-4 flex justify-between items-center flex-wrap gap-4 mt-2">
+        <div class="flex flex-col gap-0.5">
+          <span class="text-[11px] font-bold uppercase text-surface-500">Raw Material Cost:</span>
+          <span class="text-sm font-semibold text-surface-800">₹{{ selectedEntry.rawMaterialCost | number:'1.2-2' }}</span>
+        </div>
+        <div class="flex flex-col gap-0.5">
+          <span class="text-[11px] font-bold uppercase text-surface-500">Direct Labor:</span>
+          <span class="text-sm font-semibold text-surface-800">₹{{ selectedEntry.additionalLaborCost | number:'1.2-2' }}</span>
+        </div>
+        <div class="flex flex-col gap-0.5">
+          <span class="text-[11px] font-bold uppercase text-surface-500">Overheads:</span>
+          <span class="text-sm font-semibold text-surface-800">₹{{ selectedEntry.additionalOverheadCost | number:'1.2-2' }}</span>
+        </div>
+        <div class="flex flex-col gap-0.5">
+          <span class="text-[11px] font-bold uppercase text-surface-500">Grand Total:</span>
+          <span class="text-base font-bold text-blue-700">₹{{ selectedEntry.totalCost | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+  }
+</div>

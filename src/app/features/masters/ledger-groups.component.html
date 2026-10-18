@@ -1,0 +1,231 @@
+<div class="flex flex-col gap-5">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-surface-900">Ledger Group</h1>
+    </div>
+    <div class="flex gap-2.5">
+      <button
+        class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-semibold shadow-xs transition-colors cursor-pointer"
+        (click)="openCreateModal()">
+        <i class="pi pi-plus"></i> New Ledger Group
+      </button>
+    </div>
+  </div>
+
+  <!-- FILTER & TOOLBAR -->
+  <div class="bg-white border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+    <div class="p-4 flex justify-between items-center border-b border-surface-200 gap-4 flex-wrap">
+      <div class="relative flex-1 max-w-sm">
+        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
+        <input type="text" placeholder="Search ledger groups..." [(ngModel)]="searchQuery" (input)="filterGroups()"
+          class="w-full pl-9 pr-3 py-2 border border-surface-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" />
+      </div>
+      <div class="flex items-center gap-2.5">
+        <select [(ngModel)]="natureFilter" (change)="filterGroups()"
+          class="px-3 py-2 border border-surface-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary-600">
+          <option value="ALL">All Natures</option>
+          <option value="ASSET">Assets</option>
+          <option value="LIABILITY">Liabilities</option>
+          <option value="INCOME">Income</option>
+          <option value="EXPENSE">Expenses</option>
+        </select>
+
+        @if (hasAnySubGroups) {
+        <button type="button"
+          class="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-surface-300 hover:bg-surface-50 hover:border-primary-400 text-surface-700 hover:text-primary-600 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+          (click)="expandAll()" title="Expand all sub-groups">
+          <i class="pi pi-angle-double-down"></i> Expand All
+        </button>
+        <button type="button"
+          class="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-surface-300 hover:bg-surface-50 hover:border-primary-400 text-surface-700 hover:text-primary-600 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+          (click)="collapseAll()" title="Collapse all sub-groups">
+          <i class="pi pi-angle-double-up"></i> Collapse All
+        </button>
+        }
+      </div>
+    </div>
+
+    <!-- GROUPS TABLE -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead
+          class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+          <tr>
+            <th class="px-4 py-3">Group Name</th>
+            <th class="px-4 py-3">Nature</th>
+            <th class="px-4 py-3">Parent Group</th>
+            <th class="px-4 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-surface-100">
+          @if (loading) {
+          <tr>
+            <td colspan="4" class="text-center py-10 text-surface-500">
+              <i class="pi pi-spin pi-spinner mr-2"></i> Loading ledger groups...
+            </td>
+          </tr>
+          } @else if (displayedRows.length === 0) {
+          <tr>
+            <td colspan="4" class="text-center py-10 text-surface-500">
+              No ledger groups match your filter criteria.
+            </td>
+          </tr>
+          }
+          @for (g of displayedRows; track g.id) {
+          <tr class="transition-colors" [class.bg-surface-50]="g.level > 0" [class.hover:bg-surface-100]="g.level > 0"
+            [class.hover:bg-surface-50]="g.level === 0">
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2" [style.padding-left.px]="g.level * 24">
+                @if (g.hasChildren) {
+                <button type="button"
+                  class="w-5.5 h-5.5 inline-flex items-center justify-center text-xs text-surface-500 hover:text-surface-900 hover:bg-surface-200 rounded cursor-pointer transition-colors"
+                  (click)="toggleExpand(g.id, $event)"
+                  [title]="isExpanded(g.id) ? 'Collapse sub-groups' : 'Expand sub-groups'">
+                  <i [class]="isExpanded(g.id) ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"></i>
+                </button>
+                <i [class]="isExpanded(g.id) ? 'pi pi-folder-open' : 'pi pi-folder'" class="text-base cursor-pointer"
+                  [style.color]="getNatureColor(g.nature)" (click)="toggleExpand(g.id, $event)"
+                  [title]="isExpanded(g.id) ? 'Click to collapse' : 'Click to expand'"></i>
+                } @else {
+                @if (g.level > 0) {
+                <span class="text-surface-400 font-mono font-bold text-xs mr-1 inline-block">└─</span>
+                } @else {
+                <span class="w-5.5 inline-block shrink-0"></span>
+                }
+                <i class="pi pi-folder text-base" [style.color]="getNatureColor(g.nature)"></i>
+                }
+
+                <span class="text-surface-900 text-sm" [class.font-bold]="g.hasChildren"
+                  [class.font-medium]="!g.hasChildren" (click)="g.hasChildren ? toggleExpand(g.id, $event) : null"
+                  [style.cursor]="g.hasChildren ? 'pointer' : 'default'">
+                  {{ g.name }}
+                </span>
+
+                @if (g.hasChildren) {
+                <span
+                  class="text-[11px] font-semibold text-primary-700 bg-primary-50 border border-primary-200 hover:bg-primary-100 px-2 py-0.5 rounded-full cursor-pointer transition-colors"
+                  (click)="toggleExpand(g.id, $event)"
+                  [title]="isExpanded(g.id) ? 'Click to collapse' : 'Click to expand'">
+                  {{ g.childCount }} {{ g.childCount === 1 ? 'sub-group' : 'sub-groups' }}
+                </span>
+                }
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider"
+                [ngClass]="getNatureBadge(g.nature)">
+                {{ g.nature }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              @if (g.parent?.name) {
+              <span class="inline-flex items-center gap-1.5 text-xs text-surface-700 font-medium">
+                <i class="pi pi-folder text-surface-400 text-xs"></i> {{ g.parent?.name }}
+              </span>
+              } @else {
+              <span class="text-xs text-surface-400">Primary Group</span>
+              }
+            </td>
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <button
+                  class="p-1.5 text-surface-500 hover:text-surface-900 hover:bg-surface-100 rounded transition-colors cursor-pointer"
+                  (click)="openEditModal(g)" title="Edit Group">
+                  <i class="pi pi-pencil"></i>
+                </button>
+                @if (!g.isPredefined) {
+                <button
+                  class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                  (click)="deleteGroup(g)" title="Delete Custom Group">
+                  <i class="pi pi-trash"></i>
+                </button>
+                }
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CREATE / EDIT MODAL -->
+  @if (showModal) {
+  <div class="fixed inset-0 bg-slate-900/45 backdrop-blur-xs flex items-center justify-center z-50"
+    (click)="closeModal()">
+    <div class="bg-white rounded-xl w-full max-w-xl shadow-xl overflow-hidden m-4" (click)="$event.stopPropagation()">
+      <div class="px-5 py-4 border-b border-surface-200 flex justify-between items-center">
+        <h3 class="text-lg font-bold text-surface-900">{{ editingGroup ? 'Edit Ledger Group' : 'New Ledger Group' }}
+        </h3>
+        <button class="text-surface-400 hover:text-surface-700 text-2xl leading-none cursor-pointer p-1"
+          (click)="closeModal()">&times;</button>
+      </div>
+
+      <div class="p-5 max-h-[calc(85vh-120px)] overflow-y-auto">
+        @if (errorMessage) {
+        <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md flex items-center gap-2 text-sm mb-4">
+          <i class="pi pi-exclamation-circle text-red-600"></i> {{ errorMessage }}
+        </div>
+        }
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Group Name <span class="text-red-500">*</span></label>
+            <input type="text" [(ngModel)]="formData.name"
+              class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600" />
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Group Code</label>
+            <input type="text" [(ngModel)]="formData.code"
+              class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600" />
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Nature of Group <span
+                class="text-red-500">*</span></label>
+            <select [(ngModel)]="formData.nature"
+              class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600">
+              <option value="ASSET">ASSET</option>
+              <option value="LIABILITY">LIABILITY</option>
+              <option value="INCOME">INCOME</option>
+              <option value="EXPENSE">EXPENSE</option>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1.5 relative">
+            <label class="text-xs font-semibold text-surface-700">Parent Group (Leave blank if Primary)</label>
+
+            <!-- Custom Select Trigger / Input -->
+            <select [(ngModel)]="formData.parentId" (change)="onParentChange()" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600
+         [appearance:base-select] [&::picker(select)]:[appearance:base-select] [&::picker(select)]:max-h-48">
+              <option [ngValue]="null">-- Primary (No Parent) --</option>
+              @for (p of availableParents; track p.id) {
+              <option [value]="p.id">{{ p.name }}</option>
+              }
+            </select>
+          </div>
+
+
+
+        </div>
+      </div>
+
+      <div class="px-5 py-3.5 border-t border-surface-200 flex justify-end gap-2.5 bg-surface-50">
+        <button
+          class="px-4 py-2 border border-surface-300 bg-white hover:bg-surface-100 text-surface-700 rounded-md text-sm font-semibold transition-colors cursor-pointer"
+          (click)="closeModal()">Cancel</button>
+        <button
+          class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50"
+          (click)="saveGroup()" [disabled]="saving">
+          @if (saving) {
+          <i class="pi pi-spin pi-spinner"></i> Saving...
+          } @else {
+          <i class="pi pi-check"></i> {{ editingGroup ? 'Update Group' : 'Create Group' }}
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+  }
+</div>

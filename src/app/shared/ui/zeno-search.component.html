@@ -1,0 +1,25 @@
+<div
+  class="relative flex items-center w-full h-[38px] bg-surface-0 border border-surface-300 rounded-lg transition-all focus-within:border-primary-600 focus-within:ring-2 focus-within:ring-primary-100"
+  [class.opacity-60]="disabled"
+  [class.cursor-not-allowed]="disabled"
+  [class.bg-surface-50]="disabled"
+>
+  <i class="pi pi-search absolute left-3 text-surface-400 text-sm pointer-events-none"></i>
+  <input
+    type="text"
+    class="w-full h-full pl-9 pr-9 border-none bg-transparent text-sm text-surface-900 outline-none"
+    [ngModel]="value"
+    [disabled]="disabled"
+    (ngModelChange)="onInputChange($event)"
+  />
+  @if (value) {
+    <button
+      type="button"
+      class="absolute right-2 bg-transparent border-0 text-surface-400 hover:text-surface-700 hover:bg-surface-100 cursor-pointer flex items-center justify-center p-1 rounded-full text-xs transition-all"
+      (click)="clearSearch()"
+      title="Clear search"
+    >
+      <i class="pi pi-times"></i>
+    </button>
+  }
+</div>

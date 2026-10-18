@@ -1,0 +1,307 @@
+<div class="flex flex-col gap-5">
+  @if (viewMode === 'list') {
+    <!-- HEADER BAR -->
+    <div class="flex items-center justify-between mb-1">
+      <div>
+        <h1 class="text-xl font-bold text-surface-900 m-0">Customer Receipts</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer" (click)="openCreatePage()">
+          <i class="pi pi-plus"></i> Record Customer Receipt
+        </button>
+      </div>
+    </div>
+
+    <!-- TOOLBAR & TABLE CARD -->
+    <div class="bg-surface-0 border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+      <div class="p-4 border-b border-surface-200 flex flex-wrap items-center justify-between gap-4 bg-surface-0">
+        <div class="relative flex-1 min-w-[240px] max-w-sm">
+          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
+          <input
+            type="text"
+            class="w-full pl-9 pr-3 py-2 bg-surface-0 border border-surface-200 rounded-lg text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+            [(ngModel)]="searchQuery"
+            placeholder="Search customer receipts..."
+          />
+        </div>
+
+        <div class="flex items-center gap-3">
+          <select class="px-3 py-2 bg-surface-0 border border-surface-200 rounded-lg text-sm text-surface-700 focus:outline-none focus:border-primary-600" [(ngModel)]="selectedMode">
+            <option value="">All Payment Modes</option>
+            <option value="BANK">Bank Transfer</option>
+            <option value="CASH">Cash</option>
+            <option value="CHEQUE">Cheque</option>
+            <option value="UPI">UPI</option>
+          </select>
+
+          <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-medium rounded-lg border border-surface-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" (click)="exportReceipts()" [disabled]="filteredReceipts.length === 0" title="Export to CSV">
+            <i class="pi pi-download"></i> Export
+          </button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+            <tr>
+              <th class="px-4 py-3">Receipt No</th>
+              <th class="px-4 py-3">Date</th>
+              <th class="px-4 py-3">Customer</th>
+              <th class="px-4 py-3">Deposit Account (Bank / Cash)</th>
+              <th class="px-4 py-3">Mode</th>
+              <th class="px-4 py-3">Ref / Cheque #</th>
+              <th class="px-4 py-3">Amount Collected</th>
+              <th class="px-4 py-3">Invoices Allocated</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100">
+            @if (loading) {
+              <tr>
+                <td colspan="9" class="px-4 py-10 text-center text-surface-500">
+                  <i class="pi pi-spin pi-spinner text-2xl mb-2 block"></i>
+                  Loading customer receipts...
+                </td>
+              </tr>
+            } @else if (filteredReceipts.length === 0) {
+              <tr>
+                <td colspan="9" class="px-4 py-10 text-center text-surface-500">
+                  No customer receipts found.
+                </td>
+              </tr>
+            }
+            @for (rec of filteredReceipts; track rec.id) {
+              <tr (click)="viewReceipt(rec)" class="hover:bg-surface-50/50 transition-colors cursor-pointer">
+                <td class="px-4 py-3 font-mono font-bold text-emerald-700">{{ rec.voucherNo }}</td>
+                <td class="px-4 py-3 text-surface-700">{{ rec.receiptDate }}</td>
+                <td class="px-4 py-3 font-bold text-surface-900">
+                  {{ rec.customerLedger?.name || 'Customer' }}
+                </td>
+                <td class="px-4 py-3 text-surface-700">
+                  {{ rec.paymentLedger?.name || 'Bank Account' }}
+                </td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">{{ rec.paymentMode }}</span>
+                </td>
+                <td class="px-4 py-3 font-mono text-surface-700">{{ rec.referenceNo || '-' }}</td>
+                <td class="px-4 py-3 font-mono font-bold text-emerald-700 text-base">₹{{ rec.amount | number:'1.2-2' }}</td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">{{ rec.allocations?.length || 0 }} bills</span>
+                </td>
+                <td class="px-4 py-3 text-right" (click)="$event.stopPropagation()">
+                  <button class="w-8 h-8 inline-flex items-center justify-center bg-surface-0 border border-surface-200 rounded-sm text-surface-600 hover:text-primary-600 hover:border-primary-300 transition-colors cursor-pointer" title="View Receipt Voucher" (click)="viewReceipt(rec)">
+                    <i class="pi pi-eye"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  } @else if (viewMode === 'create') {
+    <!-- FULL PAGE CREATE CUSTOMER RECEIPT -->
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-3">
+        <button class="w-[34px] h-[34px] inline-flex items-center justify-center bg-surface-100 hover:bg-surface-200 text-surface-700 rounded-sm border border-surface-300 transition-colors cursor-pointer" (click)="backToList()"><i class="pi pi-arrow-left"></i></button>
+        <h1 class="text-xl font-bold text-surface-900 m-0">Record Customer Receipt</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-semibold rounded-md border border-surface-200 transition-colors cursor-pointer" (click)="backToList()">Cancel</button>
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" (click)="submitReceipt()" [disabled]="submitting || !isValidReceipt()">
+          <i class="pi pi-check"></i> Post Receipt &amp; Update Ledgers
+        </button>
+      </div>
+    </div>
+
+    <div class="bg-surface-0 border border-surface-200 rounded-xl p-6 shadow-xs flex flex-col gap-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Customer (From) <span class="text-red-500">*</span></label>
+          <zeno-searchable-select
+            [options]="customers"
+            labelKey="name"
+            valueKey="id"
+            secondaryKey="gstin"
+            placeholder="Select Customer..."
+            [(ngModel)]="newRec.customerLedgerId"
+            (selectChange)="onCustomerSelected()"
+          ></zeno-searchable-select>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Deposit Into (Bank / Cash Account) <span class="text-red-500">*</span></label>
+          <zeno-searchable-select
+            [options]="bankLedgers"
+            labelKey="name"
+            valueKey="id"
+            placeholder="Select Bank / Cash Account..."
+            [(ngModel)]="newRec.paymentLedgerId"
+          ></zeno-searchable-select>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Receipt Date <span class="text-red-500">*</span></label>
+          <input type="date" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" [(ngModel)]="newRec.receiptDate" />
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Payment Mode <span class="text-red-500">*</span></label>
+          <select class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" [(ngModel)]="newRec.paymentMode">
+            <option value="BANK">Bank Transfer / NEFT</option>
+            <option value="RTGS">RTGS</option>
+            <option value="UPI">UPI</option>
+            <option value="CHEQUE">Cheque</option>
+            <option value="CASH">Cash</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Total Amount Collected (₹) <span class="text-red-500">*</span></label>
+          <input type="number" step="0.01" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 font-mono" [(ngModel)]="newRec.amount" (input)="onAmountChanged()" />
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Ref / UTR / Cheque Number</label>
+          <input type="text" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" [(ngModel)]="newRec.referenceNo" />
+        </div>
+
+        <div class="flex flex-col gap-1.5 md:col-span-2">
+          <label class="text-xs font-semibold text-surface-700">Remarks / Notes</label>
+          <input type="text" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" [(ngModel)]="newRec.notes" />
+        </div>
+      </div>
+
+      <!-- INVOICE ALLOCATION SECTION -->
+      <div class="border border-surface-200 rounded-xl p-5 bg-surface-0 shadow-xs flex flex-col gap-4 mt-2">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="m-0 text-base font-semibold text-surface-900">Bill-by-Bill Invoice Allocations</h3>
+            <p class="text-xs text-surface-500 m-0 mt-0.5">Allocate payment against open invoices</p>
+          </div>
+          @if (unpaidInvoices.length > 0) {
+            <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border border-primary-200 text-primary-700 bg-primary-50 hover:bg-primary-100 transition-colors cursor-pointer" (click)="autoAllocateFIFO()">
+              <i class="pi pi-bolt"></i> Auto-Allocate (FIFO)
+            </button>
+          }
+        </div>
+
+        @if (unpaidInvoices.length === 0) {
+          <div class="p-6 text-center text-sm text-surface-500 bg-surface-50 rounded-lg flex items-center justify-center gap-2">
+            <i class="pi pi-info-circle text-surface-400"></i>
+            <span>{{ newRec.customerLedgerId ? 'No open/unpaid invoices found for this customer. Receipt will be recorded as on-account payment.' : 'Please select a customer to view open invoices.' }}</span>
+          </div>
+        } @else {
+          <div class="overflow-x-auto border border-surface-200 rounded-lg">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+                <tr>
+                  <th class="px-4 py-3">Invoice No</th>
+                  <th class="px-4 py-3">Date</th>
+                  <th class="px-4 py-3">Total Value</th>
+                  <th class="px-4 py-3">Already Paid</th>
+                  <th class="px-4 py-3">Balance Due</th>
+                  <th class="px-4 py-3 w-1/4">Allocate Amount (₹)</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-surface-100">
+                @for (inv of unpaidInvoices; track inv.id; let idx = $index) {
+                  <tr class="hover:bg-surface-50/50 transition-colors">
+                    <td class="px-4 py-2.5 font-mono font-bold text-primary-700">{{ inv.voucherNo }}</td>
+                    <td class="px-4 py-2.5 text-surface-700">{{ inv.invoiceDate }}</td>
+                    <td class="px-4 py-2.5 font-mono text-surface-700">₹{{ inv.grandTotal | number:'1.2-2' }}</td>
+                    <td class="px-4 py-2.5 text-emerald-600 font-mono">₹{{ (inv.paidAmount || 0) | number:'1.2-2' }}</td>
+                    <td class="px-4 py-2.5 font-bold text-red-600 font-mono">
+                      ₹{{ (inv.grandTotal - (inv.paidAmount || 0)) | number:'1.2-2' }}
+                    </td>
+                    <td class="px-4 py-2.5">
+                      <input
+                        type="number"
+                        step="0.01"
+                        class="w-full px-2.5 py-1.5 border border-surface-300 rounded text-sm font-mono text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+                        [(ngModel)]="inv.allocatedNow"
+                        (input)="recalculateAllocations()"
+                      />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <!-- ALLOCATION SUMMARY -->
+      <div class="ml-auto w-full md:w-80 bg-surface-50 border border-surface-200 rounded-lg p-4 flex flex-col gap-2">
+        <div class="flex justify-between items-center text-sm text-surface-700">
+          <span>Total Collected:</span>
+          <strong class="font-mono text-surface-900">₹{{ (newRec.amount || 0) | number:'1.2-2' }}</strong>
+        </div>
+        <div class="flex justify-between items-center text-sm text-emerald-600 font-bold">
+          <span>Total Allocated:</span>
+          <span class="font-mono">₹{{ totalAllocated | number:'1.2-2' }}</span>
+        </div>
+        <div class="flex justify-between items-center text-sm font-bold" [class.text-red-600]="unallocatedAmount > 0" [class.text-surface-700]="unallocatedAmount === 0">
+          <span>Unallocated (On Account):</span>
+          <span class="font-mono">₹{{ unallocatedAmount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+  } @else if (viewMode === 'view' && selectedReceipt) {
+    <!-- FULL PAGE VIEW CUSTOMER RECEIPT -->
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-3">
+        <button class="w-[34px] h-[34px] inline-flex items-center justify-center bg-surface-100 hover:bg-surface-200 text-surface-700 rounded-sm border border-surface-300 transition-colors cursor-pointer" (click)="backToList()"><i class="pi pi-arrow-left"></i></button>
+        <h1 class="text-xl font-bold text-surface-900 m-0">Customer Receipt Voucher #{{ selectedReceipt.voucherNo }}</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-semibold rounded-md border border-surface-200 transition-colors cursor-pointer" (click)="backToList()">Back to List</button>
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer" onclick="window.print()"><i class="pi pi-print"></i> Print Voucher</button>
+      </div>
+    </div>
+
+    <div class="bg-surface-0 border border-surface-200 rounded-xl p-6 shadow-xs flex flex-col gap-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-surface-50 p-4 rounded-lg border border-surface-200">
+        <div class="flex flex-col gap-1">
+          <span class="text-xs uppercase font-semibold text-surface-500 tracking-wider">Customer (Received From)</span>
+          <strong class="text-surface-900">{{ selectedReceipt.customerLedger?.name }}</strong>
+          <p class="text-xs text-surface-500 m-0 font-mono">{{ selectedReceipt.customerLedger?.gstin ? 'GSTIN: ' + selectedReceipt.customerLedger?.gstin : 'Unregistered' }}</p>
+        </div>
+        <div class="flex flex-col gap-1 sm:text-right">
+          <span class="text-xs uppercase font-semibold text-surface-500 tracking-wider">Deposit &amp; Method</span>
+          <strong class="text-surface-900">{{ selectedReceipt.paymentLedger?.name }}</strong>
+          <p class="text-sm text-surface-700 m-0">Mode: {{ selectedReceipt.paymentMode }} | Ref: <span class="font-mono">{{ selectedReceipt.referenceNo || 'None' }}</span></p>
+        </div>
+      </div>
+
+      <h4 class="m-0 text-sm font-bold text-surface-700">Allocated Sales Invoices</h4>
+      @if (!selectedReceipt.allocations || selectedReceipt.allocations.length === 0) {
+        <p class="text-sm text-surface-500 m-0">Payment received on-account (not allocated to specific invoices).</p>
+      } @else {
+        <div class="overflow-x-auto border border-surface-200 rounded-lg">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+              <tr>
+                <th class="px-4 py-3">Invoice No</th>
+                <th class="px-4 py-3">Invoice Date</th>
+                <th class="px-4 py-3">Invoice Total</th>
+                <th class="px-4 py-3 text-right">Allocated Amount</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-100">
+              @for (alloc of selectedReceipt.allocations; track alloc.id) {
+                <tr class="hover:bg-surface-50/50">
+                  <td class="px-4 py-2.5 font-mono font-bold text-primary-700">{{ alloc.salesInvoice?.voucherNo }}</td>
+                  <td class="px-4 py-2.5 text-surface-700">{{ alloc.salesInvoice?.invoiceDate }}</td>
+                  <td class="px-4 py-2.5 font-mono text-surface-700">₹{{ alloc.salesInvoice?.grandTotal | number:'1.2-2' }}</td>
+                  <td class="px-4 py-2.5 text-right font-mono font-bold text-emerald-600">₹{{ alloc.allocatedAmount | number:'1.2-2' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>

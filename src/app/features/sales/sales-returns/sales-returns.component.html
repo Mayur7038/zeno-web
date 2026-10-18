@@ -1,0 +1,333 @@
+<div class="flex flex-col gap-5">
+  @if (viewMode === 'list') {
+    <!-- HEADER BAR -->
+    <div class="flex items-center justify-between mb-1">
+      <div>
+        <h1 class="text-xl font-bold text-surface-900 m-0">Sales Returns (Credit Notes)</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer" (click)="openCreatePage()">
+          <i class="pi pi-plus"></i> Issue Credit Note
+        </button>
+      </div>
+    </div>
+
+    <!-- TOOLBAR & TABLE CARD -->
+    <div class="bg-surface-0 border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+      <div class="p-4 border-b border-surface-200 flex flex-wrap items-center justify-between gap-4 bg-surface-0">
+        <div class="relative flex-1 min-w-[240px] max-w-sm">
+          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
+          <input
+            type="text"
+            class="w-full pl-9 pr-3 py-2 bg-surface-0 border border-surface-200 rounded-lg text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+            [(ngModel)]="searchQuery"
+            placeholder="Search credit notes..."
+          />
+        </div>
+
+        <div class="flex items-center gap-3">
+          <select class="px-3 py-2 bg-surface-0 border border-surface-200 rounded-lg text-sm text-surface-700 focus:outline-none focus:border-primary-600" [(ngModel)]="selectedCustomer">
+            <option value="">All Customers</option>
+            @for (c of customers; track c.id) {
+              <option [value]="c.id">{{ c.name }}</option>
+            }
+          </select>
+
+          <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-medium rounded-lg border border-surface-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" (click)="exportReturns()" [disabled]="filteredReturns.length === 0" title="Export to CSV">
+            <i class="pi pi-download"></i> Export
+          </button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+            <tr>
+              <th class="px-4 py-3">Credit Note #</th>
+              <th class="px-4 py-3">Date</th>
+              <th class="px-4 py-3">Customer</th>
+              <th class="px-4 py-3">Orig. Invoice #</th>
+              <th class="px-4 py-3">Restock Warehouse</th>
+              <th class="px-4 py-3">Reason</th>
+              <th class="px-4 py-3">Taxable</th>
+              <th class="px-4 py-3">Tax Reversed</th>
+              <th class="px-4 py-3">Grand Total</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100">
+            @if (loading) {
+              <tr>
+                <td colspan="10" class="px-4 py-10 text-center text-surface-500">
+                  <i class="pi pi-spin pi-spinner text-2xl mb-2 block"></i>
+                  Loading sales returns...
+                </td>
+              </tr>
+            } @else if (filteredReturns.length === 0) {
+              <tr>
+                <td colspan="10" class="px-4 py-10 text-center text-surface-500">
+                  No sales returns or credit notes recorded.
+                </td>
+              </tr>
+            }
+            @for (sr of filteredReturns; track sr.id) {
+              <tr (click)="viewReturn(sr)" class="hover:bg-surface-50/50 transition-colors cursor-pointer">
+                <td class="px-4 py-3 font-mono font-bold text-red-600">{{ sr.voucherNo }}</td>
+                <td class="px-4 py-3 text-surface-700">{{ sr.returnDate }}</td>
+                <td class="px-4 py-3">
+                  <strong class="text-surface-900">{{ sr.customerLedger?.name || 'Customer' }}</strong>
+                  <div class="text-xs text-surface-500 font-mono">{{ sr.customerLedger?.gstin || 'Unregistered' }}</div>
+                </td>
+                <td class="px-4 py-3 font-mono text-surface-700">{{ sr.salesInvoice?.voucherNo || 'Direct Return' }}</td>
+                <td class="px-4 py-3 text-surface-700">{{ sr.godown?.name || 'Main Warehouse' }}</td>
+                <td class="px-4 py-3">
+                  <span class="inline-block px-2 py-0.5 rounded text-xs font-medium bg-surface-100 text-surface-700">{{ sr.reason }}</span>
+                </td>
+                <td class="px-4 py-3 font-mono text-surface-700">₹{{ sr.subtotal | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 font-mono text-amber-600">₹{{ sr.taxTotal | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 font-mono font-bold text-red-600">₹{{ sr.grandTotal | number:'1.2-2' }}</td>
+                <td class="px-4 py-3 text-right" (click)="$event.stopPropagation()">
+                  <button class="w-8 h-8 inline-flex items-center justify-center bg-surface-0 border border-surface-200 rounded-sm text-surface-600 hover:text-primary-600 hover:border-primary-300 transition-colors cursor-pointer" title="View Credit Note" (click)="viewReturn(sr)">
+                    <i class="pi pi-eye"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  } @else if (viewMode === 'create') {
+    <!-- FULL PAGE CREATE SALES RETURN / CREDIT NOTE -->
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-3">
+        <button class="w-[34px] h-[34px] inline-flex items-center justify-center bg-surface-100 hover:bg-surface-200 text-surface-700 rounded-sm border border-surface-300 transition-colors cursor-pointer" (click)="backToList()"><i class="pi pi-arrow-left"></i></button>
+        <h1 class="text-xl font-bold text-surface-900 m-0">New Sales Return (Credit Note)</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-semibold rounded-md border border-surface-200 transition-colors cursor-pointer" (click)="backToList()">Cancel</button>
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" (click)="submitReturn()" [disabled]="submitting || !isValidReturn()">
+          <i class="pi pi-check"></i> Post Return &amp; Issue Credit Note
+        </button>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-5">
+      <!-- TOP SECTION: CUSTOMER & METADATA -->
+      <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Customer <span class="text-red-500">*</span></label>
+            <zeno-searchable-select
+              [options]="customers"
+              labelKey="name"
+              valueKey="id"
+              secondaryKey="gstin"
+              placeholder="Select Customer..."
+              [(ngModel)]="newSr.customerLedgerId"
+              (selectChange)="onCustomerSelected()"
+            ></zeno-searchable-select>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Original Sales Invoice</label>
+            <select class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" [(ngModel)]="newSr.salesInvoiceId" (change)="onInvoiceSelected()">
+              <option value="">Direct Return (No invoice)</option>
+              @for (inv of customerInvoices; track inv.id) {
+                <option [value]="inv.id">Invoice #{{ inv.voucherNo }} (₹{{ inv.grandTotal }})</option>
+              }
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Restock Godown <span class="text-red-500">*</span></label>
+            <select class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" [(ngModel)]="newSr.godownId">
+              <option value="">Select Warehouse...</option>
+              @for (g of godowns; track g.id) {
+                <option [value]="g.id">{{ g.name }} ({{ g.code || 'Primary' }})</option>
+              }
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Return Date <span class="text-red-500">*</span></label>
+            <input type="date" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" [(ngModel)]="newSr.returnDate" />
+          </div>
+        </div>
+      </div>
+
+      <!-- LINE ITEMS EDITOR -->
+      <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs flex flex-col gap-4">
+        <zeno-item-fast-entry
+          [itemsList]="itemsList"
+          [showDiscount]="false"
+          [showGst]="false"
+          [editData]="editingItemData"
+          (itemAdded)="onFastItemAdded($event)"
+          (itemUpdated)="onFastItemUpdated($event)"
+        ></zeno-item-fast-entry>
+
+        <div class="overflow-x-auto border border-surface-200 rounded-lg bg-surface-0">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+              <tr>
+                <th class="w-9 px-3 py-3 text-center">#</th>
+                <th class="min-w-[200px] px-4 py-3">Product / Item</th>
+                <th class="w-24 px-3 py-3 text-center">Return Qty</th>
+                <th class="w-20 px-3 py-3 text-center">Unit</th>
+                <th class="w-28 px-4 py-3 text-right">Sales Rate (₹)</th>
+                <th class="w-20 px-3 py-3 text-center">GST %</th>
+                <th class="w-32 px-4 py-3 text-right">Total Refund (₹)</th>
+                <th class="w-18 px-3 py-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-100">
+              @if (newSr.items.length === 0 || (newSr.items.length === 1 && !newSr.items[0].itemId)) {
+                <tr>
+                  <td colspan="8" class="px-4 py-8 text-center text-surface-500">
+                    <i class="pi pi-inbox text-2xl block mb-1 text-surface-400"></i>
+                    No items added yet. Use the Fast Item Entry Bar above to add items to this return.
+                  </td>
+                </tr>
+              } @else {
+                @for (row of newSr.items; track $index; let idx = $index) {
+                  @if (row.itemId) {
+                    <tr class="hover:bg-surface-50/50 transition-colors">
+                      <td class="px-3 py-2.5 text-center font-mono text-xs text-surface-400">{{ idx + 1 }}</td>
+                      <td class="px-4 py-2.5 font-bold text-surface-900">
+                        {{ getItemName(row.itemId) }}
+                      </td>
+                      <td class="px-3 py-2.5 text-center font-mono font-bold text-surface-900">
+                        {{ row.returnedQty }}
+                      </td>
+                      <td class="px-3 py-2.5 text-center">
+                        <span class="inline-block px-2 py-0.5 rounded bg-surface-100 text-surface-700 text-xs font-semibold">{{ getUnitCode(row) }}</span>
+                      </td>
+                      <td class="px-4 py-2.5 text-right font-mono text-surface-700">
+                        ₹{{ row.unitPrice | number:'1.2-2' }}
+                      </td>
+                      <td class="px-3 py-2.5 text-center font-mono text-surface-900">
+                        {{ row.taxRate }}%
+                      </td>
+                      <td class="px-4 py-2.5 text-right font-mono font-bold text-red-600">
+                        ₹{{ calculateRowTotal(row) | number:'1.2-2' }}
+                      </td>
+                      <td class="px-3 py-2.5 text-center">
+                        <div class="flex items-center justify-center gap-1">
+                          <button type="button" class="w-7 h-7 inline-flex items-center justify-center text-primary-600 hover:bg-primary-50 rounded cursor-pointer transition-colors" (click)="editItemRow(idx)" title="Edit line item">
+                            <i class="pi pi-pencil"></i>
+                          </button>
+                          <button type="button" class="w-7 h-7 inline-flex items-center justify-center text-red-600 hover:bg-red-50 rounded cursor-pointer transition-colors" (click)="removeItemRow(idx)" title="Delete line item">
+                            <i class="pi pi-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SUMMARY & TOTALS FOOTER SECTION -->
+      <div class="flex flex-col md:flex-row justify-between items-start gap-6 mt-1">
+        <div class="w-full md:max-w-lg flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700 flex items-center gap-1.5"><i class="pi pi-align-left"></i> Reason for Return / Remarks</label>
+          <textarea
+            rows="3"
+            class="w-full p-2.5 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 resize-y"
+            placeholder="Enter return reason or remarks..."
+            [(ngModel)]="newSr.reason"
+          ></textarea>
+        </div>
+
+        <div class="w-full md:w-80 bg-surface-50 border border-surface-200 rounded-lg p-4 flex flex-col gap-2.5 self-stretch md:self-auto">
+          <div class="flex justify-between items-center text-sm text-surface-700">
+            <span>Reversed Taxable:</span>
+            <strong class="font-mono text-surface-900">₹{{ modalTotals.taxableSubtotal | number:'1.2-2' }}</strong>
+          </div>
+          <div class="flex justify-between items-center text-sm text-surface-700">
+            <span>Reversed GST Tax:</span>
+            <span class="font-mono text-surface-900">₹{{ modalTotals.taxTotal | number:'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between items-center text-base font-bold text-red-600 border-t border-surface-200 pt-2.5 mt-1">
+            <span>Total Credit Note:</span>
+            <strong class="text-lg">₹{{ modalTotals.grandTotal | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  } @else if (viewMode === 'view' && selectedReturn) {
+    <!-- FULL PAGE VIEW SALES RETURN / CREDIT NOTE -->
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-3">
+        <button class="w-[34px] h-[34px] inline-flex items-center justify-center bg-surface-100 hover:bg-surface-200 text-surface-700 rounded-sm border border-surface-300 transition-colors cursor-pointer" (click)="backToList()"><i class="pi pi-arrow-left"></i></button>
+        <h1 class="text-xl font-bold text-surface-900 m-0">Credit Note #{{ selectedReturn.voucherNo }}</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-semibold rounded-md border border-surface-200 transition-colors cursor-pointer" (click)="backToList()">Back to List</button>
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer" onclick="window.print()"><i class="pi pi-print"></i> Print Voucher</button>
+      </div>
+    </div>
+
+    <div class="bg-surface-0 border border-surface-200 rounded-xl p-6 shadow-xs flex flex-col gap-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-surface-50 p-4 rounded-lg border border-surface-200">
+        <div class="flex flex-col gap-1">
+          <span class="text-xs uppercase font-semibold text-surface-500 tracking-wider">Customer &amp; Reason</span>
+          <strong class="text-surface-900">{{ selectedReturn.customerLedger?.name }}</strong>
+          <p class="text-sm text-surface-700 m-0"><strong>Reason:</strong> {{ selectedReturn.reason }}</p>
+        </div>
+        <div class="flex flex-col gap-1 sm:text-right">
+          <span class="text-xs uppercase font-semibold text-surface-500 tracking-wider">Restock Godown</span>
+          <strong class="text-surface-900">{{ selectedReturn.godown?.name }}</strong>
+          <p class="text-sm text-surface-700 m-0">Orig Invoice: <span class="font-mono">{{ selectedReturn.salesInvoice?.voucherNo || 'N/A' }}</span></p>
+        </div>
+      </div>
+
+      <h4 class="m-0 text-sm font-bold text-surface-700">Returned Line Items</h4>
+      <div class="overflow-x-auto border border-surface-200 rounded-lg">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+            <tr>
+              <th class="px-4 py-3">Item</th>
+              <th class="px-4 py-3">Returned Qty</th>
+              <th class="px-4 py-3">Rate</th>
+              <th class="px-4 py-3">Taxable</th>
+              <th class="px-4 py-3 text-right">Total Refund</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100">
+            @for (item of selectedReturn.items; track item.id) {
+              <tr class="hover:bg-surface-50/50">
+                <td class="px-4 py-2.5">
+                  <strong class="text-surface-900">{{ item.item?.name }}</strong>
+                  <div class="text-xs text-surface-500 font-mono">{{ item.item?.sku }}</div>
+                </td>
+                <td class="px-4 py-2.5 font-bold text-surface-900">{{ item.returnedQty }}</td>
+                <td class="px-4 py-2.5 font-mono text-surface-700">₹{{ item.rate | number:'1.2-2' }}</td>
+                <td class="px-4 py-2.5 font-mono text-surface-700">₹{{ item.taxableAmount | number:'1.2-2' }}</td>
+                <td class="px-4 py-2.5 text-right font-mono font-bold text-red-600">₹{{ item.totalAmount | number:'1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ml-auto w-full sm:w-80 bg-surface-50 border border-surface-200 rounded-lg p-4 flex flex-col gap-2">
+        <div class="flex justify-between items-center text-sm text-surface-700">
+          <span>Reversed Subtotal:</span>
+          <strong class="font-mono text-surface-900">₹{{ selectedReturn.subtotal | number:'1.2-2' }}</strong>
+        </div>
+        <div class="flex justify-between items-center text-sm text-surface-700">
+          <span>Reversed Tax:</span>
+          <span class="font-mono text-surface-900">₹{{ selectedReturn.taxTotal | number:'1.2-2' }}</span>
+        </div>
+        <div class="flex justify-between items-center text-base font-bold text-red-600 border-t border-surface-200 pt-2.5 mt-1">
+          <span>Credit Note Total:</span>
+          <strong class="text-lg">₹{{ selectedReturn.grandTotal | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+    </div>
+  }
+</div>

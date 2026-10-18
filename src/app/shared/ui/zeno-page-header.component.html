@@ -1,0 +1,25 @@
+<div class="flex justify-between items-center flex-wrap gap-4 mb-5">
+  <div class="flex flex-col gap-1">
+    <div class="flex items-center gap-3">
+      <h1 class="text-xl font-bold text-surface-900 tracking-tight m-0 leading-tight">{{ title }}</h1>
+      @if (badge) {
+        <span
+          class="text-xs font-semibold px-2 py-0.5 rounded-full"
+          [ngClass]="{
+            'bg-blue-100 text-blue-800': badgeType === 'primary',
+            'bg-emerald-100 text-emerald-800': badgeType === 'success',
+            'bg-surface-200 text-surface-700': !badgeType || badgeType === 'neutral'
+          }"
+        >{{ badge }}</span>
+      }
+    </div>
+    @if (subtitle) {
+      <p class="text-sm text-surface-500 m-0">{{ subtitle }}</p>
+    }
+  </div>
+
+  <div class="flex items-center gap-2.5 flex-wrap">
+    <ng-content select="[actions]"></ng-content>
+  </div>
+</div>
+<ng-content></ng-content>

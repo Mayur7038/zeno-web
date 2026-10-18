@@ -1,0 +1,24 @@
+<div
+  class="flex overflow-x-auto scrollbar-none mb-5"
+  [ngClass]="variant === 'pill' ? 'bg-surface-100 p-1 rounded-sm inline-flex gap-1.5' : 'border-b-2 border-surface-200 gap-6'"
+>
+  @for (tab of tabs; track tab.id) {
+    <button
+      type="button"
+      class="inline-flex items-center gap-2 font-medium cursor-pointer transition-all whitespace-nowrap"
+      [ngClass]="variant === 'pill' ?
+        ('px-3.5 py-1.5 rounded-[4px] text-[0.8125rem] text-surface-600 hover:text-surface-900 ' + (activeTab === tab.id ? 'bg-surface-0 text-surface-900 font-semibold shadow-xs' : '')) :
+        ('px-1 py-2.5 text-sm -mb-[2px] border-b-2 ' + (activeTab === tab.id ? 'text-primary-600 border-primary-600 font-semibold' : 'text-surface-500 border-transparent hover:text-surface-900'))
+      "
+      (click)="selectTab(tab.id)"
+    >
+      @if (tab.icon) {
+        <i [class]="tab.icon"></i>
+      }
+      <span>{{ tab.label }}</span>
+      @if (tab.badge !== undefined && tab.badge !== null) {
+        <span class="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-surface-200 text-surface-700">{{ tab.badge }}</span>
+      }
+    </button>
+  }
+</div>

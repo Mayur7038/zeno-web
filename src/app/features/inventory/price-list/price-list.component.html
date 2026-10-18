@@ -1,0 +1,372 @@
+<div class="flex flex-col gap-5">
+  @if (viewMode === 'list') {
+    <div class="flex items-center justify-between mb-1">
+      <div>
+        <h1 class="text-xl font-bold text-surface-900 m-0">Price Lists &amp; Rule Engine</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button
+          class="inline-flex items-center gap-2 px-3.5 py-2 text-sm font-semibold rounded-md border transition-colors cursor-pointer"
+          [class.bg-primary-50]="selectedTab === 'SIMULATOR'"
+          [class.text-primary-700]="selectedTab === 'SIMULATOR'"
+          [class.border-primary-300]="selectedTab === 'SIMULATOR'"
+          [class.bg-surface-100]="selectedTab !== 'SIMULATOR'"
+          [class.text-surface-700]="selectedTab !== 'SIMULATOR'"
+          [class.border-surface-200]="selectedTab !== 'SIMULATOR'"
+          (click)="setTab(selectedTab === 'SIMULATOR' ? 'ALL' : 'SIMULATOR')"
+        >
+          <i class="pi pi-calculator"></i> {{ selectedTab === 'SIMULATOR' ? 'Back to Rules' : 'Price Simulator' }}
+        </button>
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer" (click)="openCreatePage()">
+          <i class="pi pi-plus"></i> New Price List
+        </button>
+      </div>
+    </div>
+
+    @if (selectedTab !== 'SIMULATOR') {
+      <!-- TABLE TOOLBAR -->
+      <div class="bg-surface-0 border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+        <div class="p-4 border-b border-surface-200 flex flex-wrap items-center justify-between gap-4 bg-surface-0">
+          <div class="relative flex-1 min-w-[240px] max-w-sm">
+            <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
+            <input
+              type="text"
+              class="w-full pl-9 pr-3 py-2 bg-surface-0 border border-surface-200 rounded-lg text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+              [(ngModel)]="searchQuery"
+              (input)="filterPriceLists()"
+              placeholder="Search price lists..."
+            />
+          </div>
+          <div class="flex items-center gap-2.5">
+            <select [(ngModel)]="selectedTab" (change)="setTab(selectedTab)" class="min-w-[190px] px-3 py-2 bg-surface-0 border border-surface-200 rounded-lg text-sm text-surface-700 focus:outline-none focus:border-primary-600">
+              <option value="ALL">All Dimensions ({{ priceLists.length }})</option>
+              <option value="STOCK_GROUP_WISE">Stock Group Wise ({{ groupRulesCount }})</option>
+              <option value="CUSTOMER_WISE">Customer Wise ({{ customerRulesCount }})</option>
+              <option value="PRODUCT_WISE">Product Wise ({{ productRulesCount }})</option>
+            </select>
+            <select [(ngModel)]="activeFilter" (change)="filterPriceLists()" class="min-w-[140px] px-3 py-2 bg-surface-0 border border-surface-200 rounded-md text-sm text-surface-700 focus:outline-none focus:border-primary-600">
+              <option value="ALL">All Statuses</option>
+              <option value="ACTIVE">Active Only</option>
+              <option value="INACTIVE">Inactive</option>
+            </select>
+            <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-medium rounded-md border border-surface-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" (click)="exportPriceLists()" [disabled]="filteredPriceLists.length === 0" title="Export to CSV">
+              <i class="pi pi-download"></i> Export
+            </button>
+          </div>
+        </div>
+
+        <!-- PRICE LISTS TABLE -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+              <tr>
+                <th class="px-4 py-3">Price List Name</th>
+                <th class="px-4 py-3">Dimension</th>
+                <th class="px-4 py-3">Effective From</th>
+                <th class="px-4 py-3 text-right">Items Count</th>
+                <th class="px-4 py-3">Status</th>
+                <th class="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-100">
+              @if (loading) {
+                <tr>
+                  <td colspan="6" class="px-4 py-12 text-center text-surface-500">
+                    <i class="pi pi-spin pi-spinner text-2xl text-primary-600"></i>
+                    <p class="mt-2 text-surface-500">Loading price lists...</p>
+                  </td>
+                </tr>
+              } @else if (filteredPriceLists.length === 0) {
+                <tr>
+                  <td colspan="6" class="px-4 py-12 text-center text-surface-500">
+                    <i class="pi pi-folder-open text-3xl text-surface-400"></i>
+                    <p class="mt-2">No price lists found for this criteria. Click <strong>New Price List</strong> to create one.</p>
+                  </td>
+                </tr>
+              } @else {
+                @for (pl of filteredPriceLists; track pl.id) {
+                  <tr class="hover:bg-surface-50/50 transition-colors">
+                    <td class="px-4 py-3">
+                      <span class="font-semibold text-primary-700 hover:underline cursor-pointer" (click)="openEditPage(pl)">
+                        {{ pl.name }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold"
+                        [ngClass]="{
+                          'bg-indigo-50 text-indigo-700 border border-indigo-200': pl.pricingType === 'STOCK_GROUP_WISE',
+                          'bg-blue-50 text-blue-700 border border-blue-200': pl.pricingType === 'CUSTOMER_WISE',
+                          'bg-emerald-50 text-emerald-700 border border-emerald-200': pl.pricingType === 'PRODUCT_WISE'
+                        }">
+                        {{ formatDimension(pl.pricingType) }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 text-surface-700">{{ pl.effectiveFrom }}</td>
+                    <td class="px-4 py-3 text-right font-medium text-surface-900">{{ pl.items?.length || 0 }}</td>
+                    <td class="px-4 py-3">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+                        [class.bg-emerald-50]="pl.isActive"
+                        [class.text-emerald-800]="pl.isActive"
+                        [class.border]="pl.isActive"
+                        [class.border-emerald-200]="pl.isActive"
+                        [class.bg-slate-100]="!pl.isActive"
+                        [class.text-slate-600]="!pl.isActive">
+                        {{ pl.isActive ? 'ACTIVE' : 'INACTIVE' }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                      <div class="flex items-center justify-end gap-1">
+                        <button class="w-8 h-8 inline-flex items-center justify-center bg-surface-0 border border-surface-200 rounded-sm text-surface-600 hover:text-primary-600 hover:border-primary-300 transition-colors cursor-pointer" (click)="openEditPage(pl)" title="Edit Price List">
+                          <i class="pi pi-pencil"></i>
+                        </button>
+                        <button class="w-8 h-8 inline-flex items-center justify-center bg-surface-0 border border-red-200 rounded-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer" (click)="deletePriceList(pl)" title="Delete Price List">
+                          <i class="pi pi-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    } @else {
+      <!-- PRICE LOOKUP SIMULATOR -->
+      <div class="bg-surface-0 border border-surface-200 rounded-xl p-6 shadow-xs flex flex-col gap-5">
+        <div class="border-b border-surface-200 pb-3">
+          <h3 class="text-base font-bold text-surface-900 m-0 flex items-center gap-2">
+            <i class="pi pi-calculator text-primary-600"></i> Real-time Effective Price Resolution Simulator
+          </h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Select Product / Item <span class="text-red-500">*</span></label>
+            <select [(ngModel)]="simItemId" (change)="runSimulation()" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600">
+              <option value="">-- Choose Product --</option>
+              @for (it of itemsList; track it.id) {
+                <option [value]="it.id">{{ it.name }} (Base: ₹{{ it.saleRate }})</option>
+              }
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Select Customer (Optional)</label>
+            <select [(ngModel)]="simCustomerId" (change)="runSimulation()" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600">
+              <option value="">-- Standard Retail / No Specific Customer --</option>
+              @for (c of customersList; track c.id) {
+                <option [value]="c.id">{{ c.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">As Of Date</label>
+            <input type="date" [(ngModel)]="simDate" (change)="runSimulation()" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" />
+          </div>
+        </div>
+
+        @if (simResult) {
+          <div class="p-5 bg-surface-50 border border-surface-200 rounded-xl flex flex-col gap-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <span class="px-2.5 py-1 rounded-md text-xs font-semibold bg-primary-50 text-primary-700 border border-primary-200">Rule Applied: <strong>{{ simResult.ruleApplied }}</strong></span>
+              <span class="px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">Source: <strong>{{ simResult.priceListName }}</strong></span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="p-4 bg-surface-0 border border-surface-200 rounded-lg flex flex-col">
+                <span class="text-xs font-semibold text-surface-500 uppercase">Standard Base Rate</span>
+                <span class="text-lg font-bold text-surface-900 font-mono mt-1">₹{{ simResult.standardRate | number:'1.2-2' }}</span>
+              </div>
+              <div class="p-4 bg-surface-0 border border-surface-200 rounded-lg flex flex-col">
+                <span class="text-xs font-semibold text-surface-500 uppercase">Applied Discount</span>
+                <span class="text-lg font-bold text-emerald-600 font-mono mt-1">{{ simResult.discountPercentage }}%</span>
+              </div>
+              <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg flex flex-col">
+                <span class="text-xs font-semibold text-blue-700 uppercase">Final Effective Selling Price</span>
+                <span class="text-xl font-bold text-primary-700 font-mono mt-1">₹{{ simResult.finalPrice | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  } @else {
+    <!-- CREATE / EDIT PRICE LIST PAGE -->
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-3">
+        <button class="w-[34px] h-[34px] inline-flex items-center justify-center bg-surface-100 hover:bg-surface-200 text-surface-700 rounded-sm border border-surface-300 transition-colors cursor-pointer" (click)="viewMode = 'list'">
+          <i class="pi pi-arrow-left"></i>
+        </button>
+        <h1 class="text-xl font-bold text-surface-900 m-0">{{ editId ? 'Edit Price List' : 'New Price List' }}</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-semibold rounded-md border border-surface-200 transition-colors cursor-pointer" (click)="viewMode = 'list'">Cancel</button>
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" (click)="savePriceList()" [disabled]="submitting">
+          <i class="pi pi-check"></i> {{ submitting ? 'Saving...' : 'Save Price List' }}
+        </button>
+      </div>
+    </div>
+
+    @if (errorMessage) {
+      <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md flex items-center gap-2.5 text-sm mb-4">
+        <i class="pi pi-exclamation-triangle text-red-600"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
+
+    <div class="bg-surface-0 border border-surface-200 rounded-xl p-6 shadow-xs flex flex-col gap-5">
+      <!-- 4 FORM GRID FIELDS -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Pricing Dimension <span class="text-red-500">*</span></label>
+          <select [(ngModel)]="formData.pricingType" (change)="onDimensionChange()" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600">
+            <option value="STOCK_GROUP_WISE">Stock Group Wise</option>
+            <option value="CUSTOMER_WISE">Customer Wise</option>
+            <option value="PRODUCT_WISE">Product Wise</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Price List Name <span class="text-red-500">*</span></label>
+          <input type="text" [(ngModel)]="formData.name" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" placeholder="Enter price list name" />
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Effective From Date <span class="text-red-500">*</span></label>
+          <input type="date" [(ngModel)]="formData.effectiveFrom" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" />
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Status</label>
+          <select [(ngModel)]="formData.isActive" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600">
+            <option [ngValue]="true">Active</option>
+            <option [ngValue]="false">Inactive / Suspended</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- JUSTIFIED TOOLBAR CONTROLS -->
+      <div class="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-surface-200">
+        <div class="relative flex-1 min-w-[220px] max-w-sm">
+          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
+          <input
+            type="text"
+            [(ngModel)]="itemSearchQuery"
+            placeholder="Search product name or SKU..."
+            class="w-full pl-9 pr-3 py-2 bg-surface-0 border border-surface-200 rounded-lg text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+          />
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="px-2.5 py-1 rounded-md bg-surface-100 text-xs font-bold text-surface-700">{{ formData.items.length }} Items</span>
+
+          <div class="flex items-center gap-1.5 bg-surface-50 p-1 rounded-lg border border-surface-200">
+            <select [(ngModel)]="globalMode" class="px-2 py-1 bg-surface-0 border border-surface-200 rounded text-xs text-surface-700">
+              <option value="MARKUP">Markup (+)</option>
+              <option value="MARKDOWN">Markdown (-)</option>
+            </select>
+            <input
+              type="number"
+              min="0"
+              step="0.5"
+              [(ngModel)]="globalPercentage"
+              placeholder="%"
+              class="w-16 px-2 py-1 bg-surface-0 border border-surface-200 rounded text-xs text-right font-mono"
+            />
+            <button class="px-2.5 py-1 bg-surface-200 hover:bg-surface-300 text-surface-800 text-xs font-semibold rounded cursor-pointer transition-colors" (click)="applyGlobalAdjustment()" title="Apply percentage to all products">
+              Apply to All
+            </button>
+          </div>
+
+          <button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-100 hover:bg-surface-200 text-surface-700 text-xs font-semibold rounded-md border border-surface-200 transition-colors cursor-pointer" (click)="addLineItem()">
+            <i class="pi pi-plus"></i> Add Line
+          </button>
+        </div>
+      </div>
+
+      <!-- PRODUCTS TABLE -->
+      <div class="overflow-x-auto border border-surface-200 rounded-lg">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+            <tr>
+              <th class="w-10 px-4 py-3">#</th>
+              <th class="px-4 py-3">Product / Item <span class="text-red-500">*</span></th>
+              <th class="px-4 py-3 text-right w-36">Purchase Price (₹)</th>
+              <th class="px-4 py-3 text-right w-36">Std Sale Rate (₹)</th>
+              <th class="px-4 py-3 w-40">Adjustment</th>
+              <th class="px-4 py-3 text-right w-32">Rate / %</th>
+              <th class="px-4 py-3 text-right w-44">Final Selling Price (₹)</th>
+              <th class="px-4 py-3 w-12 text-center"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100">
+            @if (getFilteredLineItems().length === 0) {
+              <tr>
+                <td colspan="8" class="px-4 py-8 text-center text-surface-500">
+                  No matching product items found.
+                </td>
+              </tr>
+            } @else {
+              @for (line of getFilteredLineItems(); track line.itemId || $index) {
+                <tr class="hover:bg-surface-50/50 transition-colors">
+                  <td class="px-4 py-2.5 text-xs text-surface-400">{{ $index + 1 }}</td>
+                  <td class="px-4 py-2.5">
+                    <div class="flex flex-col">
+                      <span class="font-semibold text-surface-900">{{ getItemName(line) }}</span>
+                      @if (getItemSku(line)) {
+                        <span class="text-xs text-surface-500 font-mono">SKU: {{ getItemSku(line) }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td class="px-4 py-2.5 text-right font-mono font-medium text-slate-700">₹{{ (line.purchasePrice || 0) | number:'1.2-2' }}</td>
+                  <td class="px-4 py-2.5 text-right font-mono text-surface-500">₹{{ (line.standardRate || 0) | number:'1.2-2' }}</td>
+                  <td class="px-4 py-2.5">
+                    <select [(ngModel)]="line.pricingMode" (change)="onAdjustmentChange(line)" class="w-full px-2 py-1 border border-surface-300 rounded text-xs text-surface-800 bg-surface-0 focus:outline-none focus:border-primary-600">
+                      <option value="MARKUP">Markup (+)</option>
+                      <option value="MARKDOWN">Markdown (-)</option>
+                      <option value="DIRECT">Fixed Price</option>
+                    </select>
+                  </td>
+                  <td class="px-4 py-2.5 text-right">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      [(ngModel)]="line.adjustmentPercentage"
+                      (input)="onAdjustmentChange(line)"
+                      [disabled]="line.pricingMode === 'DIRECT'"
+                      class="w-20 px-2 py-1 border border-surface-300 rounded text-right text-xs font-mono ml-auto disabled:bg-surface-100 disabled:opacity-50"
+                      placeholder="0.00%"
+                    />
+                  </td>
+                  <td class="px-4 py-2.5 text-right">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      [(ngModel)]="line.customRate"
+                      (input)="onSellingPriceChange(line)"
+                      class="w-28 px-2 py-1 border border-surface-300 rounded text-right text-sm font-mono font-bold text-primary-700 ml-auto"
+                    />
+                  </td>
+                  <td class="px-4 py-2.5 text-center">
+                    <button class="w-7 h-7 inline-flex items-center justify-center text-red-600 hover:bg-red-50 rounded cursor-pointer transition-colors" (click)="removeLineItem(line)" title="Remove Product">
+                      <i class="pi pi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- DESCRIPTION / NOTES AT BOTTOM -->
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-semibold text-surface-700">Description / Notes</label>
+        <textarea [(ngModel)]="formData.notes" rows="2" class="w-full p-2.5 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 resize-y" placeholder="Optional notes..."></textarea>
+      </div>
+    </div>
+  }
+</div>

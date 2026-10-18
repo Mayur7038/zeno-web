@@ -1,0 +1,53 @@
+<div class="flex flex-col gap-5">
+  <div class="flex items-center justify-between flex-wrap gap-3">
+    <div class="flex items-center gap-3">
+      <button class="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-surface-300 bg-white hover:bg-surface-50 text-surface-700 transition-colors cursor-pointer" routerLink="/reports" title="Back to Reports">
+        <i class="pi pi-arrow-left"></i>
+      </button>
+      <h1 class="text-2xl font-bold text-surface-900">Stock Summary</h1>
+    </div>
+    <div>
+      <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+        <i class="pi pi-database"></i> Total Valuation: ₹{{ grandValuation.toLocaleString() }}
+      </span>
+    </div>
+  </div>
+
+  <div class="bg-white border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+          <tr>
+            <th class="px-4 py-3">Item / SKU</th>
+            <th class="px-4 py-3">SKU Code</th>
+            <th class="px-4 py-3">Unit</th>
+            <th class="px-4 py-3 text-right">Available Stock</th>
+            <th class="px-4 py-3 text-right">Average Rate ₹</th>
+            <th class="px-4 py-3 text-right">Total Inventory Value ₹</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-surface-100">
+          @if (items.length === 0) {
+            <tr>
+              <td colspan="6" class="text-center py-12 text-surface-500">
+                No stock items in inventory. Receive items via GRN to update stock ledger.
+              </td>
+            </tr>
+          }
+          @for (item of items; track item.itemId) {
+            <tr class="hover:bg-surface-50/50 transition-colors">
+              <td class="px-4 py-3 font-bold text-surface-900">{{ item.itemName }}</td>
+              <td class="px-4 py-3 font-mono text-surface-600">{{ item.sku || '—' }}</td>
+              <td class="px-4 py-3 text-surface-700">{{ item.unit }}</td>
+              <td class="px-4 py-3 text-right font-mono font-bold text-emerald-700">
+                {{ item.currentStock }} {{ item.unit }}
+              </td>
+              <td class="px-4 py-3 text-right font-mono text-surface-700">₹{{ item.averageRate.toFixed(2) }}</td>
+              <td class="px-4 py-3 text-right font-mono font-bold text-surface-900">₹{{ item.totalValue.toFixed(2) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

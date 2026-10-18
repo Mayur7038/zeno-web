@@ -1,0 +1,872 @@
+<div class="flex h-screen overflow-hidden bg-surface-50">
+  <!-- SIDEBAR -->
+  <aside
+    class="bg-white border-r border-surface-200 flex flex-col shrink-0 transition-[width] duration-200 ease-in-out z-20"
+    [class.w-64]="!isSidebarCollapsed"
+    [class.w-[68px]]="isSidebarCollapsed"
+  >
+    <div class="px-4 py-3 flex items-center min-h-[76px] border-b border-surface-200" [class.justify-center]="isSidebarCollapsed">
+      <div class="flex items-center justify-start cursor-pointer" (click)="goToHome()" title="Back to Home / Dashboard">
+        <img
+          src="/zeno-books-logo.png"
+          alt="ZENO BOOKS"
+          class="h-14 w-auto object-contain transition-transform hover:scale-105"
+          [class.max-w-[44px]]="isSidebarCollapsed"
+          [class.object-cover]="isSidebarCollapsed"
+          [class.object-left]="isSidebarCollapsed"
+        />
+      </div>
+    </div>
+
+    @if (!isSettingsMode) {
+      <nav class="flex-1 px-3 py-3 overflow-y-auto flex flex-col gap-1">
+        <!-- DASHBOARD -->
+        <a
+          routerLink="/dashboard"
+          routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors"
+          [class.justify-center]="isSidebarCollapsed"
+          [title]="isSidebarCollapsed ? 'Dashboard' : ''"
+        >
+          <i class="pi pi-th-large text-base"></i>
+          @if (!isSidebarCollapsed) {
+            <span>Dashboard</span>
+          }
+        </a>
+
+        <!-- CHART OF ACCOUNT (DROPDOWN MENU) -->
+        <div class="flex flex-col">
+          <button
+            type="button"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            [class.bg-surface-100]="isAccountMasterActive()"
+            [class.text-surface-900]="isAccountMasterActive()"
+            [class.font-semibold]="isAccountMasterActive()"
+            [class.text-surface-600]="!isAccountMasterActive()"
+            [class.hover:bg-surface-50]="!isAccountMasterActive()"
+            [class.hover:text-surface-900]="!isAccountMasterActive()"
+            [class.justify-center]="isSidebarCollapsed"
+            (click)="toggleAccountMaster()"
+            [title]="isSidebarCollapsed ? 'Chart of Account' : ''"
+          >
+            <div class="flex items-center gap-3">
+              <i class="pi pi-book text-base"></i>
+              @if (!isSidebarCollapsed) {
+                <span>Chart of Account</span>
+              }
+            </div>
+            @if (!isSidebarCollapsed) {
+              <i
+                class="pi pi-chevron-right text-xs text-surface-400 transition-transform duration-200"
+                [class.rotate-90]="accountMasterOpen"
+              ></i>
+            }
+          </button>
+
+          @if (accountMasterOpen && !isSidebarCollapsed) {
+            <div class="flex flex-col gap-1 pl-3 my-1 border-l-2 border-surface-200 ml-5">
+              <a routerLink="/masters/ledger-groups" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-sitemap text-xs"></i>
+                <span>Ledger Group</span>
+              </a>
+              <a routerLink="/masters/ledgers" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-file-edit text-xs"></i>
+                <span>Ledger</span>
+              </a>
+            </div>
+          }
+        </div>
+
+        <!-- PRODUCTS (DROPDOWN MENU) -->
+        <div class="flex flex-col">
+          <button
+            type="button"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            [class.bg-surface-100]="isInventoryMasterActive()"
+            [class.text-surface-900]="isInventoryMasterActive()"
+            [class.font-semibold]="isInventoryMasterActive()"
+            [class.text-surface-600]="!isInventoryMasterActive()"
+            [class.hover:bg-surface-50]="!isInventoryMasterActive()"
+            [class.hover:text-surface-900]="!isInventoryMasterActive()"
+            [class.justify-center]="isSidebarCollapsed"
+            (click)="toggleInventoryMaster()"
+            [title]="isSidebarCollapsed ? 'Products' : ''"
+          >
+            <div class="flex items-center gap-3">
+              <i class="pi pi-box text-base"></i>
+              @if (!isSidebarCollapsed) {
+                <span>Products</span>
+              }
+            </div>
+            @if (!isSidebarCollapsed) {
+              <i
+                class="pi pi-chevron-right text-xs text-surface-400 transition-transform duration-200"
+                [class.rotate-90]="inventoryMasterOpen"
+              ></i>
+            }
+          </button>
+
+          @if (inventoryMasterOpen && !isSidebarCollapsed) {
+            <div class="flex flex-col gap-1 pl-3 my-1 border-l-2 border-surface-200 ml-5">
+              <a routerLink="/masters/items" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-tags text-xs"></i>
+                <span>Products</span>
+              </a>
+              <a routerLink="/masters/stock-groups" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-folder text-xs"></i>
+                <span>Stock Group</span>
+              </a>
+              <a routerLink="/masters/stock-categories" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-tag text-xs"></i>
+                <span>Stock Category</span>
+              </a>
+              <a routerLink="/masters/units" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-compass text-xs"></i>
+                <span>Unit</span>
+              </a>
+              <a routerLink="/masters/variants" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-sliders-v text-xs"></i>
+                <span>Variant</span>
+              </a>
+            </div>
+          }
+        </div>
+
+        <!-- PURCHASE (DROPDOWN MENU) -->
+        <div class="flex flex-col">
+          <button
+            type="button"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            [class.bg-surface-100]="isPurchaseActive()"
+            [class.text-surface-900]="isPurchaseActive()"
+            [class.font-semibold]="isPurchaseActive()"
+            [class.text-surface-600]="!isPurchaseActive()"
+            [class.hover:bg-surface-50]="!isPurchaseActive()"
+            [class.hover:text-surface-900]="!isPurchaseActive()"
+            [class.justify-center]="isSidebarCollapsed"
+            (click)="togglePurchase()"
+            [title]="isSidebarCollapsed ? 'Purchase' : ''"
+          >
+            <div class="flex items-center gap-3">
+              <i class="pi pi-shopping-cart text-base"></i>
+              @if (!isSidebarCollapsed) {
+                <span>Purchase</span>
+              }
+            </div>
+            @if (!isSidebarCollapsed) {
+              <i
+                class="pi pi-chevron-right text-xs text-surface-400 transition-transform duration-200"
+                [class.rotate-90]="purchaseOpen"
+              ></i>
+            }
+          </button>
+
+          @if (purchaseOpen && !isSidebarCollapsed) {
+            <div class="flex flex-col gap-1 pl-3 my-1 border-l-2 border-surface-200 ml-5">
+              <a routerLink="/procure-to-pay/purchase-orders" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-file text-xs"></i>
+                <span>Purchase Orders</span>
+              </a>
+              <a routerLink="/procure-to-pay/goods-receipt-notes" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-box text-xs"></i>
+                <span>Goods Receipt (GRN)</span>
+              </a>
+              <a routerLink="/procure-to-pay/purchase-invoices" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-receipt text-xs"></i>
+                <span>Purchase Invoices</span>
+              </a>
+              <a routerLink="/procure-to-pay/purchase-returns" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-replay text-xs"></i>
+                <span>Purchase Returns</span>
+              </a>
+              <a routerLink="/procure-to-pay/vendor-payments" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-credit-card text-xs"></i>
+                <span>Vendor Payments</span>
+              </a>
+            </div>
+          }
+        </div>
+
+        <!-- SALES & BILLING (DROPDOWN MENU) -->
+        <div class="flex flex-col">
+          <button
+            type="button"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            [class.bg-surface-100]="isSalesActive()"
+            [class.text-surface-900]="isSalesActive()"
+            [class.font-semibold]="isSalesActive()"
+            [class.text-surface-600]="!isSalesActive()"
+            [class.hover:bg-surface-50]="!isSalesActive()"
+            [class.hover:text-surface-900]="!isSalesActive()"
+            [class.justify-center]="isSidebarCollapsed"
+            (click)="toggleSales()"
+            [title]="isSidebarCollapsed ? 'Sales' : ''"
+          >
+            <div class="flex items-center gap-3">
+              <i class="pi pi-shopping-bag text-base"></i>
+              @if (!isSidebarCollapsed) {
+                <span>Sales</span>
+              }
+            </div>
+            @if (!isSidebarCollapsed) {
+              <i
+                class="pi pi-chevron-right text-xs text-surface-400 transition-transform duration-200"
+                [class.rotate-90]="salesOpen"
+              ></i>
+            }
+          </button>
+
+          @if (salesOpen && !isSidebarCollapsed) {
+            <div class="flex flex-col gap-1 pl-3 my-1 border-l-2 border-surface-200 ml-5">
+              <a routerLink="/sales/sales-orders" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-file text-xs"></i>
+                <span>Sales Orders</span>
+              </a>
+              <a routerLink="/sales/delivery-challans" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-truck text-xs"></i>
+                <span>Delivery Challans</span>
+              </a>
+              <a routerLink="/sales/sales-invoices" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-receipt text-xs"></i>
+                <span>Sales Invoices</span>
+              </a>
+              <a routerLink="/sales/sales-returns" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-replay text-xs"></i>
+                <span>Sales Returns</span>
+              </a>
+              <a routerLink="/sales/customer-receipts" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-wallet text-xs"></i>
+                <span>Customer Receipts</span>
+              </a>
+            </div>
+          }
+        </div>
+
+        <!-- ACCOUNTING (DROPDOWN MENU) -->
+        <div class="flex flex-col">
+          <button
+            type="button"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            [class.bg-surface-100]="isAccountingActive()"
+            [class.text-surface-900]="isAccountingActive()"
+            [class.font-semibold]="isAccountingActive()"
+            [class.text-surface-600]="!isAccountingActive()"
+            [class.hover:bg-surface-50]="!isAccountingActive()"
+            [class.hover:text-surface-900]="!isAccountingActive()"
+            [class.justify-center]="isSidebarCollapsed"
+            (click)="toggleAccounting()"
+            [title]="isSidebarCollapsed ? 'Accounting' : ''"
+          >
+            <div class="flex items-center gap-3">
+              <i class="pi pi-credit-card text-base"></i>
+              @if (!isSidebarCollapsed) {
+                <span>Accounting</span>
+              }
+            </div>
+            @if (!isSidebarCollapsed) {
+              <i
+                class="pi pi-chevron-right text-xs text-surface-400 transition-transform duration-200"
+                [class.rotate-90]="accountingOpen"
+              ></i>
+            }
+          </button>
+
+          @if (accountingOpen && !isSidebarCollapsed) {
+            <div class="flex flex-col gap-1 pl-3 my-1 border-l-2 border-surface-200 ml-5">
+              <a routerLink="/accounting/payments" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-arrow-circle-up text-xs"></i>
+                <span>Payment</span>
+              </a>
+              <a routerLink="/accounting/receipts" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-arrow-circle-down text-xs"></i>
+                <span>Receipt</span>
+              </a>
+              <a routerLink="/accounting/contra" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-sync text-xs"></i>
+                <span>Contra</span>
+              </a>
+              <a routerLink="/accounting/journals" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-book text-xs"></i>
+                <span>Journal</span>
+              </a>
+              <a routerLink="/accounting/debit-notes" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-file-export text-xs"></i>
+                <span>Debit Note</span>
+              </a>
+              <a routerLink="/accounting/credit-notes" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-file-import text-xs"></i>
+                <span>Credit Note</span>
+              </a>
+            </div>
+          }
+        </div>
+
+        <!-- INVENTORY (DROPDOWN MENU) -->
+        <div class="flex flex-col">
+          <button
+            type="button"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            [class.bg-surface-100]="isInventoryActive()"
+            [class.text-surface-900]="isInventoryActive()"
+            [class.font-semibold]="isInventoryActive()"
+            [class.text-surface-600]="!isInventoryActive()"
+            [class.hover:bg-surface-50]="!isInventoryActive()"
+            [class.hover:text-surface-900]="!isInventoryActive()"
+            [class.justify-center]="isSidebarCollapsed"
+            (click)="toggleInventory()"
+            [title]="isSidebarCollapsed ? 'Inventory' : ''"
+          >
+            <div class="flex items-center gap-3">
+              <i class="pi pi-database text-base"></i>
+              @if (!isSidebarCollapsed) {
+                <span>Inventory</span>
+              }
+            </div>
+            @if (!isSidebarCollapsed) {
+              <i
+                class="pi pi-chevron-right text-xs text-surface-400 transition-transform duration-200"
+                [class.rotate-90]="inventoryOpen"
+              ></i>
+            }
+          </button>
+
+          @if (inventoryOpen && !isSidebarCollapsed) {
+            <div class="flex flex-col gap-1 pl-3 my-1 border-l-2 border-surface-200 ml-5">
+              <a routerLink="/inventory/stock-transfer" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-arrows-h text-xs"></i>
+                <span>Stock Transfer</span>
+              </a>
+              <a routerLink="/inventory/stock-adjustment" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-sliders-h text-xs"></i>
+                <span>Stock Adjustment</span>
+              </a>
+              <a routerLink="/inventory/opening-balance" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-calendar-plus text-xs"></i>
+                <span>Update Opening Balance</span>
+              </a>
+              <a routerLink="/inventory/price-list" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-percentage text-xs"></i>
+                <span>Update Price List</span>
+              </a>
+              <a routerLink="/reports/stock-item-statement" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-box text-xs"></i>
+                <span>Stock Item Report</span>
+              </a>
+            </div>
+          }
+        </div>
+
+        <!-- MANUFACTURING (BOM & PRODUCTION) DROPDOWN -->
+        <div class="flex flex-col">
+          <button
+            type="button"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            [class.bg-surface-100]="isManufacturingActive()"
+            [class.text-surface-900]="isManufacturingActive()"
+            [class.font-semibold]="isManufacturingActive()"
+            [class.text-surface-600]="!isManufacturingActive()"
+            [class.hover:bg-surface-50]="!isManufacturingActive()"
+            [class.hover:text-surface-900]="!isManufacturingActive()"
+            [class.justify-center]="isSidebarCollapsed"
+            (click)="toggleManufacturing()"
+            [title]="isSidebarCollapsed ? 'Manufacturing' : ''"
+          >
+            <div class="flex items-center gap-3">
+              <i class="pi pi-cog text-base"></i>
+              @if (!isSidebarCollapsed) {
+                <span>Manufacturing</span>
+              }
+            </div>
+            @if (!isSidebarCollapsed) {
+              <i
+                class="pi pi-chevron-right text-xs text-surface-400 transition-transform duration-200"
+                [class.rotate-90]="manufacturingOpen"
+              ></i>
+            }
+          </button>
+
+          @if (manufacturingOpen && !isSidebarCollapsed) {
+            <div class="flex flex-col gap-1 pl-3 my-1 border-l-2 border-surface-200 ml-5">
+              <a routerLink="/manufacturing/boms" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-list text-xs"></i>
+                <span>Bill of Materials (BOM)</span>
+              </a>
+              <a routerLink="/manufacturing/production-entries" routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs" class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors">
+                <i class="pi pi-sync text-xs"></i>
+                <span>Production</span>
+              </a>
+            </div>
+          }
+        </div>
+
+        <!-- REPORTS -->
+        <a
+          routerLink="/reports"
+          routerLinkActive="bg-primary-50 text-primary-600 font-semibold shadow-xs"
+          class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors"
+          [class.justify-center]="isSidebarCollapsed"
+          [title]="isSidebarCollapsed ? 'Reports' : ''"
+        >
+          <i class="pi pi-chart-bar text-base"></i>
+          @if (!isSidebarCollapsed) {
+            <span>Reports</span>
+          }
+        </a>
+      </nav>
+    } @else {
+      <!-- SETTING MENU IN SIDEBAR -->
+      <div class="flex-1 flex flex-col overflow-y-auto">
+        <div class="p-3 border-b border-surface-200 bg-surface-50">
+          <button
+            type="button"
+            class="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg bg-surface-0 hover:bg-surface-100 border border-surface-200 text-surface-700 hover:text-surface-900 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+            [class.justify-center]="isSidebarCollapsed"
+            (click)="goToHome()"
+            title="Return to Main ERP Navigation"
+          >
+            <i class="pi pi-arrow-left text-primary-600"></i>
+            @if (!isSidebarCollapsed) {
+              <span>Back to Home</span>
+            }
+          </button>
+        </div>
+
+        @if (!isSidebarCollapsed) {
+          <div class="px-4 pt-3.5 pb-1.5 text-[11px] font-bold text-surface-400 uppercase tracking-wider">
+            SETTING MENU
+          </div>
+        }
+
+        <nav class="p-3 flex flex-col gap-1">
+          <!-- 1. ORGANIZATION -->
+          <div class="flex flex-col">
+            <button
+              type="button"
+              class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+              [class.bg-surface-100]="isSettingsOrganizationActive()"
+              [class.text-surface-900]="isSettingsOrganizationActive()"
+              [class.font-semibold]="isSettingsOrganizationActive()"
+              [class.text-surface-600]="!isSettingsOrganizationActive()"
+              [class.hover:bg-surface-50]="!isSettingsOrganizationActive()"
+              [class.hover:text-surface-900]="!isSettingsOrganizationActive()"
+              [class.justify-center]="isSidebarCollapsed"
+              (click)="toggleSettingsOrganization()"
+              [title]="isSidebarCollapsed ? 'Organization' : ''"
+            >
+              <div class="flex items-center gap-3">
+                <i class="pi pi-building text-base"></i>
+                @if (!isSidebarCollapsed) {
+                  <span>Organization</span>
+                }
+              </div>
+              @if (!isSidebarCollapsed) {
+                <i
+                  class="pi pi-chevron-right text-xs text-surface-400 transition-transform duration-200"
+                  [class.rotate-90]="settingsOrganizationOpen"
+                ></i>
+              }
+            </button>
+
+            @if (settingsOrganizationOpen && !isSidebarCollapsed) {
+              <div class="flex flex-col gap-1 pl-3 my-1 border-l-2 border-surface-200 ml-5">
+                <a
+                  [routerLink]="['/settings']"
+                  [queryParams]="{ tab: 'company' }"
+                  [class.bg-primary-50]="currentSettingsTab === 'company'"
+                  [class.text-primary-600]="currentSettingsTab === 'company'"
+                  [class.font-semibold]="currentSettingsTab === 'company'"
+                  [class.shadow-xs]="currentSettingsTab === 'company'"
+                  class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors"
+                >
+                  <i class="pi pi-building text-xs"></i>
+                  <span>Company Profile</span>
+                </a>
+                <a
+                  [routerLink]="['/settings']"
+                  [queryParams]="{ tab: 'branches' }"
+                  [class.bg-primary-50]="currentSettingsTab === 'branches'"
+                  [class.text-primary-600]="currentSettingsTab === 'branches'"
+                  [class.font-semibold]="currentSettingsTab === 'branches'"
+                  [class.shadow-xs]="currentSettingsTab === 'branches'"
+                  class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors"
+                >
+                  <i class="pi pi-sitemap text-xs"></i>
+                  <span>Branch</span>
+                </a>
+                <a
+                  [routerLink]="['/settings']"
+                  [queryParams]="{ tab: 'warehouses' }"
+                  [class.bg-primary-50]="currentSettingsTab === 'warehouses'"
+                  [class.text-primary-600]="currentSettingsTab === 'warehouses'"
+                  [class.font-semibold]="currentSettingsTab === 'warehouses'"
+                  [class.shadow-xs]="currentSettingsTab === 'warehouses'"
+                  class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors"
+                >
+                  <i class="pi pi-warehouse text-xs"></i>
+                  <span>Warehouse</span>
+                </a>
+                <a
+                  [routerLink]="['/settings']"
+                  [queryParams]="{ tab: 'financial-years' }"
+                  [class.bg-primary-50]="currentSettingsTab === 'financial-years'"
+                  [class.text-primary-600]="currentSettingsTab === 'financial-years'"
+                  [class.font-semibold]="currentSettingsTab === 'financial-years'"
+                  [class.shadow-xs]="currentSettingsTab === 'financial-years'"
+                  class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors"
+                >
+                  <i class="pi pi-calendar text-xs"></i>
+                  <span>Financial Years (F.Y.)</span>
+                </a>
+              </div>
+            }
+          </div>
+
+          <!-- 2. CONFIGURATION -->
+          <div class="flex flex-col">
+            <button
+              type="button"
+              class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+              [class.bg-surface-100]="isSettingsConfigurationActive()"
+              [class.text-surface-900]="isSettingsConfigurationActive()"
+              [class.font-semibold]="isSettingsConfigurationActive()"
+              [class.text-surface-600]="!isSettingsConfigurationActive()"
+              [class.hover:bg-surface-50]="!isSettingsConfigurationActive()"
+              [class.hover:text-surface-900]="!isSettingsConfigurationActive()"
+              [class.justify-center]="isSidebarCollapsed"
+              (click)="toggleSettingsConfiguration()"
+              [title]="isSidebarCollapsed ? 'Configuration' : ''"
+            >
+              <div class="flex items-center gap-3">
+                <i class="pi pi-cog text-base"></i>
+                @if (!isSidebarCollapsed) {
+                  <span>Configuration</span>
+                }
+              </div>
+              @if (!isSidebarCollapsed) {
+                <i
+                  class="pi pi-chevron-right text-xs text-surface-400 transition-transform duration-200"
+                  [class.rotate-90]="settingsConfigurationOpen"
+                ></i>
+              }
+            </button>
+
+            @if (settingsConfigurationOpen && !isSidebarCollapsed) {
+              <div class="flex flex-col gap-1 pl-3 my-1 border-l-2 border-surface-200 ml-5">
+                <a
+                  [routerLink]="['/settings']"
+                  [queryParams]="{ tab: 'sales' }"
+                  [class.bg-primary-50]="currentSettingsTab === 'sales'"
+                  [class.text-primary-600]="currentSettingsTab === 'sales'"
+                  [class.font-semibold]="currentSettingsTab === 'sales'"
+                  [class.shadow-xs]="currentSettingsTab === 'sales'"
+                  class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors"
+                >
+                  <i class="pi pi-shopping-bag text-xs"></i>
+                  <span>Sales Configuration</span>
+                </a>
+                <a
+                  [routerLink]="['/settings']"
+                  [queryParams]="{ tab: 'purchase' }"
+                  [class.bg-primary-50]="currentSettingsTab === 'purchase'"
+                  [class.text-primary-600]="currentSettingsTab === 'purchase'"
+                  [class.font-semibold]="currentSettingsTab === 'purchase'"
+                  [class.shadow-xs]="currentSettingsTab === 'purchase'"
+                  class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors"
+                >
+                  <i class="pi pi-shopping-cart text-xs"></i>
+                  <span>Purchase Configuration</span>
+                </a>
+                <a
+                  [routerLink]="['/settings']"
+                  [queryParams]="{ tab: 'inventory' }"
+                  [class.bg-primary-50]="currentSettingsTab === 'inventory'"
+                  [class.text-primary-600]="currentSettingsTab === 'inventory'"
+                  [class.font-semibold]="currentSettingsTab === 'inventory'"
+                  [class.shadow-xs]="currentSettingsTab === 'inventory'"
+                  class="flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors"
+                >
+                  <i class="pi pi-box text-xs"></i>
+                  <span>Inventory Configuration</span>
+                </a>
+              </div>
+            }
+          </div>
+
+          <!-- OTHER SETTING ITEMS -->
+          <a
+            [routerLink]="['/settings']"
+            [queryParams]="{ tab: 'toggles' }"
+            [class.bg-primary-50]="currentSettingsTab === 'toggles'"
+            [class.text-primary-600]="currentSettingsTab === 'toggles'"
+            [class.font-semibold]="currentSettingsTab === 'toggles'"
+            [class.shadow-xs]="currentSettingsTab === 'toggles'"
+            class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors"
+            [class.justify-center]="isSidebarCollapsed"
+          >
+            <i class="pi pi-sliders-h text-base"></i>
+            @if (!isSidebarCollapsed) { <span>Features</span> }
+          </a>
+
+          <a
+            [routerLink]="['/settings']"
+            [queryParams]="{ tab: 'roles' }"
+            [class.bg-primary-50]="currentSettingsTab === 'roles'"
+            [class.text-primary-600]="currentSettingsTab === 'roles'"
+            [class.font-semibold]="currentSettingsTab === 'roles'"
+            [class.shadow-xs]="currentSettingsTab === 'roles'"
+            class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors"
+            [class.justify-center]="isSidebarCollapsed"
+          >
+            <i class="pi pi-shield text-base"></i>
+            @if (!isSidebarCollapsed) { <span>User Roles</span> }
+          </a>
+
+          <a
+            [routerLink]="['/settings']"
+            [queryParams]="{ tab: 'users' }"
+            [class.bg-primary-50]="currentSettingsTab === 'users'"
+            [class.text-primary-600]="currentSettingsTab === 'users'"
+            [class.font-semibold]="currentSettingsTab === 'users'"
+            [class.shadow-xs]="currentSettingsTab === 'users'"
+            class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors"
+            [class.justify-center]="isSidebarCollapsed"
+          >
+            <i class="pi pi-users text-base"></i>
+            @if (!isSidebarCollapsed) { <span>Users</span> }
+          </a>
+
+          <a
+            [routerLink]="['/settings']"
+            [queryParams]="{ tab: 'mappings' }"
+            [class.bg-primary-50]="currentSettingsTab === 'mappings'"
+            [class.text-primary-600]="currentSettingsTab === 'mappings'"
+            [class.font-semibold]="currentSettingsTab === 'mappings'"
+            [class.shadow-xs]="currentSettingsTab === 'mappings'"
+            class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors"
+            [class.justify-center]="isSidebarCollapsed"
+          >
+            <i class="pi pi-book text-base"></i>
+            @if (!isSidebarCollapsed) { <span>Default Ledgers</span> }
+          </a>
+
+          <a
+            [routerLink]="['/settings']"
+            [queryParams]="{ tab: 'vouchers' }"
+            [class.bg-primary-50]="currentSettingsTab === 'vouchers'"
+            [class.text-primary-600]="currentSettingsTab === 'vouchers'"
+            [class.font-semibold]="currentSettingsTab === 'vouchers'"
+            [class.shadow-xs]="currentSettingsTab === 'vouchers'"
+            class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors"
+            [class.justify-center]="isSidebarCollapsed"
+          >
+            <i class="pi pi-hashtag text-base"></i>
+            @if (!isSidebarCollapsed) { <span>Voucher Numbers</span> }
+          </a>
+
+          <a
+            [routerLink]="['/settings']"
+            [queryParams]="{ tab: 'gst' }"
+            [class.bg-primary-50]="currentSettingsTab === 'gst' || currentSettingsTab === 'taxes'"
+            [class.text-primary-600]="currentSettingsTab === 'gst' || currentSettingsTab === 'taxes'"
+            [class.font-semibold]="currentSettingsTab === 'gst' || currentSettingsTab === 'taxes'"
+            [class.shadow-xs]="currentSettingsTab === 'gst' || currentSettingsTab === 'taxes'"
+            class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-surface-600 hover:text-surface-900 hover:bg-surface-100 transition-colors"
+            [class.justify-center]="isSidebarCollapsed"
+          >
+            <i class="pi pi-percentage text-base"></i>
+            @if (!isSidebarCollapsed) { <span>GST</span> }
+          </a>
+        </nav>
+      </div>
+    }
+
+    <div class="p-3 border-t border-surface-200 bg-white flex items-center justify-center">
+      <button
+        type="button"
+        class="w-full flex items-center justify-center gap-2.5 py-2 px-3 rounded-lg bg-surface-50 hover:bg-surface-100 border border-surface-200 text-surface-600 hover:text-surface-900 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+        (click)="toggleSidebarCollapse()"
+        [title]="isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'"
+      >
+        <i class="pi" [class.pi-angle-double-left]="!isSidebarCollapsed" [class.pi-angle-double-right]="isSidebarCollapsed"></i>
+        @if (!isSidebarCollapsed) {
+          <span>Collapse Sidebar</span>
+        }
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT WRAPPER -->
+  <div class="flex-1 flex flex-col overflow-hidden min-w-0">
+    <!-- TOPBAR -->
+    <header class="h-16 bg-white border-b border-surface-200 flex items-center justify-between px-6 z-10 shrink-0">
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+          <div class="flex flex-col">
+            <span class="text-sm font-bold text-surface-900 tracking-tight">
+              {{ tenant.currentCompany()?.legalName || tenant.currentCompany()?.tradeName || auth.currentUser()?.tenantName || 'ZENO BOOKS' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <!-- GLOBAL QUICK ACTION BUTTON & DROPDOWN -->
+        <div class="relative inline-block">
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            [class.bg-primary-700]="isQuickActionOpen"
+            (click)="toggleQuickActionMenu($event)"
+            title="Quick Actions & Important Masters"
+          >
+            <i class="pi pi-bolt text-sm"></i>
+            <span>Quick Action</span>
+            <i class="pi pi-chevron-down text-[10px] transition-transform duration-200" [class.rotate-180]="isQuickActionOpen"></i>
+          </button>
+
+          @if (isQuickActionOpen) {
+            <div class="absolute top-[calc(100%+8px)] right-0 bg-white border border-surface-200 rounded-xl shadow-xl z-50 w-[540px] p-4 flex flex-col gap-3.5 animate-in fade-in slide-in-from-top-2 duration-150" (click)="$event.stopPropagation()">
+              <div class="flex items-center justify-between pb-2.5 border-b border-surface-200">
+                <div class="flex items-center gap-2 text-sm font-bold text-surface-900">
+                  <i class="pi pi-bolt text-primary-600"></i>
+                  <span>Quick Actions</span>
+                </div>
+                <span class="text-xs text-surface-500">Workflows & Masters</span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <!-- Procure-to-Pay Section -->
+                <div class="flex flex-col gap-2">
+                  <div class="text-[11px] font-bold text-surface-500 uppercase tracking-wider flex items-center gap-1.5 px-1">
+                    <i class="pi pi-shopping-cart text-primary-600"></i>
+                    <span>Procure-to-Pay</span>
+                  </div>
+                  <div class="flex flex-col gap-1">
+                    <a routerLink="/procure-to-pay/purchase-orders" (click)="closeQuickAction()" class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-surface-50 border border-transparent hover:border-surface-200 transition-all no-underline">
+                      <span class="w-6 h-6 rounded bg-primary-50 text-primary-600 text-xs font-bold flex items-center justify-center shrink-0">1</span>
+                      <div class="flex flex-col">
+                        <span class="text-xs font-semibold text-surface-900">Purchase Order</span>
+                        <span class="text-[10px] text-surface-500">Order intent & pricing</span>
+                      </div>
+                    </a>
+                    <a routerLink="/procure-to-pay/goods-receipt-notes" (click)="closeQuickAction()" class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-surface-50 border border-transparent hover:border-surface-200 transition-all no-underline">
+                      <span class="w-6 h-6 rounded bg-primary-50 text-primary-600 text-xs font-bold flex items-center justify-center shrink-0">2</span>
+                      <div class="flex flex-col">
+                        <span class="text-xs font-semibold text-surface-900">Goods Receipt (GRN)</span>
+                        <span class="text-[10px] text-surface-500">Stock In & verification</span>
+                      </div>
+                    </a>
+                    <a routerLink="/procure-to-pay/purchase-invoices" (click)="closeQuickAction()" class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-surface-50 border border-transparent hover:border-surface-200 transition-all no-underline">
+                      <span class="w-6 h-6 rounded bg-primary-50 text-primary-600 text-xs font-bold flex items-center justify-center shrink-0">3</span>
+                      <div class="flex flex-col">
+                        <span class="text-xs font-semibold text-surface-900">Purchase Invoice</span>
+                        <span class="text-[10px] text-surface-500">Tax & ledger entry</span>
+                      </div>
+                    </a>
+                    <a routerLink="/procure-to-pay/vendor-payments" (click)="closeQuickAction()" class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-surface-50 border border-transparent hover:border-surface-200 transition-all no-underline">
+                      <span class="w-6 h-6 rounded bg-primary-50 text-primary-600 text-xs font-bold flex items-center justify-center shrink-0">4</span>
+                      <div class="flex flex-col">
+                        <span class="text-xs font-semibold text-surface-900">Vendor Payment</span>
+                        <span class="text-[10px] text-surface-500">Bill allocation & clearing</span>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+
+                <!-- Important Masters Section -->
+                <div class="flex flex-col gap-2">
+                  <div class="text-[11px] font-bold text-surface-500 uppercase tracking-wider flex items-center gap-1.5 px-1">
+                    <i class="pi pi-database text-primary-600"></i>
+                    <span>Important Masters</span>
+                  </div>
+                  <div class="flex flex-col gap-1">
+                    <a routerLink="/masters/items" (click)="closeQuickAction()" class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-surface-50 border border-transparent hover:border-surface-200 transition-all no-underline">
+                      <span class="w-6 h-6 rounded bg-surface-100 text-surface-700 text-xs flex items-center justify-center shrink-0"><i class="pi pi-box text-xs"></i></span>
+                      <div class="flex flex-col">
+                        <span class="text-xs font-semibold text-surface-900">Product Master</span>
+                        <span class="text-[10px] text-surface-500">Item catalog & pricing</span>
+                      </div>
+                    </a>
+                    <a routerLink="/masters/ledgers" (click)="closeQuickAction()" class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-surface-50 border border-transparent hover:border-surface-200 transition-all no-underline">
+                      <span class="w-6 h-6 rounded bg-surface-100 text-surface-700 text-xs flex items-center justify-center shrink-0"><i class="pi pi-book text-xs"></i></span>
+                      <div class="flex flex-col">
+                        <span class="text-xs font-semibold text-surface-900">Ledger Account</span>
+                        <span class="text-[10px] text-surface-500">Chart of accounts & parties</span>
+                      </div>
+                    </a>
+                    <a routerLink="/masters/ledger-groups" (click)="closeQuickAction()" class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-surface-50 border border-transparent hover:border-surface-200 transition-all no-underline">
+                      <span class="w-6 h-6 rounded bg-surface-100 text-surface-700 text-xs flex items-center justify-center shrink-0"><i class="pi pi-folder text-xs"></i></span>
+                      <div class="flex flex-col">
+                        <span class="text-xs font-semibold text-surface-900">Ledger Group</span>
+                        <span class="text-[10px] text-surface-500">Hierarchical account groups</span>
+                      </div>
+                    </a>
+                    <a routerLink="/masters/stock-groups" (click)="closeQuickAction()" class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-surface-50 border border-transparent hover:border-surface-200 transition-all no-underline">
+                      <span class="w-6 h-6 rounded bg-surface-100 text-surface-700 text-xs flex items-center justify-center shrink-0"><i class="pi pi-tags text-xs"></i></span>
+                      <div class="flex flex-col">
+                        <span class="text-xs font-semibold text-surface-900">Stock Group</span>
+                        <span class="text-[10px] text-surface-500">Category classification</span>
+                      </div>
+                    </a>
+                    <a routerLink="/masters/units" (click)="closeQuickAction()" class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-surface-50 border border-transparent hover:border-surface-200 transition-all no-underline">
+                      <span class="w-6 h-6 rounded bg-surface-100 text-surface-700 text-xs flex items-center justify-center shrink-0"><i class="pi pi-sliders-h text-xs"></i></span>
+                      <div class="flex flex-col">
+                        <span class="text-xs font-semibold text-surface-900">Unit of Measure</span>
+                        <span class="text-[10px] text-surface-500">Measurement units & symbols</span>
+                      </div>
+                    </a>
+                    <a routerLink="/masters/variants" (click)="closeQuickAction()" class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-surface-50 border border-transparent hover:border-surface-200 transition-all no-underline">
+                      <span class="w-6 h-6 rounded bg-surface-100 text-surface-700 text-xs flex items-center justify-center shrink-0"><i class="pi pi-clone text-xs"></i></span>
+                      <div class="flex flex-col">
+                        <span class="text-xs font-semibold text-surface-900">Variant Master</span>
+                        <span class="text-[10px] text-surface-500">Product attributes & options</span>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- SETTINGS BUTTON ON TOP -->
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border text-xs font-semibold transition-colors cursor-pointer"
+          [class.bg-primary-50]="isSettingsMode"
+          [class.border-primary-400]="isSettingsMode"
+          [class.text-primary-700]="isSettingsMode"
+          [class.bg-white]="!isSettingsMode"
+          [class.border-surface-300]="!isSettingsMode"
+          [class.text-surface-700]="!isSettingsMode"
+          [class.hover:bg-surface-50]="!isSettingsMode"
+          (click)="toggleSettingsMode()"
+          title="Settings & System Configuration"
+        >
+          <i class="pi pi-cog text-sm" [class.rotate-45]="isSettingsMode"></i>
+          <span>Settings</span>
+        </button>
+
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm">
+            {{ auth.currentUser()?.fullName?.charAt(0) || 'U' }}
+          </div>
+          <div class="flex flex-col">
+            <span class="text-xs font-semibold text-surface-900">{{ auth.currentUser()?.fullName || 'Administrator' }}</span>
+            <span class="text-[10px] font-semibold text-surface-500 uppercase tracking-wider">{{ auth.currentUser()?.role || 'SUPER_ADMIN' }}</span>
+          </div>
+        </div>
+
+        <button class="w-9 h-9 rounded-lg border border-surface-200 hover:border-red-300 hover:bg-red-50 text-surface-500 hover:text-red-600 flex items-center justify-center transition-colors cursor-pointer" (click)="auth.logout()" title="Sign Out">
+          <i class="pi pi-power-off text-sm"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- PAGE CONTENT -->
+    <main class="flex-1 overflow-y-auto p-6">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

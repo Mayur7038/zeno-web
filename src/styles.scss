@@ -1,0 +1,1193 @@
+@use './app/shared/ui/zeno-ui.scss' as *;
+
+/* =========================================================
+   ZENO BOOKS: Clean Enterprise Design System (PrimeNG Light)
+   ========================================================= */
+select.limited-select,
+select.limited-select::picker(select) { appearance: base-select; }
+
+select.limited-select::picker(select) { max-height: 12rem; }
+:root {
+  /* Brand Primary */
+  --primary-50: #eff6ff;
+  --primary-100: #dbeafe;
+  --primary-200: #bfdbfe;
+  --primary-300: #93c5fd;
+  --primary-400: #60a5fa;
+  --primary-500: #3b82f6;
+  --primary-600: #2563eb; /* Primary Accent */
+  --primary-700: #1d4ed8;
+  --primary-800: #1e40af;
+  --primary-900: #1e3a8a;
+
+  /* Enterprise Slate Surfaces */
+  --surface-0: #ffffff;
+  --surface-50: #f8fafc;
+  --surface-100: #f1f5f9;
+  --surface-200: #e2e8f0;
+  --surface-300: #cbd5e1;
+  --surface-400: #94a3b8;
+  --surface-500: #64748b;
+  --surface-600: #475569;
+  --surface-700: #334155;
+  --surface-800: #1e293b;
+  --surface-900: #0f172a;
+
+  /* Semantic Alerts */
+  --success: #10b981;
+  --success-bg: #ecfdf5;
+  --warning: #f59e0b;
+  --warning-bg: #fffbeb;
+  --danger: #ef4444;
+  --danger-bg: #fef2f2;
+  --info: #0284c7;
+  --info-bg: #f0f9ff;
+
+  /* Typography & Layout */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  --shadow-subtle: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-elevated: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+
+  /* CoreUI Angular Admin Template Tokens & Theme Variables */
+  --cui-primary: #5856d6;
+  --cui-primary-rgb: 88, 86, 214;
+  --cui-secondary: #9da5b1;
+  --cui-success: #2eb85c;
+  --cui-info: #39f;
+  --cui-warning: #f9b115;
+  --cui-danger: #e55353;
+  --cui-light: #ebedef;
+  --cui-dark: #3c4b64;
+  --cui-body-bg: #f3f4f7;
+  --cui-card-bg: #ffffff;
+  --cui-card-border-color: #d8dbe0;
+  --cui-card-cap-bg: #f7f9fa;
+  --cui-border-radius: 6px;
+}
+
+/* Global Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font-sans);
+  background-color: var(--surface-50);
+  color: var(--surface-900);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface-100);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-300);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--surface-400);
+}
+
+/* Status Pill Badges */
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap !important;
+  flex-shrink: 0;
+}
+
+.badge-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.badge-partial {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.badge-cleared, .badge-paid {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.badge-cancelled {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+/* Enterprise Buttons */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--primary-600);
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 1px 2px 0 rgba(99, 102, 241, 0.2);
+
+  &:hover {
+    background-color: var(--primary-700);
+    box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--surface-0);
+  color: var(--surface-700);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid var(--surface-200);
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+
+  &:hover {
+    background-color: var(--surface-50);
+    border-color: var(--surface-300);
+    color: var(--surface-900);
+  }
+}
+
+.btn-success {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: #059669;
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+
+  &:hover {
+    background-color: #047857;
+  }
+}
+
+/* CoreUI Admin Template Compatible Components */
+.c-card, .card, .zeno-card {
+  background: var(--cui-card-bg, #ffffff);
+  border: 1px solid var(--cui-card-border-color, #d8dbe0);
+  border-radius: var(--cui-border-radius, 6px);
+  box-shadow: 0 1px 2px 0 rgba(60, 75, 100, 0.05);
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+
+  /* Modern subtle horizontal scrollbar for wide tables */
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: var(--surface-100);
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--surface-300);
+    border-radius: var(--radius-full);
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--surface-400);
+  }
+
+  &.padded-card {
+    padding: 24px;
+  }
+
+  .c-card-header, .card-header, .card-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    background-color: var(--cui-card-cap-bg, #f7f9fa);
+    border-bottom: 1px solid var(--cui-card-border-color, #d8dbe0);
+
+    .card-title, .c-card-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--cui-dark, #3c4b64);
+      margin-bottom: 0;
+    }
+
+    .card-description {
+      font-size: 0.875rem;
+      color: var(--surface-500);
+      margin-bottom: 0;
+    }
+  }
+
+  .c-card-body, .card-body {
+    padding: 20px;
+  }
+}
+
+  .zeno-table th:first-child,
+  .zeno-table td:first-child {
+    padding-left: 20px;
+  }
+
+  .zeno-table th:last-child,
+  .zeno-table td:last-child {
+    padding-right: 20px;
+  }
+
+/* Form Controls */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+
+  label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--surface-700);
+  }
+
+  input, select, textarea {
+    padding: 9px 12px;
+    border: 1px solid var(--surface-200);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.875rem;
+    color: var(--surface-900);
+    background-color: var(--surface-0);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary-600);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    &::placeholder {
+      color: var(--surface-400);
+    }
+  }
+}
+
+/* Data Table Styling - Full row visibility without line wrapping */
+.zeno-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.875rem;
+  white-space: nowrap !important;
+
+  thead, tbody, tfoot, tr {
+    white-space: nowrap !important;
+  }
+
+  th {
+    background-color: var(--surface-50);
+    color: var(--surface-600);
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--surface-200);
+    letter-spacing: 0.02em;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+  }
+
+  td {
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--surface-100);
+    color: var(--surface-800);
+    vertical-align: middle;
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+  }
+
+  tr:hover td {
+    background-color: rgba(241, 245, 249, 0.5);
+  }
+
+  .text-right {
+    text-align: right;
+  }
+
+  .text-center {
+    text-align: center;
+  }
+
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  /* All nested contents inside th and td stay fully on one line */
+  th *,
+  td * {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+  }
+}
+
+.items-table,
+.lines-table,
+.line-table,
+.line-items-table {
+  white-space: nowrap !important;
+
+  thead, tbody, tfoot, tr {
+    white-space: nowrap !important;
+  }
+
+  th, td {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+  }
+
+  th *, td * {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+  }
+}
+
+/* Modern Editable Table Controls & Inputs (GRN, Invoices, Orders, Vouchers) */
+.items-table,
+.lines-table,
+.line-table,
+.line-items-table,
+.zeno-table {
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  select {
+    height: 36px;
+    padding: 6px 10px;
+    border: 1px solid var(--surface-300) !important;
+    border-radius: var(--radius-sm) !important;
+    font-family: var(--font-sans) !important;
+    font-size: 0.875rem !important;
+    color: var(--surface-900) !important;
+    background-color: var(--surface-0) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: all 0.15s ease-in-out;
+    box-sizing: border-box;
+
+    &:hover:not(:focus):not(:disabled) {
+      border-color: var(--surface-400) !important;
+    }
+
+    &:focus {
+      outline: none !important;
+      border-color: var(--primary-600) !important;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+      background-color: #ffffff !important;
+    }
+
+    &:disabled {
+      background-color: var(--surface-100) !important;
+      color: var(--surface-500) !important;
+      cursor: not-allowed;
+      border-color: var(--surface-200) !important;
+    }
+  }
+
+  input[type="number"] {
+    text-align: right;
+    font-family: var(--font-mono) !important;
+    font-weight: 600;
+  }
+
+  select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") !important;
+    background-position: right 8px center !important;
+    background-repeat: no-repeat !important;
+    background-size: 14px 14px !important;
+    padding-right: 28px !important;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+}
+
+/* Global Reusable Action Buttons in Line Item Tables */
+.remove-line-btn {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  border-radius: var(--radius-sm) !important;
+  border: 1px solid #fee2e2 !important;
+  background-color: #fff5f5 !important;
+  color: #ef4444 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease-in-out !important;
+  padding: 0 !important;
+
+  i {
+    font-size: 0.875rem !important;
+  }
+
+  &:hover {
+    background-color: #fee2e2 !important;
+    border-color: #fca5a5 !important;
+    color: #dc2626 !important;
+    transform: scale(1.06);
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.15);
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+.add-line-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background-color: var(--surface-0) !important;
+  color: var(--primary-700) !important;
+  border: 1.5px dashed var(--primary-300) !important;
+  padding: 8px 16px !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease-in-out !important;
+
+  &:hover {
+    background-color: var(--primary-50) !important;
+    border-color: var(--primary-600) !important;
+    color: var(--primary-800) !important;
+    box-shadow: 0 1px 3px rgba(99, 102, 241, 0.12);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
+/* Global Table Action Buttons & Badges */
+.action-buttons {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+  flex-wrap: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.action-btn,
+.btn-view-pill,
+.btn-pay-action,
+.btn-icon {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+/* Modal Overlay */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.modal-dialog {
+  background: var(--surface-0);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-elevated);
+  max-width: 900px;
+  width: 92%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: scaleUp 0.15s ease-out;
+}
+
+.modal-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--surface-200);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--surface-900);
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: var(--surface-400);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--surface-700);
+    }
+  }
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--surface-200);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  background-color: var(--surface-50);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.96); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* =========================================================
+   Standardized Page & Modal Headers across all modules
+   ========================================================= */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+
+  h1 {
+    font-size: 1.25rem !important;
+    font-weight: 700 !important;
+    color: var(--surface-900);
+    margin: 0 !important;
+    line-height: 1.25 !important;
+  }
+
+  .subtitle,
+  .page-subtitle {
+    display: none !important;
+  }
+}
+
+.modal-header {
+  .subtitle,
+  .modal-subtitle {
+    display: none !important;
+  }
+}
+
+/* Hide PrimeUI development license toast */
+#p-license-host {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* =========================================================
+   Standard List Page Toolbar, Filter Dropdowns & Export Buttons
+   ========================================================= */
+.filter-card {
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  .filter-group {
+    position: relative;
+    flex: 1;
+    min-width: 240px;
+    max-width: 380px;
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--surface-400);
+      pointer-events: none;
+    }
+
+    input {
+      width: 100%;
+      padding: 9px 12px 9px 36px;
+      border: 1px solid var(--surface-300);
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      background: var(--surface-0);
+      color: var(--surface-900);
+      outline: none;
+      transition: border-color 0.15s ease;
+
+      &:focus {
+        border-color: var(--primary-600);
+        box-shadow: 0 0 0 2px var(--primary-100);
+      }
+    }
+  }
+
+  .filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+}
+
+.filter-select {
+  height: 38px;
+  padding: 0 32px 0 12px;
+  border: 1px solid var(--surface-300);
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--surface-800);
+  background-color: var(--surface-0);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+  min-width: 170px;
+
+  &:hover {
+    border-color: var(--surface-400);
+    background-color: var(--surface-50);
+  }
+
+  &:focus {
+    border-color: var(--primary-600);
+    box-shadow: 0 0 0 2px var(--primary-100);
+  }
+}
+
+.btn-export {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 16px;
+  background-color: var(--surface-0);
+  color: var(--surface-700);
+  border: 1px solid var(--surface-300);
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  white-space: nowrap;
+
+  i {
+    font-size: 0.95rem;
+    color: #10b981;
+  }
+
+  &:hover {
+    background-color: #f0fdf4;
+    border-color: #86efac;
+    color: #166534;
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--surface-100);
+    border-color: var(--surface-200);
+    color: var(--surface-400);
+  }
+}
+
+/* Common Table Toolbar Layouts */
+[toolbar-right],
+.zeno-toolbar-right > * {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex-wrap: wrap !important;
+}
+
+[toolbar-left],
+.zeno-toolbar-left > * {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex-wrap: wrap !important;
+}
+
+/* =========================================================
+   Universal Enterprise Table System & Outlines
+   Ensures solid outlines and crisp rounded borders across
+   all Sales, Purchase, and Ledger tables
+   ========================================================= */
+
+.table-responsive,
+.table-outline-wrap,
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background-color: #ffffff !important;
+  border: 1px solid var(--surface-200) !important;
+  border-radius: var(--radius-md, 10px) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  margin-bottom: 16px;
+
+  > table {
+    border: none !important;
+    margin-bottom: 0 !important;
+  }
+}
+
+.zeno-table,
+.line-table,
+.items-table,
+.lines-table,
+.line-items-table {
+  width: 100%;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  background-color: #ffffff;
+  font-size: 0.875rem;
+
+  /* Header cell styling */
+  thead th {
+    background-color: var(--surface-50) !important;
+    color: var(--surface-600) !important;
+    font-weight: 600 !important;
+    font-size: 0.75rem !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    padding: 12px 14px !important;
+    border-bottom: 1px solid var(--surface-200) !important;
+    border-top: none !important;
+    white-space: nowrap;
+    text-align: left;
+  }
+
+  /* Body rows styling */
+  tbody tr {
+    transition: background-color 0.15s ease;
+
+    &:hover td {
+      background-color: rgba(248, 250, 252, 0.75) !important;
+    }
+
+    td {
+      padding: 10px 14px !important;
+      border-bottom: 1px solid var(--surface-100) !important;
+      color: var(--surface-800);
+      vertical-align: middle;
+      font-size: 0.875rem;
+
+      /* Inputs and selects inside table cells */
+      input, select {
+        width: 100%;
+        height: 36px;
+        padding: 6px 10px;
+        border: 1px solid var(--surface-300) !important;
+        border-radius: 6px !important;
+        background-color: #ffffff;
+        color: var(--surface-900);
+        font-size: 0.85rem;
+        outline: none;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+        &:focus {
+          border-color: var(--primary-600) !important;
+          box-shadow: 0 0 0 2px var(--primary-100) !important;
+        }
+
+        &[type="number"] {
+          font-family: var(--font-mono, monospace);
+        }
+      }
+    }
+
+    &:last-child td {
+      border-bottom: none !important;
+    }
+  }
+
+  tfoot tr td {
+    background-color: var(--surface-50);
+    border-top: 1px solid var(--surface-200);
+    font-weight: 700;
+  }
+}
+
+/* Standalone tables not inside table-responsive */
+table.zeno-table:not(.table-responsive table),
+table.line-table:not(.table-responsive table),
+table.items-table:not(.table-responsive table),
+table.lines-table:not(.table-responsive table),
+table.line-items-table:not(.table-responsive table) {
+  border: 1px solid var(--surface-200) !important;
+  border-radius: var(--radius-md, 10px) !important;
+  overflow: hidden;
+}
+
+/* Line items container section */
+.line-items-section {
+  margin: 20px 0;
+  border: 1px solid var(--surface-200);
+  border-radius: 0 !important;
+  padding: 20px;
+  background: var(--surface-0, #ffffff);
+  box-shadow: var(--shadow-subtle, 0 1px 3px rgba(0, 0, 0, 0.02));
+
+  .section-title-wrap,
+  .section-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+
+    .section-title {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--surface-900);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+
+  .table-responsive {
+    margin-bottom: 0 !important;
+  }
+}
+
+.remove-line-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #DC2626;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background-color: #FEF2F2;
+    border-color: #FECACA;
+  }
+}
+
+.add-line-btn {
+  background: transparent;
+  border: 1px dashed var(--primary-500, #8b5cf6);
+  color: var(--primary-600, #6366f1);
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background-color: var(--primary-50, #f5f3ff);
+    border-color: var(--primary-600, #6366f1);
+  }
+}
+
+/* =========================================================
+   Settings Component Styling & Form Controls
+   ========================================================= */
+app-settings {
+  display: block;
+  width: 100%;
+
+  /* Form Labels & Required indicators */
+  label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--surface-700, #334155);
+    margin-bottom: 2px;
+    user-select: none;
+
+    .required {
+      color: var(--danger, #ef4444);
+      font-weight: 700;
+      margin-left: 1px;
+    }
+  }
+
+  /* Form Inputs, Selects, and Textareas */
+  input[type="text"],
+  input[type="email"],
+  input[type="url"],
+  input[type="number"],
+  input[type="date"],
+  input[type="password"],
+  select,
+  textarea {
+    width: 100%;
+    height: 38px;
+    padding: 8px 12px;
+    border: 1px solid var(--surface-300, #cbd5e1);
+    border-radius: var(--radius-sm, 6px);
+    font-family: inherit;
+    font-size: 0.875rem;
+    color: var(--surface-900, #0f172a);
+    background-color: var(--surface-0, #ffffff);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
+
+    &:hover:not(:focus):not(:disabled) {
+      border-color: var(--surface-400, #94a3b8);
+    }
+
+    &:focus {
+      border-color: var(--primary-600, #2563eb);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    &:disabled,
+    &[readonly] {
+      background-color: var(--surface-100, #f1f5f9);
+      color: var(--surface-500, #64748b);
+      cursor: not-allowed;
+    }
+  }
+
+  textarea {
+    height: auto;
+    min-height: 80px;
+    resize: vertical;
+  }
+
+  select {
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 14px 14px;
+    padding-right: 36px;
+  }
+
+  /* Toolbar & inline controls */
+  .relative > input[type="text"],
+  input[type="text"].pl-9 {
+    padding-left: 2.25rem !important;
+    border-radius: 0.5rem !important;
+  }
+
+  .flex > select,
+  .flex select {
+    width: auto;
+    max-width: 100%;
+  }
+
+  /* Sub-tabs & Filter Active State Highlights */
+  button.active,
+  .active {
+    background-color: var(--primary-50, #eff6ff) !important;
+    color: var(--primary-700, #1d4ed8) !important;
+    border-color: var(--primary-200, #bfdbfe) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 2px 0 rgba(37, 99, 235, 0.08) !important;
+  }
+
+  /* Toggle Switch Button Component */
+  .zeno-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+    margin: 0;
+    cursor: pointer;
+    user-select: none;
+
+    input {
+      opacity: 0 !important;
+      width: 0 !important;
+      height: 0 !important;
+      position: absolute !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      pointer-events: none !important;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--surface-300, #cbd5e1);
+      transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 9999px;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+
+      &::before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: #ffffff;
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      }
+    }
+
+    input:checked + .slider {
+      background-color: var(--primary-600, #2563eb);
+    }
+
+    input:focus-visible + .slider {
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+    }
+
+    input:checked + .slider::before {
+      transform: translateX(20px);
+    }
+  }
+
+  /* Custom Toggle Feature Card Active Styling */
+  .enabled {
+    border-color: var(--primary-300, #93c5fd) !important;
+    background-color: rgba(239, 246, 255, 0.35) !important;
+  }
+
+  /* Tables inside Settings (Roles, FY, Branches, Warehouses, GST) */
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+
+    thead th {
+      background-color: var(--surface-50, #f8fafc);
+      color: var(--surface-600, #475569);
+      font-weight: 600;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--surface-200, #e2e8f0);
+      white-space: nowrap;
+    }
+
+    tbody td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--surface-100, #f1f5f9);
+      color: var(--surface-800, #1e293b);
+      vertical-align: middle;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+  }
+}
+
+/* =========================================================
+   Global Search Bar & Toolbar Controls (Product UI Pattern)
+   ========================================================= */
+.relative > .pi-search ~ input,
+.relative > input:has(+ .pi-search),
+.relative:has(> .pi-search) > input,
+input[type="text"].pl-9,
+input.pl-9,
+zeno-search > div {
+  border-radius: 1.5rem !important; /* rounded-lg (8px) matching Product search */
+}
+
+
+
+
+

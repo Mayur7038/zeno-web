@@ -1,0 +1,407 @@
+<div class="flex flex-col gap-5 w-full">
+  @if (viewMode === 'list') {
+    <!-- LIST PAGE HEADER -->
+    <div class="flex items-center justify-between mb-1">
+      <h1 class="text-xl font-bold text-surface-900 m-0">Contra Vouchers</h1>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer" (click)="openCreate()">
+          <i class="pi pi-plus"></i> Record Contra
+        </button>
+      </div>
+    </div>
+    
+    <!-- TOOLBAR & TABLE CARD -->
+    <div class="bg-surface-0 border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+      <div class="p-4 border-b border-surface-200 flex flex-wrap items-center justify-between gap-4 bg-surface-0">
+        <div class="relative flex-1 min-w-[240px] max-w-sm">
+          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (input)="loadVouchers()"
+            placeholder="Search contra vouchers..."
+            class="w-full pl-9 pr-3 py-2 bg-surface-0 border border-surface-300 rounded-lg text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 transition-all"
+          />
+        </div>
+
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs font-semibold text-surface-600">From:</span>
+            <input type="date" [(ngModel)]="startDate" (change)="loadVouchers()" class="h-9 px-3 border border-surface-300 rounded-lg text-sm font-semibold text-surface-800 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 cursor-pointer" />
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-xs font-semibold text-surface-600">To:</span>
+            <input type="date" [(ngModel)]="endDate" (change)="loadVouchers()" class="h-9 px-3 border border-surface-300 rounded-lg text-sm font-semibold text-surface-800 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 cursor-pointer" />
+          </div>
+
+          <select
+            class="h-9 px-3 border border-surface-300 rounded-lg text-sm font-semibold text-surface-800 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 cursor-pointer min-w-[160px]"
+            [(ngModel)]="selectedStatus"
+            (change)="filterStatus(selectedStatus)"
+          >
+            <option value="">All Statuses</option>
+            <option value="POSTED">Posted</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+
+          <button class="inline-flex items-center gap-1.5 h-9 px-3.5 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-medium rounded-lg border border-surface-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" (click)="exportVouchers()" [disabled]="filteredVouchers.length === 0" title="Export to CSV">
+            <i class="pi pi-download"></i> Export
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+            <tr>
+              <th class="px-4 py-3">Voucher No</th>
+              <th class="px-4 py-3">Date</th>
+              <th class="px-4 py-3">From Account</th>
+              <th class="px-4 py-3">Mode / Ref</th>
+              <th class="px-4 py-3">Remarks / Narration</th>
+              <th class="px-4 py-3 text-right">Amount</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100">
+            @if (filteredVouchers.length === 0) {
+              <tr>
+                <td colspan="8" class="text-center py-10 px-4 text-surface-500">
+                  No contra vouchers found. Click "Record Contra" to record one.
+                </td>
+              </tr>
+            }
+            @for (v of filteredVouchers; track v.id) {
+              <tr class="hover:bg-surface-50/75 transition-colors">
+                <td class="font-mono font-bold text-primary-700 px-4 py-3">
+                  {{ v.voucherNo }}
+                </td>
+                <td class="px-4 py-3 text-surface-800">{{ v.voucherDate }}</td>
+                <td class="px-4 py-3 text-surface-800">
+                  <div class="flex flex-col">
+                    <span class="font-bold text-surface-900">{{ getVoucherPrimaryAccountName(v) }}</span>
+                    @if (v.lines && v.lines.length) {
+                      <span class="text-xs text-surface-500">{{ getVoucherSecondaryAccountsSummary(v) }}</span>
+                    }
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-surface-800">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-surface-100 text-surface-700 border border-surface-200 font-mono">{{ v.paymentMode || 'CASH' }}</span>
+                  @if (v.referenceNo) {
+                    <div class="text-xs text-surface-500 mt-0.5">Ref: {{ v.referenceNo }}</div>
+                  }
+                </td>
+                <td class="px-4 py-3 text-surface-800 max-w-[200px] truncate" [title]="v.narration || ''">
+                  {{ v.narration || '—' }}
+                </td>
+                <td class="font-mono font-bold text-right text-surface-900 px-4 py-3 text-[0.95rem]">
+                  ₹{{ v.totalAmount | number:'1.2-2' }}
+                </td>
+                <td class="px-4 py-3">
+                  <span
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider whitespace-nowrap"
+                    [ngClass]="{
+                      'bg-emerald-50 text-emerald-800 border border-emerald-200': v.status === 'POSTED',
+                      'bg-red-50 text-red-800 border border-red-200': v.status === 'CANCELLED'
+                    }"
+                  >
+                    @if (v.status === 'POSTED') {
+                      <i class="pi pi-check-circle text-xs"></i>
+                    }
+                    {{ v.status }}
+                  </span>
+                </td>
+                <td class="text-right px-4 py-3">
+                  <div class="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
+                    <button class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-surface-200 bg-surface-0 text-surface-600 hover:text-primary-600 hover:border-primary-300 transition-colors cursor-pointer" title="View & Print Voucher" (click)="viewVoucher(v.id)">
+                      <i class="pi pi-eye"></i>
+                    </button>
+                    @if (v.status === 'POSTED') {
+                      <button class="inline-flex items-center justify-center w-8 h-8 rounded-md border border-red-200 bg-surface-0 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors cursor-pointer" title="Cancel & Reverse Voucher" (click)="promptCancelVoucher(v)">
+                        <i class="pi pi-ban"></i>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  } @else if (viewMode === 'create') {
+    <!-- FULL-PAGE TRANSACTION CREATION -->
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-3">
+        <button class="w-[34px] h-[34px] inline-flex items-center justify-center bg-surface-100 hover:bg-surface-200 text-surface-700 rounded-md border border-surface-300 transition-colors cursor-pointer" (click)="backToList()"><i class="pi pi-arrow-left"></i></button>
+        <h1 class="text-xl font-bold text-surface-900 m-0">Record Contra Voucher</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-semibold rounded-md border border-surface-200 transition-colors cursor-pointer" (click)="backToList()">Cancel</button>
+        <button
+          class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+          (click)="submitVoucher()"
+          [disabled]="submitting || !isFormValid()"
+        >
+          @if (submitting) {
+            <i class="pi pi-spin pi-spinner"></i> Posting...
+          } @else {
+            <i class="pi pi-check"></i> Save & Post Voucher
+          }
+        </button>
+      </div>
+    </div>
+
+    @if (errorMessage) {
+      <div class="flex items-center gap-2.5 p-3.5 mb-2 rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm">
+        <i class="pi pi-exclamation-triangle text-red-600 text-base"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
+
+    <div class="bg-surface-0 border border-surface-200 rounded-xl shadow-xs p-6 flex flex-col gap-6">
+      <!-- VOUCHER HEADER FIELDS -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Voucher Date <span class="text-red-500">*</span></label>
+          <input type="date" [(ngModel)]="createForm.voucherDate" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 transition-all" />
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Transfer From (Source Account) <span class="text-red-500">*</span></label>
+          <zeno-searchable-select
+            [options]="cashBankLedgers"
+            labelKey="name"
+            valueKey="id"
+            placeholder="-- Choose Source Account --"
+            [(ngModel)]="createForm.sourceAccountLedgerId"
+          ></zeno-searchable-select>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Transfer To (Destination Account) <span class="text-red-500">*</span></label>
+          <zeno-searchable-select
+            [options]="cashBankLedgers"
+            labelKey="name"
+            valueKey="id"
+            placeholder="-- Choose Destination Account --"
+            [(ngModel)]="createForm.destinationLedgerId"
+          ></zeno-searchable-select>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Payment Mode</label>
+          <select [(ngModel)]="createForm.paymentMode" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 transition-all cursor-pointer">
+            <option value="CASH">Cash</option>
+            <option value="CHEQUE">Cheque / Demand Draft</option>
+            <option value="NEFT_RTGS">NEFT / RTGS</option>
+            <option value="UPI">UPI / QR Code</option>
+            <option value="NET_BANKING">Net Banking</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Cheque / UTR / Reference No</label>
+          <input
+            type="text"
+            [(ngModel)]="createForm.referenceNo"
+            placeholder="Enter reference or instrument no..."
+            class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 transition-all placeholder:text-surface-400"
+          />
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700">Reference Date</label>
+          <input type="date" [(ngModel)]="createForm.referenceDate" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 transition-all" />
+        </div>
+      </div>
+
+      <!-- CONTRA SINGLE AMOUNT -->
+      <div class="p-4 bg-surface-50 border border-surface-200 rounded-lg">
+        <div class="flex flex-col gap-1.5 max-w-sm">
+          <label class="text-xs font-semibold text-surface-700">Transfer Amount (₹) <span class="text-red-500">*</span></label>
+          <div class="relative flex items-center">
+            <span class="absolute left-3 text-surface-500 font-bold text-base">₹</span>
+            <input
+              type="number"
+              min="1"
+              step="0.01"
+              [(ngModel)]="contraAmount"
+              class="w-full pl-8 pr-3 py-2 border border-surface-300 rounded-md font-mono font-bold text-lg text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 transition-all"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER NARRATION & GL PREVIEW -->
+      <div class="flex flex-col gap-1.5 max-w-2xl">
+        <label class="text-xs font-semibold text-surface-700 flex items-center gap-1.5"><i class="pi pi-align-left"></i> Overall Narration / Remarks</label>
+        <textarea
+          rows="3"
+          [(ngModel)]="createForm.narration"
+          placeholder="Enter transfer narration or audit remarks..."
+          class="w-full p-2.5 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 transition-all placeholder:text-surface-400 resize-y"
+        ></textarea>
+      </div>
+    </div>
+  } @else if (viewMode === 'view' && viewingVoucher) {
+    <!-- FULL-PAGE VOUCHER DETAIL & AUDIT SLIP -->
+    <div class="flex items-center justify-between mb-2 flex-wrap gap-4 print:hidden">
+      <div class="flex items-center gap-3">
+        <button class="w-[34px] h-[34px] inline-flex items-center justify-center bg-surface-100 hover:bg-surface-200 text-surface-700 rounded-md border border-surface-300 transition-colors cursor-pointer" (click)="backToList()"><i class="pi pi-arrow-left"></i></button>
+        <h1 class="text-xl font-bold text-surface-900 m-0">{{ viewingVoucher.voucherNo }} - Contra Voucher</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-surface-0 hover:bg-surface-50 text-surface-700 border border-surface-300 rounded-md text-sm font-semibold transition-colors cursor-pointer" (click)="printVoucher()">
+          <i class="pi pi-print"></i> Print Slip
+        </button>
+        @if (viewingVoucher.status === 'POSTED') {
+          <button class="inline-flex items-center gap-2 px-4 py-2 bg-surface-0 hover:bg-red-50 text-red-600 border border-red-200 hover:border-red-300 rounded-md text-sm font-semibold transition-colors cursor-pointer" (click)="promptCancelVoucher(viewingVoucher)">
+            <i class="pi pi-ban"></i> Cancel Voucher
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- PRINTABLE SLIP CONTAINER -->
+    <div class="bg-surface-0 border border-surface-200 rounded-xl shadow-xs p-6 md:p-8 flex flex-col gap-6 max-w-5xl mx-auto w-full">
+      <!-- SLIP HEADER -->
+      <div class="flex justify-between items-start border-b-2 border-surface-200 pb-5 gap-4 flex-wrap">
+        <div>
+          <h2 class="text-xl font-bold text-surface-900 m-0">{{ tenant.currentCompany()?.legalName || 'Organization' }}</h2>
+          <div class="flex items-center gap-3 text-xs text-surface-500 mt-1">
+            @if (tenant.currentCompany()?.gstin) {
+              <span>GSTIN: <strong class="text-surface-700">{{ tenant.currentCompany()?.gstin }}</strong></span>
+            }
+            @if (tenant.currentBranch()?.branchName) {
+              <span>Branch: {{ tenant.currentBranch()?.branchName }}</span>
+            }
+          </div>
+        </div>
+        <div class="flex flex-col items-end gap-2">
+          <div class="inline-flex px-3 py-1 rounded-md bg-primary-50 text-primary-700 font-bold text-sm uppercase tracking-wide border border-primary-200">Contra Voucher</div>
+          <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-surface-600 text-right">
+            <div><span>Voucher No:</span> <strong class="font-mono text-surface-900">{{ viewingVoucher.voucherNo }}</strong></div>
+            <div><span>Date:</span> <strong class="text-surface-900">{{ viewingVoucher.voucherDate }}</strong></div>
+            <div><span>Status:</span> <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold uppercase" [ngClass]="viewingVoucher.status === 'POSTED' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'">{{ viewingVoucher.status }}</span></div>
+            @if (viewingVoucher.paymentMode) {
+              <div><span>Mode:</span> <strong class="text-surface-900">{{ viewingVoucher.paymentMode }}</strong></div>
+            }
+            @if (viewingVoucher.referenceNo) {
+              <div><span>Ref:</span> <span class="font-mono text-surface-900">{{ viewingVoucher.referenceNo }}</span></div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- PRIMARY ACCOUNT / HEADER HIGHLIGHT -->
+      @if (viewingVoucher.sourceAccountLedger) {
+        <div class="flex items-center gap-2 p-3 bg-primary-50/60 border border-primary-100 rounded-lg text-sm">
+          <span class="text-surface-600 font-medium">Source Account:</span>
+          <span class="font-bold text-surface-900">{{ viewingVoucher.sourceAccountLedger.name }}</span>
+          <span class="text-surface-500 text-xs">({{ viewingVoucher.sourceAccountLedger.ledgerGroup?.name || 'Account' }})</span>
+        </div>
+      }
+
+      <!-- LINE ITEMS BREAKDOWN -->
+      <div class="overflow-x-auto border border-surface-200 rounded-lg">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+            <tr>
+              <th class="px-4 py-3 w-12">#</th>
+              <th class="px-4 py-3">Account Particulars</th>
+              <th class="px-4 py-3">Narration / Remarks</th>
+              <th class="px-4 py-3 text-right w-36">Debit (₹)</th>
+              <th class="px-4 py-3 text-right w-36">Credit (₹)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100">
+            @for (l of viewingVoucher.lines; track $index) {
+              <tr class="hover:bg-surface-50/50 transition-colors">
+                <td class="px-4 py-3 text-surface-500">{{ $index + 1 }}</td>
+                <td class="px-4 py-3">
+                  <strong class="text-surface-900">{{ l.ledger?.name || 'Ledger Account' }}</strong>
+                  <div class="text-surface-500 text-xs">
+                    {{ l.ledger?.ledgerGroup?.name || '' }}
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-surface-700">{{ l.narration || '—' }}</td>
+                <td class="font-mono text-right px-4 py-3 text-surface-900">
+                  {{ (l.debitAmount && l.debitAmount > 0) ? (l.debitAmount | number:'1.2-2') : '—' }}
+                </td>
+                <td class="font-mono text-right px-4 py-3 text-surface-900">
+                  {{ (l.creditAmount && l.creditAmount > 0) ? (l.creditAmount | number:'1.2-2') : '—' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="bg-surface-50 font-bold">
+              <td colspan="3" class="text-right px-4 py-3.5 border-t border-surface-200 text-surface-900">TOTAL VOUCHER AMOUNT:</td>
+              <td colspan="2" class="font-mono font-bold text-right px-4 py-3.5 border-t border-surface-200 text-base text-primary-700">
+                ₹{{ viewingVoucher.totalAmount | number:'1.2-2' }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      @if (viewingVoucher.narration) {
+        <div class="p-3.5 bg-surface-50 border border-surface-200 rounded-lg text-sm text-surface-800">
+          <strong class="text-surface-900">Narration:</strong> {{ viewingVoucher.narration }}
+        </div>
+      }
+
+      <!-- GENERAL LEDGER DOUBLE ENTRY AUDIT TRAIL -->
+      <div class="flex flex-col gap-3 mt-2 border border-surface-200 rounded-lg p-4 bg-surface-50/40">
+        <div class="flex items-center gap-2 text-sm font-bold text-surface-800">
+          <i class="pi pi-database text-primary-600"></i> General Ledger Double-Entry Audit Trail
+        </div>
+        <div class="overflow-x-auto border border-surface-200 rounded-lg bg-surface-0">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+              <tr>
+                <th class="px-3 py-2.5">Posting Account</th>
+                <th class="px-3 py-2.5">Ledger Group</th>
+                <th class="px-3 py-2.5 text-right">Debit (Dr)</th>
+                <th class="px-3 py-2.5 text-right">Credit (Cr)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-100">
+              @for (entry of viewingVoucher.ledgerEntries; track entry.id) {
+                <tr class="hover:bg-surface-50/50 transition-colors">
+                  <td class="font-bold text-surface-900 px-3 py-2.5">{{ entry.ledger?.name || 'Account' }}</td>
+                  <td class="text-surface-500 px-3 py-2.5 text-xs">{{ entry.ledger?.ledgerGroup?.name || '—' }}</td>
+                  <td class="font-mono text-right text-emerald-700 font-medium px-3 py-2.5">
+                    {{ (entry.debitAmount > 0) ? ('₹' + (entry.debitAmount | number:'1.2-2')) : '—' }}
+                  </td>
+                  <td class="font-mono text-right text-blue-700 font-medium px-3 py-2.5">
+                    {{ (entry.creditAmount > 0) ? ('₹' + (entry.creditAmount | number:'1.2-2')) : '—' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SIGNATURES BLOCK -->
+      <div class="grid grid-cols-3 gap-6 pt-10 pb-2 text-center">
+        <div class="flex flex-col items-center">
+          <div class="w-40 border-b border-surface-300 mb-2"></div>
+          <span class="text-xs font-semibold text-surface-500 uppercase tracking-wide">Prepared By</span>
+        </div>
+        <div class="flex flex-col items-center">
+          <div class="w-40 border-b border-surface-300 mb-2"></div>
+          <span class="text-xs font-semibold text-surface-500 uppercase tracking-wide">Verified / Checked By</span>
+        </div>
+        <div class="flex flex-col items-center">
+          <div class="w-40 border-b border-surface-300 mb-2"></div>
+          <span class="text-xs font-semibold text-surface-500 uppercase tracking-wide">Authorized Signatory</span>
+        </div>
+      </div>
+    </div>
+  }
+</div>

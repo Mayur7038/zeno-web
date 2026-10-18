@@ -1,0 +1,58 @@
+@if (!textarea) {
+  <div
+    class="relative flex items-center w-full bg-surface-0 border rounded-sm transition-all focus-within:border-primary-600 focus-within:ring-2 focus-within:ring-primary-100"
+    [ngClass]="{
+      'border-red-500 focus-within:ring-red-100 focus-within:border-red-600': error,
+      'border-surface-300': !error,
+      'bg-surface-100 cursor-not-allowed': disabled
+    }"
+  >
+    @if (icon) {
+      <i [class]="icon + ' absolute left-3 text-surface-400 text-sm pointer-events-none'"></i>
+    }
+    <input
+      [type]="type"
+      [ngModel]="value"
+      [disabled]="disabled"
+      [readonly]="readonly"
+      [min]="min"
+      [max]="max"
+      [step]="step"
+      [placeholder]="placeholder || ''"
+      [attr.autocomplete]="autocomplete || null"
+      [attr.maxlength]="maxlength || null"
+      [class.uppercase]="uppercase"
+      [class.font-mono]="mono"
+      [class.pl-9]="!!icon"
+      [class.pr-9]="!!iconRight"
+      class="w-full px-3 py-2 border-none bg-transparent text-sm text-surface-900 outline-none rounded-sm disabled:cursor-not-allowed disabled:text-surface-500 placeholder:text-surface-400"
+      (ngModelChange)="onValueChange($event)"
+      (blur)="onBlur($event)"
+      (focus)="onFocus($event)"
+      (keydown)="onKeydown($event)"
+    />
+    @if (iconRight) {
+      <i [class]="iconRight + ' absolute right-3 text-surface-400 text-sm pointer-events-none'"></i>
+    }
+  </div>
+} @else {
+  <textarea
+    [ngModel]="value"
+    [disabled]="disabled"
+    [readonly]="readonly"
+    [placeholder]="placeholder || ''"
+    [attr.autocomplete]="autocomplete || null"
+    [attr.maxlength]="maxlength || null"
+    [rows]="rows || 3"
+    [class.uppercase]="uppercase"
+    [class.font-mono]="mono"
+    class="w-full px-3 py-2 border rounded-sm text-sm text-surface-900 bg-surface-0 outline-none resize-y transition-all placeholder:text-surface-400 focus:border-primary-600 focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:text-surface-500 disabled:bg-surface-100"
+    [ngClass]="{
+      'border-red-500 focus:ring-red-100 focus:border-red-600': error,
+      'border-surface-200': !error
+    }"
+    (ngModelChange)="onValueChange($event)"
+    (blur)="onBlur($event)"
+    (focus)="onFocus($event)"
+  ></textarea>
+}

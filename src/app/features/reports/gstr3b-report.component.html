@@ -1,0 +1,93 @@
+<div class="flex flex-col gap-5">
+  <div class="flex justify-between items-start flex-wrap gap-3">
+    <div class="flex items-center gap-3">
+      <button class="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-surface-300 bg-white hover:bg-surface-50 text-surface-700 transition-colors cursor-pointer" routerLink="/reports">
+        <i class="pi pi-arrow-left"></i>
+      </button>
+      <div>
+        <h1 class="text-2xl font-bold text-surface-900">GSTR-3B Summary</h1>
+        <p class="text-xs text-surface-500 mt-0.5">Summary of Tax Liability and Eligible ITC</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 bg-white border border-surface-200 rounded-xl px-3.5 py-2 shadow-xs">
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-bold text-surface-500 uppercase tracking-wider">From</label>
+          <input type="date" [(ngModel)]="startDate" (change)="load()" class="border border-surface-300 rounded-md px-2 py-1 text-sm bg-white focus:outline-none focus:border-primary-600" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-bold text-surface-500 uppercase tracking-wider">To</label>
+          <input type="date" [(ngModel)]="endDate" (change)="load()" class="border border-surface-300 rounded-md px-2 py-1 text-sm bg-white focus:outline-none focus:border-primary-600" />
+        </div>
+      </div>
+      <button class="inline-flex items-center gap-1.5 px-3.5 py-2 border border-surface-300 bg-white hover:bg-surface-50 text-surface-700 rounded-lg text-sm font-semibold transition-colors cursor-pointer" onclick="window.print()">
+        <i class="pi pi-print"></i> Print
+      </button>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="py-16 text-center text-surface-500 text-sm flex items-center justify-center gap-2">
+      <i class="pi pi-spin pi-spinner"></i> Calculating GSTR-3B...
+    </div>
+  }
+
+  @if (!loading && data) {
+    <div class="bg-white border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+            <tr>
+              <th class="px-4 py-3">Nature of Supplies</th>
+              <th class="px-4 py-3 text-right">Total Taxable Value (₹)</th>
+              <th class="px-4 py-3 text-right">Integrated Tax (₹)</th>
+              <th class="px-4 py-3 text-right">Central Tax (₹)</th>
+              <th class="px-4 py-3 text-right">State/UT Tax (₹)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100">
+            <tr class="bg-surface-50"><td colspan="5" class="px-4 py-2 font-bold text-xs text-surface-700 uppercase tracking-wider">3.1 Details of Outward Supplies and inward supplies liable to reverse charge</td></tr>
+            <tr class="hover:bg-surface-50/50">
+              <td class="px-4 py-2.5 text-surface-900">(a) Outward taxable supplies (other than zero rated, nil rated and exempted)</td>
+              <td class="px-4 py-2.5 text-right font-mono text-surface-700">{{ data.outward.taxable.toFixed(2) }}</td>
+              <td class="px-4 py-2.5 text-right font-mono text-surface-700">{{ data.outward.igst.toFixed(2) }}</td>
+              <td class="px-4 py-2.5 text-right font-mono text-surface-700">{{ data.outward.cgst.toFixed(2) }}</td>
+              <td class="px-4 py-2.5 text-right font-mono text-surface-700">{{ data.outward.sgst.toFixed(2) }}</td>
+            </tr>
+            <tr class="hover:bg-surface-50/50">
+              <td class="px-4 py-2.5 text-surface-900">(b) Outward taxable supplies (zero rated)</td>
+              <td class="px-4 py-2.5 text-right font-mono text-surface-700">0.00</td>
+              <td class="px-4 py-2.5 text-right font-mono text-surface-700">0.00</td>
+              <td class="px-4 py-2.5 text-right font-mono text-surface-700">0.00</td>
+              <td class="px-4 py-2.5 text-right font-mono text-surface-700">0.00</td>
+            </tr>
+            <tr class="hover:bg-surface-50/50">
+              <td class="px-4 py-2.5 text-surface-900">(c) Other outward supplies (Nil rated, exempted)</td>
+              <td class="px-4 py-2.5 text-right font-mono text-surface-700">0.00</td>
+              <td class="px-4 py-2.5 text-right font-mono text-surface-700">0.00</td>
+              <td class="px-4 py-2.5 text-right font-mono text-surface-700">0.00</td>
+              <td class="px-4 py-2.5 text-right font-mono text-surface-700">0.00</td>
+            </tr>
+
+            <tr class="bg-surface-50"><td colspan="5" class="px-4 py-2 font-bold text-xs text-surface-700 uppercase tracking-wider">4. Eligible ITC</td></tr>
+            <tr class="hover:bg-surface-50/50">
+              <td class="px-4 py-2.5 text-surface-900">(A) ITC Available (whether in full or part) - All other ITC</td>
+              <td class="px-4 py-2.5 text-right font-mono text-surface-700">{{ data.inward.taxable.toFixed(2) }}</td>
+              <td class="px-4 py-2.5 text-right font-mono text-surface-700">{{ data.inward.igst.toFixed(2) }}</td>
+              <td class="px-4 py-2.5 text-right font-mono text-surface-700">{{ data.inward.cgst.toFixed(2) }}</td>
+              <td class="px-4 py-2.5 text-right font-mono text-surface-700">{{ data.inward.sgst.toFixed(2) }}</td>
+            </tr>
+
+            <tr class="bg-surface-100 font-bold text-sm border-t-2 border-surface-300">
+              <td class="px-4 py-3 text-right">Net Tax Payable (Outward - ITC)</td>
+              <td class="px-4 py-3 text-right font-mono"></td>
+              <td class="px-4 py-3 text-right font-mono font-bold" [class.text-red-600]="(data.outward.igst - data.inward.igst) > 0" [class.text-emerald-600]="(data.outward.igst - data.inward.igst) <= 0">{{ (data.outward.igst - data.inward.igst).toFixed(2) }}</td>
+              <td class="px-4 py-3 text-right font-mono font-bold" [class.text-red-600]="(data.outward.cgst - data.inward.cgst) > 0" [class.text-emerald-600]="(data.outward.cgst - data.inward.cgst) <= 0">{{ (data.outward.cgst - data.inward.cgst).toFixed(2) }}</td>
+              <td class="px-4 py-3 text-right font-mono font-bold" [class.text-red-600]="(data.outward.sgst - data.inward.sgst) > 0" [class.text-emerald-600]="(data.outward.sgst - data.inward.sgst) <= 0">{{ (data.outward.sgst - data.inward.sgst).toFixed(2) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>

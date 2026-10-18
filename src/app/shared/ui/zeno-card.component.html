@@ -1,0 +1,28 @@
+<div
+  class="block bg-surface-0 border border-surface-200 rounded-md shadow-xs max-w-full mb-6"
+  [class.overflow-hidden]="overflowHidden"
+>
+  @if (title || hasHeaderActions) {
+    <div class="flex justify-between items-center px-5 py-4 border-b border-surface-200 bg-surface-0">
+      <div>
+        @if (title) {
+          <h3 class="text-lg font-bold text-surface-900 m-0 leading-snug">{{ title }}</h3>
+        }
+        @if (subtitle) {
+          <p class="text-[0.8125rem] text-surface-500 mt-1 mb-0">{{ subtitle }}</p>
+        }
+      </div>
+      <div class="flex items-center gap-2">
+        <ng-content select="[header-actions]"></ng-content>
+      </div>
+    </div>
+  }
+
+  <div class="w-full" [class.p-6]="padded">
+    <ng-content></ng-content>
+  </div>
+
+  <div class="px-5 py-3.5 border-t border-surface-200 bg-surface-50 empty:hidden">
+    <ng-content select="[footer]"></ng-content>
+  </div>
+</div>

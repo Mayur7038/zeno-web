@@ -1,0 +1,2816 @@
+    <div class="p-0 text-sm animate-fade-in">
+      <!-- HEADER -->
+      <div class="flex justify-between items-center mb-5">
+        <div class="flex items-center gap-3">
+          <button class="bg-surface-0 hover:bg-surface-100 text-surface-600 hover:text-surface-900 border border-surface-200 rounded-lg w-9 h-9 inline-flex items-center justify-center cursor-pointer shadow-2xs transition-all duration-150" (click)="roleViewMode !== 'list' && activeTab === 'roles' ? backToRoleList() : goHome()" [title]="roleViewMode !== 'list' && activeTab === 'roles' ? 'Back to Roles List' : 'Back to Home / Dashboard'">
+            <i class="pi pi-arrow-left text-sm"></i>
+          </button>
+          <h1 class="text-xl font-bold text-surface-900 tracking-tight m-0">{{ getActiveTabTitle() }}</h1>
+        </div>
+        <div class="flex items-center gap-2.5">
+          @if (activeTab === 'company') {
+            <button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4 py-2 rounded-lg font-medium text-sm cursor-pointer shadow-xs transition-colors duration-150" (click)="saveCompanyProfile()" [disabled]="savingCompany">
+              <i class="pi pi-check text-xs"></i> {{ savingCompany ? 'Saving...' : 'Save Company Profile' }}
+            </button>
+          } @else if (activeTab === 'branches') {
+            <button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4 py-2 rounded-lg font-medium text-sm cursor-pointer shadow-xs transition-colors duration-150" (click)="openCreateBranchModal()">
+              <i class="pi pi-plus text-xs"></i> Add New Branch
+            </button>
+          } @else if (activeTab === 'warehouses') {
+            <button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4 py-2 rounded-lg font-medium text-sm cursor-pointer shadow-xs transition-colors duration-150" (click)="openCreateWarehouseModal()">
+              <i class="pi pi-plus text-xs"></i> Add New Warehouse
+            </button>
+          } @else if (activeTab === 'financial-years') {
+            <button class="inline-flex items-center gap-2 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-4 py-2 rounded-lg font-medium text-sm cursor-pointer transition-colors duration-150" (click)="openCloseFyModal()" [disabled]="closingFy || !hasOpenFy()">
+              <i class="pi pi-lock text-xs"></i> Close F.Y. & Transfer Balances
+            </button>
+            <button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4 py-2 rounded-lg font-medium text-sm cursor-pointer shadow-xs transition-colors duration-150" (click)="openCreateFyModal()">
+              <i class="pi pi-plus text-xs"></i> Open New F.Y.
+            </button>
+          } @else if (activeTab === 'roles') {
+            @if (roleViewMode === 'list') {
+              <button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4.5 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="startCreateRole()">
+                <i class="pi pi-plus"></i> Create New Role
+              </button>
+            } @else if (roleViewMode === 'create') {
+              <button class="inline-flex items-center gap-2 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-4 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="backToRoleList()">
+                <i class="pi pi-arrow-left"></i> Back to Roles
+              </button>
+              <button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4.5 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="submitCreateRole()" [disabled]="savingRole || !newRole.name.trim()">
+                <i class="pi pi-check"></i> {{ savingRole ? 'Creating...' : 'Create Role & Save' }}
+              </button>
+            } @else {
+              <button class="inline-flex items-center gap-2 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-4 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="backToRoleList()">
+                <i class="pi pi-arrow-left"></i> Back to Roles
+              </button>
+              <button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4.5 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="saveRolePermissions(selectedRole)" [disabled]="savingRole || !selectedRole">
+                <i class="pi pi-check"></i> {{ savingRole ? 'Saving...' : 'Save Role & Privileges' }}
+              </button>
+            }
+          } @else if (activeTab === 'users') {
+            <button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4.5 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="openNewUserModal()">
+              <i class="pi pi-user-plus"></i> Add User
+            </button>
+          } @else {
+            <button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4.5 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="saveSettings()" [disabled]="saving || savingRole">
+              <i class="pi pi-check"></i> {{ saving || savingRole ? 'Saving...' : 'Save Configuration' }}
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (saveSuccess) {
+        <div class="flex items-center gap-3 py-3 px-4.5 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-md mb-5 text-sm font-medium">
+          <i class="pi pi-check-circle"></i>
+          <span>{{ saveMessage || 'Configuration saved successfully! All transactional engines and parameters refreshed.' }}</span>
+        </div>
+      }
+
+      <!-- TAB 1: FEATURE TOGGLES -->
+      @if (activeTab === 'toggles') {
+        <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+          <div class="text-lg font-bold text-surface-900 mb-4">Modular System Capabilities</div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            @for (toggle of toggles; track toggle.featureKey) {
+              <div class="flex justify-between items-center p-4 sm:px-5 border border-surface-200 rounded-xl bg-surface-0 transition-all duration-150" [class.enabled]="toggle.isEnabled">
+                <div class="flex items-center gap-3.5">
+                  <div class="w-[42px] h-[42px] rounded-lg bg-surface-100 text-primary-600 flex items-center justify-center text-xl shrink-0">
+                    <i [class]="getFeatureIcon(toggle.featureKey)"></i>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-surface-900 text-[15px] mb-0.5">{{ formatFeatureName(toggle.featureKey) }}</div>
+                    <div class="text-xs text-surface-500 max-w-[250px] leading-snug">{{ getFeatureDescription(toggle.featureKey) }}</div>
+                  </div>
+                </div>
+                <div class="flex flex-col items-center gap-1.5">
+                  <label class="zeno-switch cursor-pointer" [title]="toggle.isEnabled ? 'Disable module' : 'Enable module'">
+                    <input 
+                      type="checkbox" 
+                      [checked]="toggle.isEnabled" 
+                      (change)="toggleFeature(toggle, $event)"
+                    />
+                    <span class="slider"></span>
+                  </label>
+                  <span class="text-[11px] font-semibold uppercase tracking-wider transition-colors" [ngClass]="toggle.isEnabled ? 'text-primary-700' : 'text-surface-400'">
+                    {{ toggle.isEnabled ? 'Active' : 'Disabled' }}
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- TAB 2: USER ROLE & PERMISSION -->
+      @if (activeTab === 'roles') {
+        <!-- VIEW 1: ROLES LIST PAGE (DEFAULT) -->
+        @if (roleViewMode === 'list') {
+          <div class="bg-white border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+            <!-- FILTER TOOLBAR -->
+            <div class="p-4 flex justify-between items-center border-b border-surface-200 gap-4 flex-wrap">
+              <div class="relative flex-1 min-w-[260px] max-w-sm">
+                <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm pointer-events-none"></i>
+                <input
+                  type="text"
+                  placeholder="Search roles..."
+                  [(ngModel)]="roleSearchQuery"
+                  class="w-full !pl-9 !pr-8 !py-2 border border-surface-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+                />
+                @if (roleSearchQuery) {
+                  <button class="absolute right-2.5 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-700 text-xs p-1 cursor-pointer bg-transparent border-0" (click)="roleSearchQuery = ''">
+                    <i class="pi pi-times"></i>
+                  </button>
+                }
+              </div>
+
+              <div class="flex items-center gap-2.5 flex-wrap shrink-0">
+                <button 
+                  type="button" 
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-surface-200 text-surface-600 bg-surface-50 hover:bg-surface-100 cursor-pointer transition-all shrink-0" 
+                  [class.active]="roleTypeFilter === 'all'" 
+                  (click)="roleTypeFilter = 'all'"
+                >
+                  All ({{ roles.length }})
+                </button>
+                <button 
+                  type="button" 
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-surface-200 text-surface-600 bg-surface-50 hover:bg-surface-100 cursor-pointer transition-all shrink-0" 
+                  [class.active]="roleTypeFilter === 'system'" 
+                  (click)="roleTypeFilter = 'system'"
+                >
+                  <i class="pi pi-lock"></i> System ({{ getSystemRolesCount() }})
+                </button>
+                <button 
+                  type="button" 
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-surface-200 text-surface-600 bg-surface-50 hover:bg-surface-100 cursor-pointer transition-all shrink-0" 
+                  [class.active]="roleTypeFilter === 'custom'" 
+                  (click)="roleTypeFilter = 'custom'"
+                >
+                  <i class="pi pi-sparkles"></i> Custom ({{ getCustomRolesCount() }})
+                </button>
+
+                <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap" (click)="startCreateRole()">
+                  <i class="pi pi-plus"></i> Create New Role
+                </button>
+              </div>
+            </div>
+
+            <!-- ROLES DATA TABLE -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-sm">
+                <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+                  <tr>
+                    <th class="px-4 py-3" style="min-width: 220px;">Role & Classification</th>
+                    <th class="px-4 py-3" style="min-width: 260px;">Functional Duties / Scope</th>
+                    <th class="px-4 py-3" style="min-width: 200px;">Privilege Coverage</th>
+                    <th class="px-4 py-3 text-center" style="min-width: 140px;">Assigned Users</th>
+                    <th class="px-4 py-3 text-right" style="min-width: 200px;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-surface-100">
+                  @for (r of filteredRoles(); track r.id) {
+                    <tr class="hover:bg-surface-50/75 transition-colors">
+                      <td class="px-4 py-3">
+                        <div class="flex items-center gap-3">
+                          <div class="w-8 h-8 rounded-full bg-surface-100 text-surface-600 flex items-center justify-center text-sm font-semibold shrink-0" [class.system]="r.isSystem">
+                            <i [class]="r.isSystem ? 'pi pi-shield' : 'pi pi-user'"></i>
+                          </div>
+                          <div class="flex flex-col">
+                            <div class="font-bold text-surface-900">{{ r.name }}</div>
+                            @if (r.isSystem) {
+                              <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 w-fit mt-0.5">
+                                <i class="pi pi-lock"></i> SYSTEM
+                              </span>
+                            } @else {
+                              <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 border border-primary-200 w-fit mt-0.5">
+                                <i class="pi pi-sparkles"></i> CUSTOM
+                              </span>
+                            }
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-4 py-3">
+                        <p class="text-xs text-surface-500 m-0 max-w-xs">{{ r.description || 'Predefined system role for ' + r.name }}</p>
+                      </td>
+                      <td class="px-4 py-3">
+                        <div class="flex flex-col gap-1 min-w-[180px]">
+                          <div class="flex justify-between text-xs text-surface-600">
+                            <span class="priv-count"><strong>{{ (r.permissions || []).length }}</strong> / {{ totalPrivilegesCount }}</span>
+                            <span class="priv-pct">{{ getPrivilegePercentage(r) }}%</span>
+                          </div>
+                          <div class="h-1.5 bg-surface-100 rounded-full overflow-hidden w-full">
+                            <div class="h-full bg-primary-600 rounded-full transition-all duration-300" [style.width.%]="getPrivilegePercentage(r)"></div>
+                          </div>
+                          <div class="flex flex-wrap gap-1 mt-0.5">
+                            @for (cat of getRoleCategoryBreakdown(r); track cat) {
+                              <span class="text-[10px] font-semibold bg-surface-100 text-surface-600 px-1.5 py-0.5 rounded">{{ cat }}</span>
+                            }
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-4 py-3 text-center">
+                        <div class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-surface-100 text-surface-500" [class.has-users]="getUserCountForRole(r.id) > 0">
+                          <i class="pi pi-users"></i>
+                          <span>{{ getUserCountForRole(r.id) }} users</span>
+                        </div>
+                      </td>
+                      <td class="px-4 py-3 text-right">
+                        <div class="inline-flex items-center gap-1.5 justify-end">
+                          <button 
+                            type="button" 
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold bg-primary-50 text-primary-700 hover:bg-primary-600 hover:text-white border border-primary-200 rounded-md cursor-pointer transition-all" 
+                            (click)="startConfigurePermissions(r)"
+                            title="Configure Module Permissions & Privileges"
+                          >
+                            <i class="pi pi-sliders-h"></i> Permissions
+                          </button>
+                          <button 
+                            type="button" 
+                            class="p-1.5 text-surface-500 hover:text-surface-900 hover:bg-surface-100 rounded transition-colors cursor-pointer" 
+                            (click)="cloneRole(r)"
+                            title="Clone this role into a new custom role"
+                          >
+                            <i class="pi pi-copy"></i>
+                          </button>
+                          <button 
+                            type="button" 
+                            class="p-1.5 text-surface-500 hover:text-surface-900 hover:bg-surface-100 rounded transition-colors cursor-pointer" 
+                            (click)="openEditRoleModal(r)"
+                            title="Edit Role Name & Note"
+                          >
+                            <i class="pi pi-pencil"></i>
+                          </button>
+                          @if (!r.isSystem) {
+                            <button 
+                              type="button" 
+                              class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors cursor-pointer" 
+                              (click)="confirmDeleteRole(r)"
+                              title="Delete Custom Role"
+                            >
+                              <i class="pi pi-trash"></i>
+                            </button>
+                          }
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                  @if (filteredRoles().length === 0) {
+                    <tr>
+                      <td colspan="5" class="py-10 text-center text-surface-500">
+                        <div class="flex flex-col items-center justify-center gap-2">
+                          <i class="pi pi-filter-slash text-2xl text-surface-400"></i>
+                          <h4 class="m-0 text-sm font-semibold text-surface-700">No matching roles found</h4>
+                          <p class="m-0 text-xs text-surface-500">Try modifying your search query or reset the filter.</p>
+                          <button class="inline-flex items-center gap-1.5 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-3 py-1 rounded-lg font-semibold text-xs cursor-pointer transition-colors mt-1" (click)="roleSearchQuery = ''; roleTypeFilter = 'all'">
+                            Reset Filters
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+
+        <!-- VIEW 2: CREATE NEW ROLE PAGE -->
+        @else if (roleViewMode === 'create') {
+          <div class="flex flex-col gap-4">
+            <!-- ROLE DETAILS FORM CARD -->
+            <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+              <div class="text-lg font-bold text-surface-900 mb-4">1. Role Definition & Baseline Template</div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3.5">
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Role Name <span class="required">*</span></label>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="newRole.name" 
+                    autofocus
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Clone Base Privileges (Optional Template)</label>
+                  <select [(ngModel)]="createBaseRoleId" (change)="onBaseRoleChanged()">
+                    <option value="">-- Start with Blank Permissions --</option>
+                    @for (r of roles; track r.id) {
+                      <option [value]="r.id">
+                        Clone from: {{ r.name }} ({{ (r.permissions || []).length }} privileges)
+                      </option>
+                    }
+                  </select>
+                </div>
+
+                <div class="flex flex-col gap-1.5 mb-4 col-span-full">
+                  <label>Role Description & Functional Scope</label>
+                  <textarea 
+                    rows="2" 
+                    [(ngModel)]="newRole.description" 
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- PERMISSION MATRIX FOR NEW ROLE -->
+            <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+              <div class="text-lg font-bold text-surface-900 mb-4">2. Configure Module Permissions</div>
+
+              <!-- MATRIX TOOLBAR -->
+              <div class="flex items-center justify-between gap-3.5 p-3.5 bg-surface-50 border border-surface-200 rounded-lg flex-wrap mb-3">
+                <div class="relative flex-1 min-w-[200px] max-w-xs">
+                  <i class="pi pi-search"></i>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="moduleSearchQuery" 
+                  />
+                  @if (moduleSearchQuery) {
+                    <button class="absolute right-2.5 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-700 text-xs p-1 cursor-pointer bg-transparent border-0" (click)="moduleSearchQuery = ''">
+                      <i class="pi pi-times"></i>
+                    </button>
+                  }
+                </div>
+
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  @for (cat of categoryOptions; track cat.key) {
+                    <button 
+                      type="button" 
+                      class="px-2.5 py-1 text-xs font-semibold rounded-full border border-surface-200 bg-surface-50 text-surface-600 hover:bg-surface-100 cursor-pointer transition-all" 
+                      [class.active]="selectedCategoryFilter === cat.key" 
+                      (click)="selectedCategoryFilter = cat.key"
+                    >
+                      {{ cat.label }} ({{ cat.count }})
+                    </button>
+                  }
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                  <button type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-surface-100 hover:bg-surface-200 text-surface-700 rounded text-xs font-semibold cursor-pointer border border-surface-300 transition-colors" (click)="grantAllViewOnly(newRole)" title="Grant Read-Only View to all modules">
+                    <i class="pi pi-eye"></i> View Only
+                  </button>
+                  <button type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-surface-100 hover:bg-surface-200 text-surface-700 rounded text-xs font-semibold cursor-pointer border border-surface-300 transition-colors" (click)="grantFullAccess(newRole)" title="Grant all actions across all modules">
+                    <i class="pi pi-check-circle"></i> Grant All
+                  </button>
+                  <button type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded text-xs font-semibold cursor-pointer border border-rose-200 transition-colors" (click)="revokeAllPermissions(newRole)" title="Clear all granted privileges">
+                    <i class="pi pi-ban"></i> Revoke All
+                  </button>
+                </div>
+              </div>
+
+              <!-- MATRIX TABLE -->
+              <div class="overflow-x-auto border border-surface-200 rounded-md mt-3">
+                <table class="w-full border-collapse text-xs">
+                  <thead>
+                    <tr>
+                      <th style="min-width: 220px;">Module & Resource</th>
+                      <th style="min-width: 130px;">Category</th>
+                      @for (act of permissionActions; track act.key) {
+                        <th style="text-align: center; width: 95px;">
+                          <div class="flex items-center justify-center gap-1">
+                            <span>{{ act.label }}</span>
+                            <button 
+                              type="button" 
+                              class="bg-transparent border-0 text-surface-400 hover:text-primary-600 cursor-pointer p-0.5 rounded text-xs" 
+                              (click)="toggleColumnAll(newRole, act.key)"
+                              [title]="'Toggle ' + act.label + ' column for all modules'"
+                            >
+                              <i class="pi pi-sort-alt"></i>
+                            </button>
+                          </div>
+                        </th>
+                      }
+                      <th style="text-align: center; width: 100px;">Grant Row</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (mod of filteredPermissionModules(); track mod.key) {
+                      <tr [class.row-highlight]="isModuleActive(newRole, mod.key)">
+                        <td class="flex items-center">
+                          <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm bg-surface-100 text-surface-700 shrink-0">
+                              <i [class]="mod.icon || 'pi pi-folder'"></i>
+                            </div>
+                            <div class="flex flex-col gap-0.5">
+                              <span class="font-semibold text-surface-900 text-xs">{{ mod.label }}</span>
+                              <span class="text-[10px] text-surface-400 font-mono">{{ mod.key }}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-surface-100 text-surface-600 border border-transparent whitespace-nowrap" [ngClass]="'cat-' + mod.category.toLowerCase()">{{ mod.category }}</span>
+                        </td>
+                        @for (act of permissionActions; track act.key) {
+                          <td style="text-align: center;">
+                            <input 
+                              type="checkbox" 
+                              class="w-4 h-4 accent-primary-600 cursor-pointer"
+                              [checked]="hasPermission(newRole, mod.key, act.key)"
+                              (change)="togglePermission(newRole, mod.key, act.key)"
+                            />
+                          </td>
+                        }
+                        <td style="text-align: center;">
+                          <button 
+                            type="button" 
+                            class="px-2 py-1 text-xs font-semibold rounded border cursor-pointer transition-all bg-surface-100 text-surface-700 border-surface-300 hover:bg-surface-200"
+                            [class.btn-all-active]="isModuleFullyGranted(newRole, mod.key)"
+                            (click)="toggleAllModulePermissions(newRole, mod.key)"
+                            title="Toggle all 6 privileges for this module"
+                          >
+                            {{ isModuleFullyGranted(newRole, mod.key) ? 'Clear' : 'Toggle' }}
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- VIEW 3: MANAGE PERMISSIONS MATRIX VIEW -->
+        @else if (roleViewMode === 'permissions' && selectedRole) {
+          <div class="flex flex-col gap-4 pb-20">
+            <!-- SUB-NAV / BREADCRUMB -->
+            <div class="flex items-center justify-between gap-3 p-3 bg-surface-0 border border-surface-200 rounded-xl mb-3 flex-wrap">
+              <button type="button" class="inline-flex items-center gap-1.5 text-xs font-semibold text-surface-600 hover:text-surface-900 cursor-pointer bg-transparent border-0" (click)="backToRoleList()">
+                <i class="pi pi-arrow-left"></i> Back to Roles List
+              </button>
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-base text-surface-900">{{ selectedRole.name }}</span>
+                @if (selectedRole.isSystem) {
+                  <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 w-fit mt-0.5"><i class="pi pi-lock"></i> SYSTEM PREDEFINED</span>
+                } @else {
+                  <span class="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 border border-primary-200 w-fit mt-0.5"><i class="pi pi-sparkles"></i> CUSTOM ROLE</span>
+                }
+              </div>
+            </div>
+
+            <!-- ROLE DETAILS / NOTES CARD -->
+            <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+              <div class="flex flex-col gap-3.5">
+                <div class="flex gap-4 items-end flex-wrap">
+                  @if (!selectedRole.isSystem) {
+                    <div class="flex flex-col gap-1.5 mb-4" style="flex: 1; max-width: 320px;">
+                      <label>Role Name *</label>
+                      <input type="text" [(ngModel)]="selectedRole.name" />
+                    </div>
+                  }
+                  <div class="flex flex-col gap-1.5 mb-4" style="flex: 2;">
+                    <label>Role Note / Functional Scope</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="selectedRole.description" 
+                    />
+                  </div>
+                </div>
+
+                <div class="flex flex-col gap-1.5 p-2.5 px-3.5 bg-surface-50 rounded-md border border-surface-200">
+                  <div class="flex items-baseline gap-1.5">
+                    <span class="text-xl font-extrabold text-primary-600">{{ (selectedRole.permissions || []).length }}</span>
+                    <span class="text-xs font-semibold text-surface-600">of {{ totalPrivilegesCount }} Privileges Active ({{ getPrivilegePercentage(selectedRole) }}%)</span>
+                  </div>
+                  <div class="h-1.5 bg-surface-200 rounded-full overflow-hidden w-full">
+                    <div class="h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all duration-300" [style.width.%]="getPrivilegePercentage(selectedRole)"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- MATRIX TOOLBAR -->
+            <div class="flex items-center justify-between gap-3.5 p-3.5 bg-surface-0 border border-surface-200 rounded-xl flex-wrap mb-3 shadow-xs">
+              <div class="relative flex-1 min-w-[200px] max-w-xs">
+                <i class="pi pi-search"></i>
+                <input 
+                  type="text" 
+                  [(ngModel)]="moduleSearchQuery" 
+                />
+                @if (moduleSearchQuery) {
+                  <button class="absolute right-2.5 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-700 text-xs p-1 cursor-pointer bg-transparent border-0" (click)="moduleSearchQuery = ''">
+                    <i class="pi pi-times"></i>
+                  </button>
+                }
+              </div>
+
+              <div class="flex items-center gap-1.5 flex-wrap">
+                @for (cat of categoryOptions; track cat.key) {
+                  <button 
+                    type="button" 
+                    class="px-2.5 py-1 text-xs font-semibold rounded-full border border-surface-200 bg-surface-50 text-surface-600 hover:bg-surface-100 cursor-pointer transition-all" 
+                    [class.active]="selectedCategoryFilter === cat.key" 
+                    (click)="selectedCategoryFilter = cat.key"
+                  >
+                    {{ cat.label }} ({{ cat.count }})
+                  </button>
+                }
+              </div>
+
+              <div class="flex items-center gap-2 flex-wrap">
+                <button type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-surface-100 hover:bg-surface-200 text-surface-700 rounded text-xs font-semibold cursor-pointer border border-surface-300 transition-colors" (click)="grantAllViewOnly(selectedRole)" title="Grant Read-Only View to all modules">
+                  <i class="pi pi-eye"></i> View Only
+                </button>
+                <button type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-surface-100 hover:bg-surface-200 text-surface-700 rounded text-xs font-semibold cursor-pointer border border-surface-300 transition-colors" (click)="grantFullAccess(selectedRole)" title="Grant all actions across all modules">
+                  <i class="pi pi-check-circle"></i> Grant All
+                </button>
+                <button type="button" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded text-xs font-semibold cursor-pointer border border-rose-200 transition-colors" (click)="revokeAllPermissions(selectedRole)" title="Clear all granted privileges">
+                  <i class="pi pi-ban"></i> Revoke All
+                </button>
+              </div>
+            </div>
+
+            <!-- PERMISSION MATRIX TABLE -->
+            <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+              <div class="overflow-x-auto border border-surface-200 rounded-md mt-3">
+                <table class="w-full border-collapse text-xs">
+                  <thead>
+                    <tr>
+                      <th style="min-width: 220px;">Module & Resource</th>
+                      <th style="min-width: 130px;">Category</th>
+                      @for (act of permissionActions; track act.key) {
+                        <th style="text-align: center; width: 95px;">
+                          <div class="flex items-center justify-center gap-1">
+                            <span>{{ act.label }}</span>
+                            <button 
+                              type="button" 
+                              class="bg-transparent border-0 text-surface-400 hover:text-primary-600 cursor-pointer p-0.5 rounded text-xs" 
+                              (click)="toggleColumnAll(selectedRole, act.key)"
+                              [title]="'Toggle ' + act.label + ' column for all modules'"
+                            >
+                              <i class="pi pi-sort-alt"></i>
+                            </button>
+                          </div>
+                        </th>
+                      }
+                      <th style="text-align: center; width: 100px;">Grant Row</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (mod of filteredPermissionModules(); track mod.key) {
+                      <tr [class.row-highlight]="isModuleActive(selectedRole, mod.key)">
+                        <td class="flex items-center">
+                          <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm bg-surface-100 text-surface-700 shrink-0">
+                              <i [class]="mod.icon || 'pi pi-folder'"></i>
+                            </div>
+                            <div class="flex flex-col gap-0.5">
+                              <span class="font-semibold text-surface-900 text-xs">{{ mod.label }}</span>
+                              <span class="text-[10px] text-surface-400 font-mono">{{ mod.key }}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-surface-100 text-surface-600 border border-transparent whitespace-nowrap" [ngClass]="'cat-' + mod.category.toLowerCase()">{{ mod.category }}</span>
+                        </td>
+                        @for (act of permissionActions; track act.key) {
+                          <td style="text-align: center;">
+                            <input 
+                              type="checkbox" 
+                              class="w-4 h-4 accent-primary-600 cursor-pointer"
+                              [checked]="hasPermission(selectedRole, mod.key, act.key)"
+                              (change)="togglePermission(selectedRole, mod.key, act.key)"
+                            />
+                          </td>
+                        }
+                        <td style="text-align: center;">
+                          <button 
+                            type="button" 
+                            class="px-2 py-1 text-xs font-semibold rounded border cursor-pointer transition-all bg-surface-100 text-surface-700 border-surface-300 hover:bg-surface-200"
+                            [class.btn-all-active]="isModuleFullyGranted(selectedRole, mod.key)"
+                            (click)="toggleAllModulePermissions(selectedRole, mod.key)"
+                            title="Toggle all 6 privileges for this module"
+                          >
+                            {{ isModuleFullyGranted(selectedRole, mod.key) ? 'Clear' : 'Toggle' }}
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                    @if (filteredPermissionModules().length === 0) {
+                      <tr>
+                        <td colspan="8" class="py-10 text-center">
+                          <div class="flex flex-col items-center justify-center gap-2">
+                            <i class="pi pi-search empty-icon"></i>
+                            <h4>No modules match your filter</h4>
+                            <p>Adjust your search query or category filter above.</p>
+                            <button class="inline-flex items-center gap-1.5 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-3 py-1 rounded-sm font-semibold text-xs cursor-pointer transition-colors duration-150" (click)="moduleSearchQuery = ''; selectedCategoryFilter = 'ALL'">
+                              Reset Filter
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- STICKY BOTTOM SAVE ACTIONS -->
+            <div class="fixed bottom-0 left-60 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-surface-200 py-3.5 px-8 flex items-center justify-between shadow-lg">
+              <div class="flex items-center gap-2 text-sm text-surface-700">
+                <i class="pi pi-check-circle"></i>
+                <span>Role: <strong>{{ selectedRole.name }}</strong> &bull; <strong>{{ (selectedRole.permissions || []).length }}</strong> active privileges</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <button type="button" class="inline-flex items-center gap-2 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-4 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="backToRoleList()">Back to Roles</button>
+                <button 
+                  type="button" 
+                  class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4.5 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" 
+                  (click)="saveRolePermissions(selectedRole)" 
+                  [disabled]="savingRole"
+                >
+                  <i class="pi pi-check"></i> {{ savingRole ? 'Saving...' : 'Save Role & Privileges' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      }
+
+      <!-- TAB 2.5: USERS -->
+      @if (activeTab === 'users') {
+        <div class="bg-white border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+          <!-- FILTER TOOLBAR -->
+          <div class="p-4 flex justify-between items-center border-b border-surface-200 gap-4 flex-wrap">
+            <div class="relative flex-1 min-w-[260px] max-w-sm">
+              <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm pointer-events-none"></i>
+              <input
+                type="text"
+                placeholder="Search users by name, email, phone..."
+                [(ngModel)]="userSearchQuery"
+                class="w-full !pl-9 !pr-8 !py-2 border border-surface-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+              />
+              @if (userSearchQuery) {
+                <button class="absolute right-2.5 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-700 text-xs p-1 cursor-pointer bg-transparent border-0" (click)="userSearchQuery = ''">
+                  <i class="pi pi-times"></i>
+                </button>
+              }
+            </div>
+
+            <div class="flex items-center gap-2.5 flex-nowrap shrink-0">
+              <select [(ngModel)]="userRoleFilter" class="!w-auto min-w-[160px] px-3 py-2 border border-surface-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary-600 shrink-0">
+                <option value="ALL">All Roles</option>
+                @for (r of roles; track r.id) {
+                  <option [value]="r.id">{{ r.name }}</option>
+                }
+              </select>
+
+              <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap" (click)="openNewUserModal()">
+                <i class="pi pi-user-plus"></i> Add User
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+                <tr>
+                  <th class="px-4 py-3">User Name</th>
+                  <th class="px-4 py-3">Email Address</th>
+                  <th class="px-4 py-3">Phone</th>
+                  <th class="px-4 py-3" style="min-width: 200px;">Assigned Role</th>
+                  <th class="px-4 py-3">Status</th>
+                  <th class="px-4 py-3">Created On</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-surface-100">
+                @if (filteredUsers().length === 0) {
+                  <tr>
+                    <td colspan="6" class="text-center py-10 text-surface-500">
+                      No users found. Click "Add User" to invite a team member.
+                    </td>
+                  </tr>
+                }
+                @for (u of filteredUsers(); track u.id) {
+                  <tr class="hover:bg-surface-50/75 transition-colors">
+                    <td class="px-4 py-3">
+                      <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-full bg-surface-100 text-primary-700 flex items-center justify-center text-xs font-bold shrink-0">
+                          {{ u.fullName ? u.fullName.charAt(0).toUpperCase() : 'U' }}
+                        </div>
+                        <span class="font-bold text-surface-900">{{ u.fullName }}</span>
+                      </div>
+                    </td>
+                    <td class="px-4 py-3 text-surface-600">{{ u.email }}</td>
+                    <td class="px-4 py-3 text-surface-600">{{ u.phone || '—' }}</td>
+                    <td class="px-4 py-3">
+                      <select 
+                        class="px-2.5 py-1.5 text-xs border border-surface-300 rounded-lg bg-white text-surface-800 font-medium outline-none focus:border-primary-500" 
+                        [(ngModel)]="u.roleId"
+                        (change)="changeUserRole(u, $event)"
+                      >
+                        <option [value]="null">-- No Role Assigned --</option>
+                        <option value="">-- No Role Assigned --</option>
+                        @for (r of roles; track r.id) {
+                          <option [value]="r.id">{{ r.name }}</option>
+                        }
+                      </select>
+                    </td>
+                    <td class="px-4 py-3">
+                      <button 
+                        type="button" 
+                        class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold cursor-pointer border transition-colors" 
+                        [ngClass]="u.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-surface-100 text-surface-500 border-surface-200'"
+                        (click)="toggleUserStatus(u)"
+                      >
+                        {{ u.isActive ? 'Active' : 'Inactive' }}
+                      </button>
+                    </td>
+                    <td class="px-4 py-3 font-mono text-xs text-surface-500">{{ u.createdAt | date:'mediumDate' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 3: DEFAULT LEDGER MAPPINGS (3 FIELDS PER LINE) -->
+      @if (activeTab === 'mappings') {
+        <div class="flex flex-col gap-5">
+          <!-- SECTION 1: SALES & PURCHASES (3 FIELDS PER LINE) -->
+          <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+            <div class="text-lg font-bold text-surface-900 mb-4">Core Sales & Purchase Accounts</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Default Sales Account (Income) *</label>
+                <select [(ngModel)]="settings.defaultSalesLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }} ({{ l.ledgerGroup?.name }})</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Default Sales Return Account (Inward)</label>
+                <select [(ngModel)]="settings.defaultSalesReturnLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }} ({{ l.ledgerGroup?.name }})</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Default Purchase Account (Expense) *</label>
+                <select [(ngModel)]="settings.defaultPurchaseLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }} ({{ l.ledgerGroup?.name }})</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Default Purchase Return Account (Outward)</label>
+                <select [(ngModel)]="settings.defaultPurchaseReturnLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }} ({{ l.ledgerGroup?.name }})</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Default Round-Off Ledger</label>
+                <select [(ngModel)]="settings.defaultRoundOffLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Default Freight & Forwarding Ledger</label>
+                <select [(ngModel)]="settings.defaultFreightLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 2: GST STATUTORY TAX LEDGERS (3 FIELDS PER LINE) -->
+          <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+            <div class="text-lg font-bold text-surface-900 mb-4">GST Statutory Input & Output Tax Ledgers</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Input CGST Ledger (Asset/Credit)</label>
+                <select [(ngModel)]="settings.defaultCgstInputLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Output CGST Ledger (Liability)</label>
+                <select [(ngModel)]="settings.defaultCgstOutputLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Input SGST Ledger (Asset/Credit)</label>
+                <select [(ngModel)]="settings.defaultSgstInputLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Output SGST Ledger (Liability)</label>
+                <select [(ngModel)]="settings.defaultSgstOutputLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Input IGST Ledger (Asset/Credit)</label>
+                <select [(ngModel)]="settings.defaultIgstInputLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Output IGST Ledger (Liability)</label>
+                <select [(ngModel)]="settings.defaultIgstOutputLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Input Cess Ledger (Asset/Credit)</label>
+                <select [(ngModel)]="settings.defaultCessInputLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Output Cess Ledger (Liability)</label>
+                <select [(ngModel)]="settings.defaultCessOutputLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Tax Round-Off Adjustment Ledger</label>
+                <select [(ngModel)]="settings.defaultRoundOffLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 3: LIQUID SETTLEMENT & ADJUSTMENTS (3 FIELDS PER LINE) -->
+          <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+            <div class="text-lg font-bold text-surface-900 mb-4">Settlement Funds, Cash & Bank Accounts</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Default Cash-in-Hand Ledger</label>
+                <select [(ngModel)]="settings.defaultCashLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Default Operating Bank Ledger</label>
+                <select [(ngModel)]="settings.defaultBankLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Default Discount Allowed (Expense)</label>
+                <select [(ngModel)]="settings.defaultDiscountAllowedLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Default Discount Received (Income)</label>
+                <select [(ngModel)]="settings.defaultDiscountLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Default Round-Off Ledger</label>
+                <select [(ngModel)]="settings.defaultRoundOffLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Default Freight & Forwarding Ledger</label>
+                <select [(ngModel)]="settings.defaultFreightLedgerId">
+                  <option [ngValue]="null">-- Select Ledger --</option>
+                  @for (l of ledgers; track l.id) {
+                    <option [value]="l.id">{{ l.name }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 4: VOUCHER NUMBER CONFIGURATION -->
+      @if (activeTab === 'vouchers') {
+        <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+          <div class="flex justify-between items-center py-4 px-5 border-b border-surface-200">
+            <div class="text-lg font-bold text-surface-900 mb-4">Voucher Numbering Series & Rules</div>
+          </div>
+
+          <div class="overflow-x-auto w-full">
+            <table class="w-full border-collapse text-[13px]">
+              <thead>
+                <tr>
+                  <th style="min-width: 170px;">Voucher Type</th>
+                  <th style="width: 110px;">Prefix</th>
+                  <th style="width: 95px;">Start No.</th>
+                  <th style="width: 100px;">Padding</th>
+                  <th style="width: 120px;">Suffix</th>
+                  <th style="width: 130px;">Reset Cycle</th>
+                  <th style="width: 90px; text-align: center;">Auto</th>
+                  <th style="min-width: 160px;">Live Sample Preview</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (v of voucherKeys; track v.key) {
+                  <tr>
+                    <td class="font-bold">
+                      <div class="flex items-center gap-2">
+                        <span class="text-[13px] font-semibold text-surface-800">{{ v.name }}</span>
+                        <span class="voucher-code-badge font-mono">{{ v.key }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <input 
+                        type="text" 
+                        class="w-full px-2.5 py-1.5 text-[13px] border border-surface-300 rounded-md bg-white focus:border-primary-500 focus:outline-none" 
+                        [(ngModel)]="getVoucherItem(v.key).prefix" 
+                      />
+                    </td>
+                    <td>
+                      <input 
+                        type="number" 
+                        class="w-full px-2.5 py-1.5 text-[13px] border border-surface-300 rounded-md bg-white focus:border-primary-500 focus:outline-none" 
+                        [(ngModel)]="getVoucherItem(v.key).startingNumber" 
+                        min="1"
+                      />
+                    </td>
+                    <td>
+                      <select class="w-full px-2.5 py-1.5 text-[13px] border border-surface-300 rounded-md bg-white focus:border-primary-500 focus:outline-none" [(ngModel)]="getVoucherItem(v.key).padding">
+                        <option [value]="3">3 (001)</option>
+                        <option [value]="4">4 (0001)</option>
+                        <option [value]="5">5 (00001)</option>
+                        <option [value]="6">6 (000001)</option>
+                      </select>
+                    </td>
+                    <td>
+                      <input 
+                        type="text" 
+                        class="w-full px-2.5 py-1.5 text-[13px] border border-surface-300 rounded-md bg-white focus:border-primary-500 focus:outline-none" 
+                        [(ngModel)]="getVoucherItem(v.key).suffix" 
+                      />
+                    </td>
+                    <td>
+                      <select class="w-full px-2.5 py-1.5 text-[13px] border border-surface-300 rounded-md bg-white focus:border-primary-500 focus:outline-none" [(ngModel)]="getVoucherItem(v.key).resetFrequency">
+                        <option value="YEARLY">Yearly (FY)</option>
+                        <option value="MONTHLY">Monthly</option>
+                        <option value="NEVER">Continuous</option>
+                      </select>
+                    </td>
+                    <td style="text-align: center;">
+                      <input 
+                        type="checkbox" 
+                        class="w-4 h-4 accent-primary-600 cursor-pointer" 
+                        [(ngModel)]="getVoucherItem(v.key).isAuto" 
+                      />
+                    </td>
+                    <td>
+                      <span class="voucher-preview-pill font-mono">
+                        {{ getVoucherPreview(v.key) }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 5: SALES CONFIGURATION -->
+      @if (activeTab === 'sales') {
+        <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            <!-- COLUMN 1: INVOICING & CREDIT PARAMETERS -->
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Default Customer Credit Period (Days)</label>
+                  <input 
+                    type="number" 
+                    [(ngModel)]="settings.salesSettings.defaultCreditPeriod" 
+                    min="0"
+                    placeholder="e.g. 30"
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>E-Way Bill Generation Threshold (₹)</label>
+                  <input 
+                    type="number" 
+                    [(ngModel)]="settings.salesSettings.ewayBillThreshold" 
+                    min="0"
+                    placeholder="e.g. 50000"
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Customer Credit Limit Enforcement</label>
+                  <select [(ngModel)]="settings.salesSettings.creditLimitAction">
+                    <option value="WARN">Show Warning Alert on Exceeding</option>
+                    <option value="BLOCK">Strict Block (Prevent Invoice Creation)</option>
+                    <option value="IGNORE">No Verification</option>
+                  </select>
+                </div>
+
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Default Sales Invoice Print Template</label>
+                  <select [(ngModel)]="settings.salesSettings.printTemplate">
+                    <option value="TAX_INVOICE_GST">Standard GST Tax Invoice (A4)</option>
+                    <option value="COMPACT_2COL">Compact 2-Column Template</option>
+                    <option value="THERMAL_80MM">Thermal POS Receipt (80mm)</option>
+                    <option value="EXPORT_INVOICE">Export & Commercial Invoice</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- COLUMN 2: SALES RULES, POLICIES & TERMS -->
+            <div class="flex flex-col gap-4">
+              <div class="toggles-sublist no-top-border">
+                <div class="flex justify-between items-center py-2.5 bg-transparent border-0">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-sm font-semibold text-surface-800">Automatic Invoice Round-Off</span>
+                    <span class="text-xs text-surface-500">Automatically round invoice totals to nearest rupee</span>
+                  </div>
+                  <label class="zeno-switch shrink-0" title="Automatic Invoice Round-Off">
+                    <input type="checkbox" [(ngModel)]="settings.salesSettings.enableRoundOff" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <div class="flex justify-between items-center py-2.5 bg-transparent border-0">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-sm font-semibold text-surface-800">Allow Negative Stock Invoicing</span>
+                    <span class="text-xs text-surface-500">Generate sales invoices even when stock is zero</span>
+                  </div>
+                  <label class="zeno-switch shrink-0" title="Allow Negative Stock Invoicing">
+                    <input type="checkbox" [(ngModel)]="settings.salesSettings.allowNegativeStockSale" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <div class="flex justify-between items-center py-2.5 bg-transparent border-0">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-sm font-semibold text-surface-800">Allow Billing Below Purchase Cost</span>
+                    <span class="text-xs text-surface-500">Permit invoicing items below latest acquisition price</span>
+                  </div>
+                  <label class="zeno-switch shrink-0" title="Allow Billing Below Purchase Cost">
+                    <input type="checkbox" [(ngModel)]="settings.salesSettings.allowSalesBelowCost" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group full-width-field" style="margin-top: 14px;">
+                <label>Default Terms & Conditions (Appended on Invoices)</label>
+                <textarea 
+                  rows="4" 
+                  [(ngModel)]="settings.salesSettings.termsAndConditions"
+                  placeholder="Enter standard payment terms, warranty info, or conditions..."
+                ></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 6: PURCHASE CONFIGURATION -->
+      @if (activeTab === 'purchase') {
+        <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            <!-- COLUMN 1: PROCUREMENT PARAMETERS -->
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>PO Approval Authority Threshold (₹)</label>
+                  <input 
+                    type="number" 
+                    [(ngModel)]="settings.purchaseSettings.poApprovalThreshold" 
+                    min="0"
+                    placeholder="e.g. 100000"
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Maximum Price Variance Tolerance (%)</label>
+                  <input 
+                    type="number" 
+                    [(ngModel)]="settings.purchaseSettings.strictPriceVariancePercent" 
+                    min="0" 
+                    max="100"
+                    placeholder="e.g. 5"
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Default Vendor Credit Period (Days)</label>
+                  <input 
+                    type="number" 
+                    [(ngModel)]="settings.purchaseSettings.defaultVendorCreditDays" 
+                    min="0"
+                    placeholder="e.g. 45"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- COLUMN 2: WORKFLOW & VERIFICATION TOGGLES -->
+            <div class="flex flex-col gap-4">
+              <div class="toggles-sublist no-top-border">
+                <div class="flex justify-between items-center py-2.5 bg-transparent border-0">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-sm font-semibold text-surface-800">Enforce Three-Way Matching</span>
+                    <span class="text-xs text-surface-500">Reconcile PO ↔ GRN ↔ Vendor Bill automatically</span>
+                  </div>
+                  <label class="zeno-switch shrink-0" title="Enforce Three-Way Matching">
+                    <input type="checkbox" [(ngModel)]="settings.purchaseSettings.enforceThreeWayMatch" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <div class="flex justify-between items-center py-2.5 bg-transparent border-0">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-sm font-semibold text-surface-800">Auto-Generate GRN on PO Approval</span>
+                    <span class="text-xs text-surface-500">Create goods receipt voucher when purchase order is approved</span>
+                  </div>
+                  <label class="zeno-switch shrink-0" title="Auto-Generate GRN on PO Approval">
+                    <input type="checkbox" [(ngModel)]="settings.purchaseSettings.autoGrnFromPo" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <div class="flex justify-between items-center py-2.5 bg-transparent border-0">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-sm font-semibold text-surface-800">Auto-Generate Vendor Bill on GRN Completion</span>
+                    <span class="text-xs text-surface-500">Create draft purchase bill on receipt of items</span>
+                  </div>
+                  <label class="zeno-switch shrink-0" title="Auto-Generate Vendor Bill on GRN Completion">
+                    <input type="checkbox" [(ngModel)]="settings.purchaseSettings.autoInvoiceFromGrn" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <div class="flex justify-between items-center py-2.5 bg-transparent border-0">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-sm font-semibold text-surface-800">Auto ITC Reversal on Debit Notes</span>
+                    <span class="text-xs text-surface-500">Adjust input tax credit automatically on return debit notes</span>
+                  </div>
+                  <label class="zeno-switch shrink-0" title="Auto ITC Reversal on Debit Notes">
+                    <input type="checkbox" [(ngModel)]="settings.purchaseSettings.debitNoteAutoItcReversal" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 7: INVENTORY CONFIGURATION -->
+      @if (activeTab === 'inventory') {
+        <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            <!-- COLUMN 1: VALUATION & GODOWN POLICIES -->
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col gap-4" style="margin-bottom: 14px;">
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Default Stock Valuation Method</label>
+                  <select [(ngModel)]="settings.inventorySettings.valuationMethod">
+                    <option value="FIFO">FIFO (First In, First Out)</option>
+                    <option value="WEIGHTED_AVG">Weighted Average Cost (WAC)</option>
+                  </select>
+                </div>
+
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Negative Stock Enforcement</label>
+                  <select [(ngModel)]="settings.inventorySettings.allowNegativeStock">
+                    <option [ngValue]="false">Strict Block (Prevent negative stock)</option>
+                    <option [ngValue]="true">Allowed with Warning Notification</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="flex flex-col gap-3 pt-0 border-t-0">
+                <div class="flex justify-between items-center py-2.5 bg-transparent border-0">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-sm font-semibold text-surface-800">Auto-Generate Product Barcodes</span>
+                    <span class="text-xs text-surface-500">Generate EAN-13 barcodes on item creation</span>
+                  </div>
+                  <label class="zeno-switch shrink-0" title="Auto-Generate Product Barcodes">
+                    <input type="checkbox" [(ngModel)]="settings.inventorySettings.autoGenerateBarcodes" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <div class="flex justify-between items-center py-2.5 bg-transparent border-0">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-sm font-semibold text-surface-800">Two-Step Transfer Verification</span>
+                    <span class="text-xs text-surface-500">Require dispatch and receipt confirmation between godowns</span>
+                  </div>
+                  <label class="zeno-switch shrink-0" title="Two-Step Transfer Verification">
+                    <input type="checkbox" [(ngModel)]="settings.inventorySettings.godownTransferVerification" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- COLUMN 2: TRACKING & ALERT CONTROLS -->
+            <div class="flex flex-col gap-4">
+              <div class="toggles-sublist no-top-border">
+                <div class="flex justify-between items-center py-2.5 bg-transparent border-0">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-sm font-semibold text-surface-800">Mandatory Batch & Lot Tracking</span>
+                    <span class="text-xs text-surface-500">Enforce batch numbers and manufacturing/expiry dates</span>
+                  </div>
+                  <label class="zeno-switch shrink-0" title="Mandatory Batch & Lot Tracking">
+                    <input type="checkbox" [(ngModel)]="settings.inventorySettings.mandatoryBatchTracking" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <div class="flex justify-between items-center py-2.5 bg-transparent border-0">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-sm font-semibold text-surface-800">Mandatory Serial / IMEI Tracking</span>
+                    <span class="text-xs text-surface-500">Track unique individual serial numbers per unit</span>
+                  </div>
+                  <label class="zeno-switch shrink-0" title="Mandatory Serial / IMEI Tracking">
+                    <input type="checkbox" [(ngModel)]="settings.inventorySettings.mandatorySerialNumber" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <div class="flex justify-between items-center py-2.5 bg-transparent border-0">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-sm font-semibold text-surface-800">Low Stock Alert Notifications</span>
+                    <span class="text-xs text-surface-500">Trigger warnings when stock drops below safety reorder level</span>
+                  </div>
+                  <label class="zeno-switch shrink-0" title="Low Stock Alert Notifications">
+                    <input type="checkbox" [(ngModel)]="settings.inventorySettings.lowStockAlertEnabled" />
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- TAB 8: GST & TAX MANAGEMENT (COMBINED HIERARCHY + SLABS IN SAME PAGE WITH TABS) -->
+      @if (activeTab === 'gst' || activeTab === 'taxes') {
+        <div class="flex flex-col gap-4">
+          <!-- SUB-NAV: HIERARCHY VS SLABS MASTER -->
+          <div class="flex justify-between items-center bg-white p-2.5 px-4 rounded-xl border border-surface-200 shadow-xs mb-4 flex-wrap gap-3">
+            <div class="flex gap-2 flex-wrap">
+              <button 
+                class="inline-flex items-center gap-2 px-4 py-1.5 rounded-sm border border-transparent bg-transparent text-surface-600 text-[13px] font-semibold cursor-pointer transition-colors hover:bg-surface-100 hover:text-surface-900" 
+                [class.active]="gstSubTab === 'hierarchy'" 
+                (click)="gstSubTab = 'hierarchy'"
+              >
+                <i class="pi pi-sitemap"></i> GST Resolution Hierarchy
+              </button>
+              <button 
+                class="inline-flex items-center gap-2 px-4 py-1.5 rounded-sm border border-transparent bg-transparent text-surface-600 text-[13px] font-semibold cursor-pointer transition-colors hover:bg-surface-100 hover:text-surface-900" 
+                [class.active]="gstSubTab === 'slabs'" 
+                (click)="gstSubTab = 'slabs'"
+              >
+                <i class="pi pi-percentage"></i> Tax Slabs Master ({{ taxMasters.length }})
+              </button>
+            </div>
+            @if (gstSubTab === 'slabs') {
+              <button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4.5 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="openTaxModal()">
+                <i class="pi pi-plus"></i> Add Tax Slab
+              </button>
+            }
+          </div>
+
+          <!-- SUB-MODE 1: GST RESOLUTION HIERARCHY -->
+          @if (gstSubTab === 'hierarchy') {
+            <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+              <div class="text-lg font-bold text-surface-900 mb-4">GST Active Resolution Hierarchy</div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div 
+                  class="flex gap-3.5 p-4.5 rounded-xl bg-surface-0 border-2 border-surface-200 hover:border-primary-300 cursor-pointer transition-all" 
+                  [class.selected]="settings.gstActiveLevel === 'COMPANY'"
+                  (click)="setGstLevel('COMPANY')"
+                >
+                  <div class="radio-indicator">
+                    <i class="pi" [ngClass]="settings.gstActiveLevel === 'COMPANY' ? 'pi-check-circle' : 'pi-circle'"></i>
+                  </div>
+                  <div class="level-info">
+                    <span class="font-bold text-[15px] text-surface-900 block mb-1">Company Level</span>
+                    <span class="inline-block text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full mb-2 bg-indigo-50 text-indigo-700">Global Fallback</span>
+                    <p>Flat tax slab applied globally to all transactions unless overridden.</p>
+                  </div>
+                </div>
+
+                <div 
+                  class="flex gap-3.5 p-4.5 rounded-xl bg-surface-0 border-2 border-surface-200 hover:border-primary-300 cursor-pointer transition-all" 
+                  [class.selected]="settings.gstActiveLevel === 'ITEM_GROUP'"
+                  (click)="setGstLevel('ITEM_GROUP')"
+                >
+                  <div class="radio-indicator">
+                    <i class="pi" [ngClass]="settings.gstActiveLevel === 'ITEM_GROUP' ? 'pi-check-circle' : 'pi-circle'"></i>
+                  </div>
+                  <div class="level-info">
+                    <span class="font-bold text-[15px] text-surface-900 block mb-1">Item Group Level</span>
+                    <span class="inline-block text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full mb-2 bg-blue-50 text-blue-700">Recommended for Retail</span>
+                    <p>Tax slab assigned by category group (e.g. Raw Materials, Electronics, Apparel).</p>
+                  </div>
+                </div>
+
+                <div 
+                  class="flex gap-3.5 p-4.5 rounded-xl bg-surface-0 border-2 border-surface-200 hover:border-primary-300 cursor-pointer transition-all" 
+                  [class.selected]="settings.gstActiveLevel === 'ITEM_CATEGORY'"
+                  (click)="setGstLevel('ITEM_CATEGORY')"
+                >
+                  <div class="radio-indicator">
+                    <i class="pi" [ngClass]="settings.gstActiveLevel === 'ITEM_CATEGORY' ? 'pi-check-circle' : 'pi-circle'"></i>
+                  </div>
+                  <div class="level-info">
+                    <span class="font-bold text-[15px] text-surface-900 block mb-1">Item Category Level</span>
+                    <span class="inline-block text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full mb-2 bg-amber-50 text-amber-800">Mid Granularity</span>
+                    <p>Specific sub-categories inherit standardized statutory GST rates.</p>
+                  </div>
+                </div>
+
+                <div 
+                  class="flex gap-3.5 p-4.5 rounded-xl bg-surface-0 border-2 border-surface-200 hover:border-primary-300 cursor-pointer transition-all" 
+                  [class.selected]="settings.gstActiveLevel === 'ITEM'"
+                  (click)="setGstLevel('ITEM')"
+                >
+                  <div class="radio-indicator">
+                    <i class="pi" [ngClass]="settings.gstActiveLevel === 'ITEM' ? 'pi-check-circle' : 'pi-circle'"></i>
+                  </div>
+                  <div class="level-info">
+                    <span class="font-bold text-[15px] text-surface-900 block mb-1">Item Master Level (Default)</span>
+                    <span class="inline-block text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full mb-2 bg-emerald-50 text-emerald-800">Maximum Precision</span>
+                    <p>Every individual SKU defines its own HSN Code, GST %, and Cess %.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          } @else {
+            <!-- SUB-MODE 2: TAX SLABS MASTER -->
+            <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+              <div class="flex justify-between items-center py-4 px-5 border-b border-surface-200">
+                <div class="text-lg font-bold text-surface-900 mb-4">Statutory GST Tax Slabs</div>
+              </div>
+
+              <div class="overflow-x-auto w-full">
+                <table class="w-full border-collapse text-[13px]">
+                  <thead>
+                    <tr>
+                      <th>Tax Slab Name</th>
+                      <th>Total Rate (%)</th>
+                      <th>CGST Rate</th>
+                      <th>SGST Rate</th>
+                      <th>IGST Rate</th>
+                      <th>Cess Rate</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (tax of taxMasters; track tax.id) {
+                      <tr>
+                        <td class="font-bold">{{ tax.taxName }}</td>
+                        <td><span class="badge-pill badge-rate">{{ tax.taxRate }}%</span></td>
+                        <td>{{ tax.cgstRate || (tax.taxRate / 2) }}%</td>
+                        <td>{{ tax.sgstRate || (tax.taxRate / 2) }}%</td>
+                        <td>{{ tax.igstRate || tax.taxRate }}%</td>
+                        <td>{{ tax.cessRate || 0 }}%</td>
+                        <td class="text-muted">{{ tax.description || '—' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- TAB: COMPANY PROFILE (TABBED CONFIGURATION) -->
+      @if (activeTab === 'company') {
+        <div class="flex flex-col gap-4">
+          <!-- SUB-TABS NAVIGATION -->
+          <div class="flex flex-wrap gap-2 bg-white p-2 px-3 rounded-xl border border-surface-200 shadow-xs">
+            <button 
+              type="button" 
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-transparent bg-transparent text-surface-600 font-semibold text-xs cursor-pointer transition-all hover:bg-surface-100 hover:text-surface-900" 
+              [class.active]="companySubTab === 'basic'" 
+              (click)="companySubTab = 'basic'"
+            >
+              <i class="pi pi-id-card"></i>
+              <span>Basic Details</span>
+            </button>
+            <button 
+              type="button" 
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-transparent bg-transparent text-surface-600 font-semibold text-xs cursor-pointer transition-all hover:bg-surface-100 hover:text-surface-900" 
+              [class.active]="companySubTab === 'address'" 
+              (click)="companySubTab = 'address'"
+            >
+              <i class="pi pi-map-marker"></i>
+              <span>Address Details</span>
+            </button>
+            <button 
+              type="button" 
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-transparent bg-transparent text-surface-600 font-semibold text-xs cursor-pointer transition-all hover:bg-surface-100 hover:text-surface-900" 
+              [class.active]="companySubTab === 'gst'" 
+              (click)="companySubTab = 'gst'"
+            >
+              <i class="pi pi-percentage"></i>
+              <span>GST & Tax Registration</span>
+            </button>
+            <button 
+              type="button" 
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-transparent bg-transparent text-surface-600 font-semibold text-xs cursor-pointer transition-all hover:bg-surface-100 hover:text-surface-900" 
+              [class.active]="companySubTab === 'contact'" 
+              (click)="companySubTab = 'contact'"
+            >
+              <i class="pi pi-phone"></i>
+              <span>Contact Information</span>
+            </button>
+            <button 
+              type="button" 
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-transparent bg-transparent text-surface-600 font-semibold text-xs cursor-pointer transition-all hover:bg-surface-100 hover:text-surface-900" 
+              [class.active]="companySubTab === 'logo'" 
+              (click)="companySubTab = 'logo'"
+            >
+              <i class="pi pi-image"></i>
+              <span>Logo & Branding</span>
+            </button>
+          </div>
+
+          <!-- TAB 1: BASIC DETAILS -->
+          @if (companySubTab === 'basic') {
+            <div class="bg-white border border-surface-200 rounded-xl p-5 shadow-xs">
+              <div class="text-base font-bold text-surface-900 mb-4 pb-3 border-b border-surface-200 flex items-center gap-2">
+                <i class="pi pi-id-card text-primary-600"></i>
+                <span>Basic Organizational Information</span>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- ROW 1: IDENTIFIERS -->
+                <div class="flex flex-col gap-1.5">
+                  <label>Company Legal Name <span class="required">*</span></label>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="companyForm.legalName" 
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                  <label>Trade / Brand Name</label>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="companyForm.tradeName" 
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                  <label>Company Code <span class="required">*</span></label>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="companyForm.code" 
+                    class="font-mono uppercase" 
+                  />
+                </div>
+
+                <!-- ROW 2: ENTITY, INDUSTRY & CURRENCY -->
+                <div class="flex flex-col gap-1.5">
+                  <label>Business Entity Type</label>
+                  <select [(ngModel)]="companyForm.businessType">
+                    <option value="Private Limited Company">Private Limited Company</option>
+                    <option value="Public Limited Company">Public Limited Company</option>
+                    <option value="Partnership Firm">Partnership Firm</option>
+                    <option value="Limited Liability Partnership (LLP)">Limited Liability Partnership (LLP)</option>
+                    <option value="Sole Proprietorship">Sole Proprietorship</option>
+                    <option value="One Person Company (OPC)">One Person Company (OPC)</option>
+                    <option value="Trust / Society / Non-Profit">Trust / Society / Non-Profit</option>
+                  </select>
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                  <label>Industry Type</label>
+                  <select [(ngModel)]="companyForm.industryType">
+                    <option value="">-- Select Industry --</option>
+                    <option value="pharmacy">Pharmacy</option>
+                    <option value="garments">Garments</option>
+                    <option value="electronic">Electronic</option>
+                    <option value="General store">General store</option>
+                    <option value="Hardware">Hardware</option>
+                    <option value="Stationary">Stationary</option>
+                    <option value="Jwellery shop">Jwellery shop</option>
+                    <option value="Others">Others</option>
+                  </select>
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                  <label>Base Currency Code</label>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="companyForm.currencyCode" 
+                    class="font-mono" 
+                  />
+                </div>
+
+                <!-- ROW 3: FINANCIAL PERIODS & BOOKS -->
+                <div class="flex flex-col gap-1.5">
+                  <label>Financial Year Starts From <span class="required">*</span></label>
+                  <input 
+                    type="date" 
+                    [(ngModel)]="companyForm.financialYearStart" 
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                  <label>Financial Year Ends On <span class="required">*</span></label>
+                  <input 
+                    type="date" 
+                    [(ngModel)]="companyForm.financialYearEnd" 
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                  <label>Books Begin From <span class="required">*</span></label>
+                  <input 
+                    type="date" 
+                    [(ngModel)]="companyForm.booksBeginFrom" 
+                  />
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- TAB 2: ADDRESS DETAILS -->
+          @if (companySubTab === 'address') {
+            <div class="flex flex-col gap-5 w-full">
+              <!-- BILLING ADDRESS CARD -->
+              <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+                <div class="text-lg font-bold text-surface-900 mb-4"><i class="pi pi-home"></i> Registered Billing Address</div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Address Line 1 <span class="required">*</span></label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="companyForm.billingAddress.addressLine1" 
+                    />
+                  </div>
+
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Address Line 2</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="companyForm.billingAddress.addressLine2" 
+                    />
+                  </div>
+
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>City <span class="required">*</span></label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="companyForm.billingAddress.city" 
+                    />
+                  </div>
+
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>State <span class="required">*</span></label>
+                    <select [(ngModel)]="companyForm.billingAddress.state" (change)="onCompanyBillingStateChange()">
+                      <option value="">-- Select State --</option>
+                      @for (s of indianStates; track s.code) {
+                        <option [value]="s.name">{{ s.name }} ({{ s.code }})</option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Pincode / Postal Code <span class="required">*</span></label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="companyForm.billingAddress.pincode" 
+                      class="font-mono" 
+                    />
+                  </div>
+
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Country</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="companyForm.billingAddress.country" 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- SHIPPING ADDRESS CARD -->
+              <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+                <div class="flex justify-between items-center pb-4 mb-4 border-b border-surface-200">
+                  <div class="text-base font-bold text-surface-900 flex items-center gap-2"><i class="pi pi-truck text-primary-600"></i> Primary Shipping / Plant Address</div>
+                  <button type="button" class="inline-flex items-center gap-1.5 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-3.5 py-1.5 rounded-lg font-medium text-xs cursor-pointer transition-colors duration-150" (click)="copyBillingToShipping()">
+                    <i class="pi pi-copy text-xs"></i> Copy from Billing
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Address Line 1 <span class="required">*</span></label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="companyForm.shippingAddress.addressLine1" 
+                    />
+                  </div>
+
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Address Line 2</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="companyForm.shippingAddress.addressLine2" 
+                    />
+                  </div>
+
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>City <span class="required">*</span></label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="companyForm.shippingAddress.city" 
+                    />
+                  </div>
+
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>State <span class="required">*</span></label>
+                    <select [(ngModel)]="companyForm.shippingAddress.state">
+                      <option value="">-- Select State --</option>
+                      @for (s of indianStates; track s.code) {
+                        <option [value]="s.name">{{ s.name }} ({{ s.code }})</option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Pincode / Postal Code <span class="required">*</span></label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="companyForm.shippingAddress.pincode" 
+                      class="font-mono" 
+                    />
+                  </div>
+
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Country</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="companyForm.shippingAddress.country" 
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- TAB 3: GST & TAX REGISTRATION -->
+          @if (companySubTab === 'gst') {
+            <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+              <div class="text-lg font-bold text-surface-900 mb-4">GST & Statutory Tax Identifiers</div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>GST Registration Type</label>
+                  <select [(ngModel)]="companyForm.gstRegistrationType">
+                    <option value="Regular">Regular / Normal Taxpayer</option>
+                    <option value="Composition">Composition Scheme</option>
+                    <option value="SEZ Unit">SEZ Unit (Zero Rated)</option>
+                    <option value="SEZ Developer">SEZ Developer</option>
+                    <option value="Deemed Export / EOU">Deemed Export / EOU</option>
+                    <option value="Unregistered">Unregistered Entity</option>
+                  </select>
+                </div>
+
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>GSTIN (15-Digit GST Identification Number) <span class="required">*</span></label>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="companyForm.gstin" 
+                    maxlength="15" 
+                    class="font-mono uppercase font-bold" 
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Permanent Account Number (PAN) <span class="required">*</span></label>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="companyForm.pan" 
+                    maxlength="10" 
+                    class="font-mono uppercase font-bold" 
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Jurisdiction State & State Code</label>
+                  <select [(ngModel)]="companyForm.stateName">
+                    <option value="">-- Select Jurisdiction State --</option>
+                    @for (s of indianStates; track s.code) {
+                      <option [value]="s.name + ' (' + s.code + ')'">{{ s.name }} ({{ s.code }})</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>GST Return Filing Frequency</label>
+                  <select [(ngModel)]="companyForm.filingFrequency">
+                    <option value="Monthly">Monthly (GSTR-1, GSTR-3B)</option>
+                    <option value="Quarterly (QRMP)">Quarterly (QRMP Scheme with monthly IFF)</option>
+                  </select>
+                </div>
+
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>TAN Number</label>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="companyForm.tanNumber" 
+                    class="font-mono uppercase" 
+                  />
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- TAB 4: CONTACT INFORMATION -->
+          @if (companySubTab === 'contact') {
+            <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+              <div class="text-lg font-bold text-surface-900 mb-4">Corporate Contact & Communication Directory</div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Primary Contact Person <span class="required">*</span></label>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="companyForm.contactDetails.contactPerson" 
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Official Accounts / Finance Email <span class="required">*</span></label>
+                  <input 
+                    type="email" 
+                    [(ngModel)]="companyForm.contactDetails.email" 
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Primary Phone / Mobile <span class="required">*</span></label>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="companyForm.contactDetails.phone" 
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Alternate / Landline Helpline</label>
+                  <input 
+                    type="text" 
+                    [(ngModel)]="companyForm.contactDetails.alternatePhone" 
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Official Corporate Website</label>
+                  <input 
+                    type="url" 
+                    [(ngModel)]="companyForm.contactDetails.website" 
+                  />
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- TAB 5: LOGO & BRANDING -->
+          @if (companySubTab === 'logo') {
+            <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+              <div class="text-lg font-bold text-surface-900 mb-4">Logo, Brand Identity & Invoice Letterhead</div>
+
+              <div class="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-7 mt-4 items-start">
+                <!-- LOGO PREVIEW BOX -->
+                <div class="flex flex-col items-center gap-3 p-5 border border-surface-200 rounded-xl bg-surface-50 text-center">
+                  <div class="w-[220px] h-[120px] p-2.5 rounded-xl border-2 border-dashed border-surface-300 bg-white flex items-center justify-center overflow-hidden shadow-xs">
+                    @if (companyForm.logoUrl) {
+                      <img [src]="companyForm.logoUrl" alt="Company Logo" class="max-w-full max-h-full object-contain" />
+                    } @else {
+                      <div class="flex flex-col items-center gap-1.5 text-surface-400 text-xs font-medium">
+                        <i class="pi pi-building" style="font-size: 2.5rem; color: var(--primary-600);"></i>
+                        <span>No Logo Set</span>
+                      </div>
+                    }
+                  </div>
+                  <div class="flex flex-col gap-0.5">
+                    <strong>{{ companyForm.legalName || 'Apex Technologies' }}</strong>
+                    <span class="text-muted">{{ companyForm.extraDetails?.tagline || 'Enterprise ERP Profile' }}</span>
+                  </div>
+                </div>
+
+                <!-- LOGO UPLOAD & BRANDING CONTROLS -->
+                <div class="flex flex-col gap-4">
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Upload Company Logo</label>
+                    <div 
+                      class="flex flex-col items-center justify-center gap-2.5 p-6 border-2 border-dashed border-surface-300 hover:border-primary-500 rounded-xl bg-surface-50 hover:bg-primary-50 cursor-pointer transition-all text-center" 
+                      (click)="logoFileInput.click()"
+                      (dragover)="$event.preventDefault()"
+                      (drop)="onLogoDrop($event)"
+                    >
+                      <input 
+                        #logoFileInput 
+                        type="file" 
+                        accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp" 
+                        (change)="onLogoFileSelected($event)" 
+                        style="display: none;" 
+                      />
+                      <div class="w-11 h-11 rounded-full bg-surface-200 text-surface-700 flex items-center justify-center text-xl transition-colors">
+                        <i class="pi pi-cloud-upload"></i>
+                      </div>
+                      <div class="flex flex-col gap-0.5">
+                        <span class="text-sm font-semibold text-surface-800">Click to upload logo or drag and drop</span>
+                        <span class="text-xs text-surface-500">PNG, JPG, SVG, or WEBP (Max 2MB)</span>
+                      </div>
+                    </div>
+
+                    @if (companyForm.logoUrl) {
+                      <div class="flex gap-2.5 mt-2.5">
+                        <button type="button" class="inline-flex items-center gap-1.5 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-3.5 py-1.5 rounded-lg font-medium text-xs cursor-pointer transition-colors duration-150" (click)="logoFileInput.click()">
+                          <i class="pi pi-upload text-xs"></i> Change Image
+                        </button>
+                        <button type="button" class="inline-flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3.5 py-1.5 rounded-lg font-medium text-xs cursor-pointer transition-colors duration-150" (click)="companyForm.logoUrl = ''">
+                          <i class="pi pi-trash text-xs"></i> Remove Logo
+                        </button>
+                      </div>
+                    }
+                  </div>
+
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Brand Tagline / Slogan</label>
+                    <input 
+                      type="text" 
+                      [(ngModel)]="companyForm.extraDetails.tagline" 
+                    />
+                  </div>
+
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Print Invoice Header Note</label>
+                    <textarea 
+                      rows="2" 
+                      [(ngModel)]="companyForm.extraDetails.invoiceHeaderNote" 
+                    ></textarea>
+                  </div>
+
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Print Invoice Footer Declaration & Jurisdiction</label>
+                    <textarea 
+                      rows="2" 
+                      [(ngModel)]="companyForm.extraDetails.invoiceFooterNote" 
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- TAB: BRANCH MASTER (UNDER SETTINGS) -->
+      @if (activeTab === 'branches') {
+        <div class="bg-white border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+          <!-- FILTER TOOLBAR -->
+          <div class="p-4 flex justify-between items-center border-b border-surface-200 gap-4 flex-wrap">
+            <div class="relative flex-1 min-w-[260px] max-w-sm">
+              <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm pointer-events-none"></i>
+              <input
+                type="text"
+                placeholder="Search branch name, code, address, GSTIN..."
+                [(ngModel)]="branchSearchQuery"
+                class="w-full !pl-9 !pr-8 !py-2 border border-surface-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+              />
+              @if (branchSearchQuery) {
+                <button class="absolute right-2.5 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-700 text-xs p-1 cursor-pointer bg-transparent border-0" (click)="branchSearchQuery = ''">
+                  <i class="pi pi-times"></i>
+                </button>
+              }
+            </div>
+
+            <div class="flex items-center gap-2.5 flex-nowrap shrink-0">
+              <span class="text-xs text-surface-500 font-medium whitespace-nowrap">
+                Showing <span class="font-bold text-surface-800">{{ filteredBranches.length }}</span> {{ filteredBranches.length === 1 ? 'branch' : 'branches' }}
+              </span>
+
+              <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap" (click)="openCreateBranchModal()">
+                <i class="pi pi-plus"></i> Add New Branch
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+                <tr>
+                  <th class="px-4 py-3" style="min-width: 220px;">Branch Name & Code</th>
+                  <th class="px-4 py-3" style="min-width: 150px;">Type / Status</th>
+                  <th class="px-4 py-3" style="min-width: 180px;">State & Jurisdiction</th>
+                  <th class="px-4 py-3" style="min-width: 240px;">Physical Address</th>
+                  <th class="px-4 py-3 text-center" style="min-width: 140px;">Linked Godowns</th>
+                  <th class="px-4 py-3 text-right" style="min-width: 110px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-surface-100">
+                @if (filteredBranches.length === 0) {
+                  <tr>
+                    <td colspan="6" class="text-center py-10 text-surface-500">
+                      No branches found matching your search. Click "Add New Branch" to create one.
+                    </td>
+                  </tr>
+                }
+                @for (b of filteredBranches; track b.id) {
+                  <tr class="hover:bg-surface-50/75 transition-colors">
+                    <td class="px-4 py-3">
+                      <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-blue-50 text-primary-600 flex items-center justify-center text-base shrink-0 border border-blue-100"><i class="pi pi-building"></i></div>
+                        <div>
+                          <strong class="text-sm text-surface-900 font-semibold block">{{ b.branchName }}</strong>
+                          <div class="text-xs text-surface-500 font-mono font-medium">{{ b.branchCode }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-4 py-3">
+                      @if (b.isHeadOffice) {
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                          <i class="pi pi-star-fill text-[10px]"></i> Head Office
+                        </span>
+                      } @else {
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-100 text-surface-700 border border-surface-200">
+                          <i class="pi pi-circle-fill text-[8px] text-surface-400"></i> Branch Office
+                        </span>
+                      }
+                    </td>
+                    <td class="px-4 py-3 text-surface-800">
+                      <div class="flex items-center gap-1.5">
+                        <span class="font-medium">{{ b.stateName || 'Maharashtra' }}</span>
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-surface-100 text-surface-600 border border-surface-200">{{ b.stateCode || '27' }}</span>
+                      </div>
+                    </td>
+                    <td class="px-4 py-3 text-surface-700">
+                      <div class="text-xs leading-snug">
+                        {{ b.addressLine1 || '—' }}
+                        @if (b.pincode) {
+                          <div class="text-xs text-surface-400 font-mono">PIN: {{ b.pincode }}</div>
+                        }
+                      </div>
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                        <i class="pi pi-warehouse text-xs"></i> {{ getGodownsCountForBranch(b.id) }} Godowns
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                      <div class="flex items-center justify-end gap-1.5">
+                        <button class="p-1.5 text-surface-500 hover:text-surface-900 hover:bg-surface-100 rounded transition-colors cursor-pointer" (click)="openEditBranchModal(b)" title="Edit Branch">
+                          <i class="pi pi-pencil"></i>
+                        </button>
+                        <button class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed" (click)="openDeleteBranchModal(b)" title="Delete Branch" [disabled]="b.isHeadOffice && branches.length === 1">
+                          <i class="pi pi-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+          <!-- MODAL: CREATE NEW BRANCH -->
+          @if (createBranchModalVisible) {
+            <div class="fixed inset-0 w-screen h-screen bg-black/45 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+              <div class="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden border border-surface-200 flex flex-col max-h-[90vh]">
+                <div class="py-4 px-5 flex justify-between items-center border-b border-surface-200">
+                  <h3>Add New Company Branch</h3>
+                  <button class="bg-transparent border-0 text-surface-400 hover:text-surface-700 cursor-pointer text-base w-7 h-7 flex items-center justify-center rounded-sm hover:bg-surface-100 transition-colors" (click)="createBranchModalVisible = false"><i class="pi pi-times"></i></button>
+                </div>
+                <div class="p-5 flex flex-col gap-4 overflow-y-auto">
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Branch Name <span class="required">*</span></label>
+                    <input type="text" [(ngModel)]="newBranch.branchName" />
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="flex flex-col gap-1.5 mb-4">
+                      <label>Branch Code <span class="required">*</span></label>
+                      <input type="text" [(ngModel)]="newBranch.branchCode" class="font-mono uppercase" />
+                    </div>
+                    <div class="flex flex-col gap-1.5 mb-4">
+                      <label>State <span class="required">*</span></label>
+                      <select [(ngModel)]="newBranch.stateName" (change)="onNewBranchStateChange()">
+                        @for (s of indianStates; track s.code) {
+                          <option [value]="s.name">{{ s.name }} ({{ s.code }})</option>
+                        }
+                      </select>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="flex flex-col gap-1.5 mb-4">
+                      <label>State Code</label>
+                      <input type="text" [(ngModel)]="newBranch.stateCode" class="font-mono" />
+                    </div>
+                    <div class="flex flex-col gap-1.5 mb-4">
+                      <label>Pincode / Postal Code</label>
+                      <input type="text" [(ngModel)]="newBranch.pincode" class="font-mono" />
+                    </div>
+                  </div>
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Street / Building Address</label>
+                    <input type="text" [(ngModel)]="newBranch.addressLine1" />
+                  </div>
+                  <div class="flex items-center gap-3 pt-2 mb-4">
+                    <label class="zeno-switch shrink-0" title="Primary Head Office">
+                      <input type="checkbox" [(ngModel)]="newBranch.isHeadOffice" />
+                      <span class="slider"></span>
+                    </label>
+                    <span class="text-sm font-semibold text-surface-800">Primary Head Office (Corporate HQ)</span>
+                  </div>
+                </div>
+                <div class="py-3.5 px-5 flex justify-end gap-2.5 bg-surface-50 border-t border-surface-200">
+                  <button class="inline-flex items-center gap-2 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-4 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="createBranchModalVisible = false">Cancel</button>
+                  <button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4.5 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="submitCreateBranch()" [disabled]="savingBranch || !newBranch.branchName.trim() || !newBranch.branchCode.trim()">
+                    <i class="pi pi-check"></i> {{ savingBranch ? 'Saving...' : 'Save Branch' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- MODAL: EDIT BRANCH -->
+          @if (editBranchModalVisible && branchToEdit) {
+            <div class="fixed inset-0 w-screen h-screen bg-black/45 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+              <div class="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden border border-surface-200 flex flex-col max-h-[90vh]">
+                <div class="py-4 px-5 flex justify-between items-center border-b border-surface-200">
+                  <h3>Edit Branch Information</h3>
+                  <button class="bg-transparent border-0 text-surface-400 hover:text-surface-700 cursor-pointer text-base w-7 h-7 flex items-center justify-center rounded-sm hover:bg-surface-100 transition-colors" (click)="editBranchModalVisible = false"><i class="pi pi-times"></i></button>
+                </div>
+                <div class="p-5 flex flex-col gap-4 overflow-y-auto">
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Branch Name <span class="required">*</span></label>
+                    <input type="text" [(ngModel)]="branchToEdit.branchName" />
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="flex flex-col gap-1.5 mb-4">
+                      <label>Branch Code <span class="required">*</span></label>
+                      <input type="text" [(ngModel)]="branchToEdit.branchCode" class="font-mono uppercase" />
+                    </div>
+                    <div class="flex flex-col gap-1.5 mb-4">
+                      <label>State <span class="required">*</span></label>
+                      <select [(ngModel)]="branchToEdit.stateName" (change)="onEditBranchStateChange()">
+                        @for (s of indianStates; track s.code) {
+                          <option [value]="s.name">{{ s.name }} ({{ s.code }})</option>
+                        }
+                      </select>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="flex flex-col gap-1.5 mb-4">
+                      <label>State Code</label>
+                      <input type="text" [(ngModel)]="branchToEdit.stateCode" class="font-mono" />
+                    </div>
+                    <div class="flex flex-col gap-1.5 mb-4">
+                      <label>Pincode / Postal Code</label>
+                      <input type="text" [(ngModel)]="branchToEdit.pincode" class="font-mono" />
+                    </div>
+                  </div>
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Street / Building Address</label>
+                    <input type="text" [(ngModel)]="branchToEdit.addressLine1" />
+                  </div>
+                  <div class="flex items-center gap-3 pt-2 mb-4">
+                    <label class="zeno-switch shrink-0" title="Primary Head Office">
+                      <input type="checkbox" [(ngModel)]="branchToEdit.isHeadOffice" />
+                      <span class="slider"></span>
+                    </label>
+                    <span class="text-sm font-semibold text-surface-800">Primary Head Office (Corporate HQ)</span>
+                  </div>
+                </div>
+                <div class="py-3.5 px-5 flex justify-end gap-2.5 bg-surface-50 border-t border-surface-200">
+                  <button class="inline-flex items-center gap-2 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-4 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="editBranchModalVisible = false">Cancel</button>
+                  <button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4.5 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="submitEditBranch()" [disabled]="savingBranch || !branchToEdit.branchName.trim() || !branchToEdit.branchCode.trim()">
+                    <i class="pi pi-check"></i> {{ savingBranch ? 'Updating...' : 'Save Changes' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- MODAL: CONFIRM DELETE BRANCH -->
+          @if (deleteBranchModalVisible && branchToDelete) {
+            <div class="fixed inset-0 w-screen h-screen bg-black/45 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+              <div class="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden border border-surface-200 flex flex-col max-h-[90vh]">
+                <div class="py-4 px-5 flex justify-between items-center border-b border-surface-200">
+                  <h3>Delete Branch</h3>
+                  <button class="bg-transparent border-0 text-surface-400 hover:text-surface-700 cursor-pointer text-base w-7 h-7 flex items-center justify-center rounded-sm hover:bg-surface-100 transition-colors" (click)="deleteBranchModalVisible = false"><i class="pi pi-times"></i></button>
+                </div>
+                <div class="p-5 flex flex-col gap-4 overflow-y-auto">
+                  <div class="flex gap-4 items-start py-2.5">
+                    <i class="pi pi-exclamation-triangle warning-icon"></i>
+                    <div>
+                      <p>Are you sure you want to delete branch <strong>{{ branchToDelete.branchName }} ({{ branchToDelete.branchCode }})</strong>?</p>
+                      <p class="text-sm text-muted">This branch has {{ getGodownsCountForBranch(branchToDelete.id) }} associated godown(s). Deleting it will permanently remove the branch record.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="py-3.5 px-5 flex justify-end gap-2.5 bg-surface-50 border-t border-surface-200">
+                  <button class="inline-flex items-center gap-2 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-4 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="deleteBranchModalVisible = false">Cancel</button>
+                  <button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-sm cursor-pointer border-0" (click)="confirmDeleteBranch()" [disabled]="savingBranch">
+                    <i class="pi pi-trash"></i> {{ savingBranch ? 'Deleting...' : 'Confirm Delete' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        }
+       <!-- TAB: WAREHOUSE MASTER (AFTER COMPANY PROFILE) -->
+      @if (activeTab === 'warehouses') {
+        <div class="bg-white border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+          <!-- FILTER TOOLBAR -->
+          <div class="p-4 flex justify-between items-center border-b border-surface-200 gap-4 flex-wrap">
+            <div class="relative flex-1 min-w-[260px] max-w-sm">
+              <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm pointer-events-none"></i>
+              <input 
+                type="text" 
+                [(ngModel)]="warehouseSearchQuery" 
+                placeholder="Search warehouse name, code, address..."
+                class="w-full !pl-9 !pr-8 !py-2 border border-surface-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+              />
+              @if (warehouseSearchQuery) {
+                <button class="absolute right-2.5 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-700 text-xs p-1 cursor-pointer bg-transparent border-0" (click)="warehouseSearchQuery = ''">
+                  <i class="pi pi-times"></i>
+                </button>
+              }
+            </div>
+
+            <div class="flex items-center gap-2.5 flex-nowrap shrink-0">
+              <select [(ngModel)]="warehouseBranchFilter" class="!w-auto min-w-[160px] px-3 py-2 border border-surface-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary-600 shrink-0">
+                <option value="ALL">All Branches</option>
+                @for (b of tenant.branches(); track b.id) {
+                  <option [value]="b.id">{{ b.branchName }} ({{ b.branchCode }})</option>
+                }
+              </select>
+
+              <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap" (click)="openCreateWarehouseModal()">
+                <i class="pi pi-plus"></i> Add New Warehouse
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+                <tr>
+                  <th class="px-4 py-3" style="min-width: 220px;">Warehouse / Godown</th>
+                  <th class="px-4 py-3" style="min-width: 160px;">Linked Branch</th>
+                  <th class="px-4 py-3" style="min-width: 240px;">Physical Address</th>
+                  <th class="px-4 py-3" style="min-width: 180px;">Contact Person</th>
+                  <th class="px-4 py-3" style="min-width: 100px;">Status</th>
+                  <th class="px-4 py-3 text-right" style="min-width: 110px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-surface-100">
+                @if (filteredWarehouses.length === 0) {
+                  <tr>
+                    <td colspan="6" class="text-center py-10 text-surface-500">
+                      No warehouses or storage facilities matched the criteria. Click "Add New Warehouse" to create one.
+                    </td>
+                  </tr>
+                }
+                @for (wh of filteredWarehouses; track wh.id) {
+                  <tr class="hover:bg-surface-50/75 transition-colors">
+                    <td class="px-4 py-3">
+                      <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-blue-50 text-primary-600 flex items-center justify-center text-base shrink-0 border border-blue-100"><i class="pi pi-box"></i></div>
+                        <div>
+                          <strong class="text-sm text-surface-900 font-semibold block">{{ wh.name }}</strong>
+                          <div class="text-xs text-surface-500 font-mono font-medium">{{ wh.code }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-4 py-3 text-surface-800">
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                        <i class="pi pi-map-marker text-[10px]"></i> {{ wh.branch?.branchName || 'Main Branch' }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 text-surface-700">
+                      <div class="text-xs leading-snug">
+                        {{ wh.address || '—' }}
+                        @if (wh.city || wh.pincode) {
+                          <div class="text-xs text-surface-400">{{ wh.city }} {{ wh.state }} {{ wh.pincode }}</div>
+                        }
+                      </div>
+                    </td>
+                    <td class="px-4 py-3 text-surface-800">
+                      <div class="font-medium">{{ wh.contactPerson || '—' }}</div>
+                      @if (wh.contactPhone) {
+                        <div class="text-xs font-mono text-surface-500">{{ wh.contactPhone }}</div>
+                      }
+                    </td>
+                    <td class="px-4 py-3">
+                      <span
+                        class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider whitespace-nowrap"
+                        [ngClass]="wh.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-surface-100 text-surface-500 border border-surface-200'"
+                      >
+                        {{ wh.isActive ? 'Active' : 'Inactive' }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                      <div class="flex items-center justify-end gap-1.5">
+                        <button class="p-1.5 text-surface-500 hover:text-surface-900 hover:bg-surface-100 rounded transition-colors cursor-pointer" (click)="openEditWarehouseModal(wh)" title="Edit Warehouse">
+                          <i class="pi pi-pencil"></i>
+                        </button>
+                        <button class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors cursor-pointer" (click)="openDeleteWarehouseModal(wh)" title="Delete Warehouse">
+                          <i class="pi pi-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- MODAL: CREATE NEW WAREHOUSE -->
+        @if (createWarehouseModalVisible) {
+          <div class="fixed inset-0 w-screen h-screen bg-black/45 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+            <div class="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden border border-surface-200 flex flex-col max-h-[90vh]">
+              <div class="py-4 px-5 flex justify-between items-center border-b border-surface-200">
+                <h3>Add New Warehouse / Godown</h3>
+                <button class="bg-transparent border-0 text-surface-400 hover:text-surface-700 cursor-pointer text-base w-7 h-7 flex items-center justify-center rounded-sm hover:bg-surface-100 transition-colors" (click)="createWarehouseModalVisible = false"><i class="pi pi-times"></i></button>
+              </div>
+              <div class="p-5 flex flex-col gap-4 overflow-y-auto">
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Warehouse Name <span class="required">*</span></label>
+                  <input type="text" [(ngModel)]="newWarehouse.name" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Warehouse Code <span class="required">*</span></label>
+                    <input type="text" [(ngModel)]="newWarehouse.code" class="font-mono uppercase" />
+                  </div>
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Associated Branch <span class="required">*</span></label>
+                    <select [(ngModel)]="newWarehouse.branchId">
+                      @for (b of tenant.branches(); track b.id) {
+                        <option [value]="b.id">{{ b.branchName }} ({{ b.branchCode }})</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Address Line</label>
+                  <input type="text" [(ngModel)]="newWarehouse.address" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>City</label>
+                    <input type="text" [(ngModel)]="newWarehouse.city" />
+                  </div>
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>State</label>
+                    <select [(ngModel)]="newWarehouse.state">
+                      <option value="">-- Select State --</option>
+                      @for (s of indianStates; track s.code) {
+                        <option [value]="s.name">{{ s.name }} ({{ s.code }})</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Pincode</label>
+                    <input type="text" [(ngModel)]="newWarehouse.pincode" class="font-mono" />
+                  </div>
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Contact Person</label>
+                    <input type="text" [(ngModel)]="newWarehouse.contactPerson" />
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Contact Phone</label>
+                    <input type="text" [(ngModel)]="newWarehouse.contactPhone" />
+                  </div>
+                  <div class="flex items-center gap-3 pt-6 mb-4">
+                    <label class="zeno-switch shrink-0" title="Active Storage Facility">
+                      <input type="checkbox" [(ngModel)]="newWarehouse.isActive" />
+                      <span class="slider"></span>
+                    </label>
+                    <span class="text-sm font-semibold text-surface-800">Active Storage Facility</span>
+                  </div>
+                </div>
+              </div>
+              <div class="py-3.5 px-5 flex justify-end gap-2.5 bg-surface-50 border-t border-surface-200">
+                <button class="inline-flex items-center gap-2 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-4 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="createWarehouseModalVisible = false">Cancel</button>
+                <button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4.5 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="submitCreateWarehouse()" [disabled]="savingWarehouse || !newWarehouse.name.trim() || !newWarehouse.code.trim()">
+                  <i class="pi pi-check"></i> {{ savingWarehouse ? 'Creating...' : 'Save Warehouse' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- MODAL: EDIT WAREHOUSE -->
+        @if (editWarehouseModalVisible && warehouseToEdit) {
+          <div class="fixed inset-0 w-screen h-screen bg-black/45 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+            <div class="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden border border-surface-200 flex flex-col max-h-[90vh]">
+              <div class="py-4 px-5 flex justify-between items-center border-b border-surface-200">
+                <h3>Edit Warehouse Information</h3>
+                <button class="bg-transparent border-0 text-surface-400 hover:text-surface-700 cursor-pointer text-base w-7 h-7 flex items-center justify-center rounded-sm hover:bg-surface-100 transition-colors" (click)="editWarehouseModalVisible = false"><i class="pi pi-times"></i></button>
+              </div>
+              <div class="p-5 flex flex-col gap-4 overflow-y-auto">
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Warehouse Name <span class="required">*</span></label>
+                  <input type="text" [(ngModel)]="warehouseToEdit.name" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Warehouse Code <span class="required">*</span></label>
+                    <input type="text" [(ngModel)]="warehouseToEdit.code" class="font-mono uppercase" />
+                  </div>
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Associated Branch</label>
+                    <select [(ngModel)]="warehouseToEdit.branchId">
+                      @for (b of tenant.branches(); track b.id) {
+                        <option [value]="b.id">{{ b.branchName }} ({{ b.branchCode }})</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Address</label>
+                  <input type="text" [(ngModel)]="warehouseToEdit.address" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>City</label>
+                    <input type="text" [(ngModel)]="warehouseToEdit.city" />
+                  </div>
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>State</label>
+                    <select [(ngModel)]="warehouseToEdit.state">
+                      <option value="">-- Select State --</option>
+                      @for (s of indianStates; track s.code) {
+                        <option [value]="s.name">{{ s.name }} ({{ s.code }})</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Pincode</label>
+                    <input type="text" [(ngModel)]="warehouseToEdit.pincode" class="font-mono" />
+                  </div>
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Contact Person</label>
+                    <input type="text" [(ngModel)]="warehouseToEdit.contactPerson" />
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div class="flex flex-col gap-1.5 mb-4">
+                    <label>Contact Phone</label>
+                    <input type="text" [(ngModel)]="warehouseToEdit.contactPhone" />
+                  </div>
+                  <div class="flex items-center gap-3 pt-6 mb-4">
+                    <label class="zeno-switch shrink-0" title="Active Storage Facility">
+                      <input type="checkbox" [(ngModel)]="warehouseToEdit.isActive" />
+                      <span class="slider"></span>
+                    </label>
+                    <span class="text-sm font-semibold text-surface-800">Active Storage Facility</span>
+                  </div>
+                </div>
+              </div>
+              <div class="py-3.5 px-5 flex justify-end gap-2.5 bg-surface-50 border-t border-surface-200">
+                <button class="inline-flex items-center gap-2 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-4 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="editWarehouseModalVisible = false">Cancel</button>
+                <button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4.5 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="submitEditWarehouse()" [disabled]="savingWarehouse || !warehouseToEdit.name.trim()">
+                  <i class="pi pi-check"></i> {{ savingWarehouse ? 'Updating...' : 'Save Changes' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- MODAL: CONFIRM DELETE WAREHOUSE -->
+        @if (deleteWarehouseModalVisible && warehouseToDelete) {
+          <div class="fixed inset-0 w-screen h-screen bg-black/45 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+            <div class="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden border border-surface-200 flex flex-col max-h-[90vh]">
+              <div class="py-4 px-5 flex justify-between items-center border-b border-surface-200">
+                <h3>Delete Warehouse</h3>
+                <button class="bg-transparent border-0 text-surface-400 hover:text-surface-700 cursor-pointer text-base w-7 h-7 flex items-center justify-center rounded-sm hover:bg-surface-100 transition-colors" (click)="deleteWarehouseModalVisible = false"><i class="pi pi-times"></i></button>
+              </div>
+              <div class="p-5 flex flex-col gap-4 overflow-y-auto">
+                <div class="flex gap-4 items-start py-2.5">
+                  <i class="pi pi-exclamation-triangle warning-icon"></i>
+                  <div>
+                    <p>Are you sure you want to delete warehouse <strong>{{ warehouseToDelete.name }} ({{ warehouseToDelete.code }})</strong>?</p>
+                    <p class="text-sm text-muted">This will remove the godown definition from branch listings. Note that historical vouchers will retain their audit records.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="py-3.5 px-5 flex justify-end gap-2.5 bg-surface-50 border-t border-surface-200">
+                <button class="inline-flex items-center gap-2 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-4 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="deleteWarehouseModalVisible = false">Cancel</button>
+                <button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-sm cursor-pointer border-0" (click)="confirmDeleteWarehouse()" [disabled]="savingWarehouse">
+                  <i class="pi pi-trash"></i> {{ savingWarehouse ? 'Deleting...' : 'Confirm Delete' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      }
+
+      <!-- TAB 4: FINANCIAL YEARS (F.Y.) -->
+      @if (activeTab === 'financial-years') {
+        <div class="bg-white border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+          <!-- FILTER TOOLBAR -->
+          <div class="p-4 flex justify-between items-center border-b border-surface-200 gap-4 flex-wrap">
+            <div class="relative flex-1 min-w-[260px] max-w-sm">
+              <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm pointer-events-none"></i>
+              <input
+                type="text"
+                placeholder="Search financial year name or date..."
+                [(ngModel)]="financialYearSearchQuery"
+                class="w-full !pl-9 !pr-8 !py-2 border border-surface-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+              />
+              @if (financialYearSearchQuery) {
+                <button class="absolute right-2.5 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-700 text-xs p-1 cursor-pointer bg-transparent border-0" (click)="financialYearSearchQuery = ''">
+                  <i class="pi pi-times"></i>
+                </button>
+              }
+            </div>
+
+            <div class="flex items-center gap-2.5 flex-nowrap shrink-0">
+              <button type="button" class="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-surface-300 hover:bg-surface-50 text-surface-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50 shrink-0 whitespace-nowrap" (click)="openCloseFyModal()" [disabled]="closingFy || !hasOpenFy()" title="Close Year & Transfer Balances">
+                <i class="pi pi-lock"></i> Close F.Y.
+              </button>
+              <button type="button" class="inline-flex items-center gap-1.5 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap" (click)="openCreateFyModal()">
+                <i class="pi pi-plus"></i> Open New F.Y.
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+                <tr>
+                  <th class="px-4 py-3" style="min-width: 180px;">F.Y. Name</th>
+                  <th class="px-4 py-3" style="min-width: 140px;">Start Date</th>
+                  <th class="px-4 py-3" style="min-width: 140px;">End Date</th>
+                  <th class="px-4 py-3" style="min-width: 130px;">Status</th>
+                  <th class="px-4 py-3" style="min-width: 150px;">Active Context</th>
+                  <th class="px-4 py-3" style="min-width: 140px;">Closed At</th>
+                  <th class="px-4 py-3 text-right" style="min-width: 160px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-surface-100">
+                @if (filteredFinancialYears.length === 0) {
+                  <tr>
+                    <td colspan="7" class="text-center py-10 text-surface-500">
+                      No Financial Years found. Click "Open New F.Y." to add an accounting period.
+                    </td>
+                  </tr>
+                }
+                @for (fy of filteredFinancialYears; track fy.id) {
+                  <tr class="hover:bg-surface-50/75 transition-colors">
+                    <td class="px-4 py-3 font-bold text-surface-900">{{ fy.name }}</td>
+                    <td class="px-4 py-3 font-mono text-xs text-surface-700">{{ fy.startDate }}</td>
+                    <td class="px-4 py-3 font-mono text-xs text-surface-700">{{ fy.endDate }}</td>
+                    <td class="px-4 py-3">
+                      @if (fy.isClosed) {
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                          <i class="pi pi-lock text-[10px]"></i> Closed
+                        </span>
+                      } @else {
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <i class="pi pi-circle-fill text-[8px] text-emerald-500"></i> Open / Active
+                        </span>
+                      }
+                    </td>
+                    <td class="px-4 py-3">
+                      @if (fy.isCurrent) {
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-primary-700 border border-primary-200">
+                          <i class="pi pi-check-circle text-xs text-primary-600"></i> Current Active
+                        </span>
+                      } @else {
+                        <span class="text-surface-400 text-xs">—</span>
+                      }
+                    </td>
+                    <td class="px-4 py-3 font-mono text-xs text-surface-500">
+                      {{ fy.closedAt ? (fy.closedAt | date:'mediumDate') : '—' }}
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                      <div class="flex items-center justify-end gap-1.5">
+                        @if (!fy.isClosed) {
+                          <button type="button" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg cursor-pointer transition-colors" (click)="openCloseFyModal(fy)" title="Close year & transfer opening balances">
+                            <i class="pi pi-lock text-[10px]"></i> Close Year
+                          </button>
+                        }
+                        @if (!fy.isCurrent) {
+                          <button type="button" class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 border border-primary-200 rounded-lg cursor-pointer transition-colors" (click)="switchFy(fy)" title="Set as current active F.Y.">
+                            <i class="pi pi-sync text-[10px]"></i> Switch Context
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <!-- MODAL: EDIT ROLE DETAILS -->
+      @if (editRoleModalVisible && editingRole) {
+        <div class="fixed inset-0 w-screen h-screen bg-black/45 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div class="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden border border-surface-200 flex flex-col max-h-[90vh]">
+            <div class="py-4 px-5 flex justify-between items-center border-b border-surface-200">
+              <h3>Edit Role Information</h3>
+              <button class="bg-transparent border-0 text-surface-400 hover:text-surface-700 cursor-pointer text-base w-7 h-7 flex items-center justify-center rounded-sm hover:bg-surface-100 transition-colors" (click)="editRoleModalVisible = false"><i class="pi pi-times"></i></button>
+            </div>
+            <div class="p-5 flex flex-col gap-4 overflow-y-auto">
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Role Name <span class="required">*</span></label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="editingRole.name" 
+                  [disabled]="editingRole.isSystem" 
+                />
+              </div>
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Functional Duties / Description</label>
+                <textarea 
+                  rows="3" 
+                  [(ngModel)]="editingRole.description" 
+                ></textarea>
+              </div>
+            </div>
+            <div class="py-3.5 px-5 flex justify-end gap-2.5 bg-surface-50 border-t border-surface-200">
+              <button class="inline-flex items-center gap-2 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-4 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="editRoleModalVisible = false">Cancel</button>
+              <button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4.5 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="submitEditRole()" [disabled]="savingRole || !editingRole.name.trim()">
+                <i class="pi pi-check"></i> {{ savingRole ? 'Saving...' : 'Save Changes' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- MODAL: CONFIRM DELETE CUSTOM ROLE -->
+      @if (deleteRoleModalVisible && roleToDelete) {
+        <div class="fixed inset-0 w-screen h-screen bg-black/45 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div class="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden border border-surface-200 flex flex-col max-h-[90vh]">
+            <div class="py-4 px-5 flex justify-between items-center border-b border-surface-200">
+              <h3>Delete Custom Role</h3>
+              <button class="bg-transparent border-0 text-surface-400 hover:text-surface-700 cursor-pointer text-base w-7 h-7 flex items-center justify-center rounded-sm hover:bg-surface-100 transition-colors" (click)="deleteRoleModalVisible = false"><i class="pi pi-times"></i></button>
+            </div>
+            <div class="p-5 flex flex-col gap-4 overflow-y-auto">
+              <div class="flex gap-4 items-start py-2.5">
+                <div class="w-11 h-11 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-xl shrink-0">
+                  <i class="pi pi-exclamation-triangle"></i>
+                </div>
+                <div>
+                  <p class="text-[15px] text-surface-900 mb-2 leading-snug">
+                    Are you sure you want to delete role <strong>"{{ roleToDelete.name }}"</strong>?
+                  </p>
+                  @if (getUserCountForRole(roleToDelete.id) > 0) {
+                    <div class="flex items-center gap-2 p-2 px-3 bg-amber-50 border border-amber-200 rounded-sm text-amber-800 text-xs font-semibold mb-2.5">
+                      <i class="pi pi-users"></i>
+                      <span>Warning: <strong>{{ getUserCountForRole(roleToDelete.id) }}</strong> active user(s) currently assigned to this role will lose these privileges.</span>
+                    </div>
+                  }
+                  <p class="text-xs text-surface-500 leading-snug m-0">This action cannot be undone. All custom permission mappings associated with this role will be permanently removed.</p>
+                </div>
+              </div>
+            </div>
+            <div class="py-3.5 px-5 flex justify-end gap-2.5 bg-surface-50 border-t border-surface-200">
+              <button class="inline-flex items-center gap-2 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-4 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="deleteRoleModalVisible = false">Cancel</button>
+              <button class="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4.5 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="deleteRoleConfirmed()" [disabled]="deletingRole">
+                <i class="pi pi-trash"></i> {{ deletingRole ? 'Deleting...' : 'Confirm Delete' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- MODAL: ADD USER -->
+      @if (showNewUserModal) {
+        <div class="fixed inset-0 w-screen h-screen bg-black/45 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div class="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden border border-surface-200 flex flex-col max-h-[90vh]">
+            <div class="py-4 px-5 flex justify-between items-center border-b border-surface-200">
+              <h3>Add Authorized User</h3>
+              <button class="bg-transparent border-0 text-surface-400 hover:text-surface-700 cursor-pointer text-base w-7 h-7 flex items-center justify-center rounded-sm hover:bg-surface-100 transition-colors" (click)="showNewUserModal = false"><i class="pi pi-times"></i></button>
+            </div>
+            <div class="p-5 flex flex-col gap-4 overflow-y-auto">
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Full Name *</label>
+                <input type="text" [(ngModel)]="newUser.fullName" />
+              </div>
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Email Address *</label>
+                <input type="email" [(ngModel)]="newUser.email" />
+              </div>
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Phone Number</label>
+                <input type="text" [(ngModel)]="newUser.phone" />
+              </div>
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Assign Role *</label>
+                <select [(ngModel)]="newUser.roleId">
+                  <option value="">-- Select Functional Role --</option>
+                  @for (r of roles; track r.id) {
+                    <option [value]="r.id">{{ r.name }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="py-3.5 px-5 flex justify-end gap-2.5 bg-surface-50 border-t border-surface-200">
+              <button class="inline-flex items-center gap-2 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-4 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="showNewUserModal = false">Cancel</button>
+              <button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4.5 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="submitNewUser()">Add User</button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- MODAL: ADD TAX SLAB -->
+      @if (showTaxModal) {
+        <div class="fixed inset-0 w-screen h-screen bg-black/45 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div class="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden border border-surface-200 flex flex-col max-h-[90vh]">
+            <div class="py-4 px-5 flex justify-between items-center border-b border-surface-200">
+              <h3>Create New GST Tax Slab</h3>
+              <button class="bg-transparent border-0 text-surface-400 hover:text-surface-700 cursor-pointer text-base w-7 h-7 flex items-center justify-center rounded-sm hover:bg-surface-100 transition-colors" (click)="showTaxModal = false"><i class="pi pi-times"></i></button>
+            </div>
+            <div class="p-5 flex flex-col gap-4 overflow-y-auto">
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Tax Slab Name *</label>
+                <input type="text" [(ngModel)]="newTax.taxName" />
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Total Rate (%) *</label>
+                  <input type="number" step="0.01" [(ngModel)]="newTax.rate" />
+                </div>
+                <div class="flex flex-col gap-1.5 mb-4">
+                  <label>Cess Rate (%)</label>
+                  <input type="number" step="0.01" [(ngModel)]="newTax.cessRate" />
+                </div>
+              </div>
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Description</label>
+                <input type="text" [(ngModel)]="newTax.description" />
+              </div>
+            </div>
+            <div class="py-3.5 px-5 flex justify-end gap-2.5 bg-surface-50 border-t border-surface-200">
+              <button class="inline-flex items-center gap-2 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-4 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="showTaxModal = false">Cancel</button>
+              <button class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4.5 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="submitTaxMaster()">Save Tax Slab</button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- MODAL: OPEN NEW FINANCIAL YEAR -->
+      @if (showCreateFyModal) {
+        <div class="fixed inset-0 w-screen h-screen bg-black/45 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div class="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden border border-surface-200 flex flex-col max-h-[90vh]" style="max-width: 500px;">
+            <div class="py-4 px-5 flex justify-between items-center border-b border-surface-200">
+              <h3>Open New Financial Year</h3>
+              <button type="button" class="bg-transparent border-0 text-surface-400 hover:text-surface-700 cursor-pointer text-base w-7 h-7 flex items-center justify-center rounded-sm hover:bg-surface-100 transition-colors" (click)="showCreateFyModal = false">
+                <i class="pi pi-times"></i>
+              </button>
+            </div>
+            <div class="p-5 flex flex-col gap-4 overflow-y-auto">
+              <div class="flex flex-col gap-1.5 mb-4" style="margin-bottom: 14px;">
+                <label>F.Y. Name *</label>
+                <input type="text" [(ngModel)]="newFyData.name" placeholder="e.g. F.Y. 2026-2027" />
+              </div>
+              <div class="flex flex-col gap-1.5 mb-4" style="margin-bottom: 14px;">
+                <label>Start Date *</label>
+                <input type="date" [(ngModel)]="newFyData.startDate" />
+              </div>
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>End Date *</label>
+                <input type="date" [(ngModel)]="newFyData.endDate" />
+              </div>
+            </div>
+            <div class="py-3.5 px-5 flex justify-end gap-2.5 bg-surface-50 border-t border-surface-200">
+              <button type="button" class="inline-flex items-center gap-2 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-4 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="showCreateFyModal = false">Cancel</button>
+              <button type="button" class="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4.5 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="submitCreateFy()" [disabled]="creatingFy || !newFyData.name">
+                <i class="pi pi-check"></i> {{ creatingFy ? 'Creating...' : 'Open Financial Year' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- MODAL: CLOSE FINANCIAL YEAR & TRANSFER BALANCES -->
+      @if (showCloseFyModal && selectedFyToClose) {
+        <div class="fixed inset-0 w-screen h-screen bg-black/45 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div class="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden border border-surface-200 flex flex-col max-h-[90vh]" style="max-width: 550px;">
+            <div class="py-4 px-5 flex justify-between items-center border-b border-surface-200">
+              <h3>Close Financial Year: {{ selectedFyToClose.name }}</h3>
+              <button type="button" class="bg-transparent border-0 text-surface-400 hover:text-surface-700 cursor-pointer text-base w-7 h-7 flex items-center justify-center rounded-sm hover:bg-surface-100 transition-colors" (click)="showCloseFyModal = false">
+                <i class="pi pi-times"></i>
+              </button>
+            </div>
+            <div class="p-5 flex flex-col gap-4 overflow-y-auto">
+              <div style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 14px; border-radius: 6px; font-size: 0.84rem; margin-bottom: 16px;">
+                <i class="pi pi-info-circle" style="margin-right: 6px; font-weight: bold;"></i>
+                <strong>Year-End Balance Transfer Rule:</strong>
+                Closing this Financial Year will calculate the final Net Closing Balance of all Balance Sheet Ledger Heads (Assets, Liabilities, Equity) and automatically post them as the Opening Balances for the new Financial Year.
+              </div>
+
+              <div class="flex flex-col gap-1.5 mb-4">
+                <label>Year-End Closing Audit Notes / Remarks</label>
+                <textarea rows="3" [(ngModel)]="fyClosingNotes" placeholder="Enter year-end audit remarks or approval notes..."></textarea>
+              </div>
+            </div>
+            <div class="py-3.5 px-5 flex justify-end gap-2.5 bg-surface-50 border-t border-surface-200">
+              <button type="button" class="inline-flex items-center gap-2 bg-surface-100 hover:bg-surface-200 text-surface-700 border border-surface-300 px-4 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="showCloseFyModal = false">Cancel</button>
+              <button type="button" class="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-60 disabled:cursor-not-allowed text-white border-0 px-4.5 py-2 rounded-sm font-semibold text-sm cursor-pointer transition-colors duration-150" (click)="submitCloseFy()" [disabled]="closingFy">
+                <i class="pi pi-lock"></i> {{ closingFy ? 'Processing Transfer...' : 'Confirm Close & Transfer Balances' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>

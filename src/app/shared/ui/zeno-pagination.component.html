@@ -1,0 +1,98 @@
+<div
+  class="flex items-center justify-between gap-4 flex-wrap py-3 px-1 text-sm"
+  [class.hidden]="total === 0 && !showInfo"
+>
+  <!-- LEFT: Info & Page Size -->
+  <div class="flex items-center gap-4 flex-wrap">
+    @if (showInfo) {
+      <span class="text-surface-500 text-[0.8125rem] whitespace-nowrap">
+        @if (total === 0) {
+          No records
+        } @else {
+          Showing <strong class="text-surface-700 font-semibold">{{ startRecord }}</strong>–<strong class="text-surface-700 font-semibold">{{ endRecord }}</strong> of <strong class="text-surface-700 font-semibold">{{ total }}</strong>
+        }
+      </span>
+    }
+
+    @if (showPageSize && pageSizeOptions.length > 1) {
+      <div class="flex items-center gap-2">
+        <span class="text-[0.8125rem] text-surface-500 whitespace-nowrap">Rows per page:</span>
+        <select
+          class="h-8 px-2 pr-7 border border-surface-300 rounded-sm text-[0.8125rem] font-medium text-surface-800 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-2 focus:ring-primary-100 transition-all cursor-pointer appearance-none"
+          [ngModel]="pageSize"
+          (ngModelChange)="onPageSizeChange($event)"
+        >
+          @for (opt of pageSizeOptions; track opt) {
+            <option [ngValue]="opt">{{ opt }}</option>
+          }
+        </select>
+      </div>
+    }
+  </div>
+
+  <!-- RIGHT: Page navigation -->
+  <div class="flex items-center gap-1">
+    <!-- First -->
+    <button
+      type="button"
+      class="inline-flex items-center justify-center w-8 h-8 rounded-sm border border-transparent text-surface-500 hover:text-surface-900 hover:bg-surface-100 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+      [disabled]="page <= 1"
+      (click)="first()"
+      title="First page"
+    >
+      <i class="pi pi-angle-double-left text-xs"></i>
+    </button>
+
+    <!-- Prev -->
+    <button
+      type="button"
+      class="inline-flex items-center justify-center w-8 h-8 rounded-sm border border-transparent text-surface-500 hover:text-surface-900 hover:bg-surface-100 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+      [disabled]="page <= 1"
+      (click)="prev()"
+      title="Previous page"
+    >
+      <i class="pi pi-angle-left text-xs"></i>
+    </button>
+
+    <!-- Page numbers -->
+    @for (p of pages; track $index) {
+      @if (isNumber(p)) {
+        <button
+          type="button"
+          class="inline-flex items-center justify-center min-w-8 h-8 px-1 rounded-sm text-[0.8125rem] font-medium transition-all cursor-pointer border"
+          [ngClass]="p === page
+            ? 'bg-primary-600 text-white border-primary-600 font-semibold shadow-xs'
+            : 'bg-transparent text-surface-600 border-transparent hover:bg-surface-100 hover:text-surface-900'"
+          (click)="goTo(p)"
+          [title]="'Page ' + p"
+        >
+          {{ p }}
+        </button>
+      } @else {
+        <span class="inline-flex items-center justify-center w-8 h-8 text-surface-400 text-xs select-none">…</span>
+      }
+    }
+
+    <!-- Next -->
+    <button
+      type="button"
+      class="inline-flex items-center justify-center w-8 h-8 rounded-sm border border-transparent text-surface-500 hover:text-surface-900 hover:bg-surface-100 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+      [disabled]="page >= totalPages"
+      (click)="next()"
+      title="Next page"
+    >
+      <i class="pi pi-angle-right text-xs"></i>
+    </button>
+
+    <!-- Last -->
+    <button
+      type="button"
+      class="inline-flex items-center justify-center w-8 h-8 rounded-sm border border-transparent text-surface-500 hover:text-surface-900 hover:bg-surface-100 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+      [disabled]="page >= totalPages"
+      (click)="last()"
+      title="Last page"
+    >
+      <i class="pi pi-angle-double-right text-xs"></i>
+    </button>
+  </div>
+</div>

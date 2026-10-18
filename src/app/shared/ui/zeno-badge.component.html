@@ -1,0 +1,6 @@
+<span [class]="getBadgeClasses()">
+  @if (icon) {
+    <i [class]="icon + ' text-xs'"></i>
+  }
+  <ng-content></ng-content>
+</span>

@@ -1,0 +1,152 @@
+<div class="flex flex-col gap-5">
+  <div class="flex justify-between items-start flex-wrap gap-3">
+    <div class="flex items-center gap-3">
+      <button class="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-surface-300 bg-white hover:bg-surface-50 text-surface-700 transition-colors cursor-pointer" routerLink="/reports">
+        <i class="pi pi-arrow-left"></i>
+      </button>
+      <div>
+        <h1 class="text-2xl font-bold text-surface-900">Balance Sheet</h1>
+        <p class="text-xs text-surface-500 mt-0.5">Statement of Assets & Liabilities</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 flex-wrap">
+      @if (data) {
+        @if (data.netProfit !== undefined && data.netProfit !== 0) {
+          <div
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border"
+            [ngClass]="data.isProfit ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-red-50 text-red-800 border-red-200'"
+          >
+            <i [class]="data.isProfit ? 'pi pi-arrow-up-right' : 'pi pi-arrow-down-right'"></i>
+            <span>{{ data.isProfit ? 'Net Profit' : 'Net Loss' }}: ₹{{ Math.abs(data.netProfit).toFixed(2) }}</span>
+          </div>
+        }
+        <div
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border"
+          [ngClass]="data.isBalanced ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'"
+        >
+          <i [class]="data.isBalanced ? 'pi pi-check-circle' : 'pi pi-exclamation-triangle'"></i>
+          <span>{{ data.isBalanced ? 'Balanced' : 'Diff: ₹' + Math.abs((data.totalAssets || 0) - (data.totalLiabilities || 0)).toFixed(2) }}</span>
+        </div>
+      }
+      <div class="flex items-center gap-3 bg-white border border-surface-200 rounded-xl px-3.5 py-2 shadow-xs">
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] font-bold text-surface-500 uppercase tracking-wider">As of Date</label>
+          <input type="date" [(ngModel)]="asOfDate" (change)="load()" class="border border-surface-300 rounded-md px-2 py-1 text-sm bg-white focus:outline-none focus:border-primary-600 cursor-pointer" />
+        </div>
+      </div>
+      <button class="inline-flex items-center gap-1.5 px-3.5 py-2 border border-surface-300 bg-white hover:bg-surface-50 text-surface-700 rounded-lg text-sm font-semibold transition-colors cursor-pointer" onclick="window.print()">
+        <i class="pi pi-print"></i> Print
+      </button>
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="py-16 text-center text-surface-500 text-sm flex items-center justify-center gap-2">
+      <i class="pi pi-spin pi-spinner"></i> Computing Balance Sheet...
+    </div>
+  }
+
+  @if (error) {
+    <div class="p-8 text-center text-red-700 bg-red-50 border border-red-200 rounded-xl mt-4">
+      <i class="pi pi-exclamation-triangle text-3xl mb-2 block text-red-500"></i>
+      <h3 class="text-base font-bold">Failed to load report</h3>
+      <p class="text-sm mt-1">Could not connect to the backend server. Please ensure the API server (Port 4000) is running.</p>
+    </div>
+  }
+
+  @if (!loading && !error && data) {
+    <div class="bg-white border border-surface-200 rounded-xl shadow-xs overflow-hidden flex flex-col md:flex-row min-h-[400px]">
+      <!-- LIABILITIES SIDE -->
+      <div class="flex-1 flex flex-col border-b md:border-b-0 md:border-r border-surface-200">
+        <div class="p-3.5 font-bold text-sm text-center border-b border-surface-200 bg-red-50 text-red-700 tracking-wider">
+          <i class="pi pi-briefcase mr-2"></i> LIABILITIES
+        </div>
+        <div class="flex-1 overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+              <tr>
+                <th class="px-4 py-2.5">Particulars</th>
+                <th class="px-4 py-2.5 text-right w-36">Amount (₹)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-100">
+              @if (!groupedLiabilities || groupedLiabilities.length === 0) {
+                <tr><td colspan="2" class="p-8 text-center text-surface-400 italic">No liability entries found.</td></tr>
+              }
+              @for (g of groupedLiabilities; track g.groupId) {
+                <tr (click)="toggleGroup(g)" class="hover:bg-surface-50/75 cursor-pointer transition-colors">
+                  <td class="px-4 py-2.5 font-bold text-surface-900">
+                    <i [class]="g.expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" class="mr-2 text-xs text-surface-400"></i>
+                    {{ g.groupName }}
+                  </td>
+                  <td class="px-4 py-2.5 text-right font-mono text-red-600 font-bold">₹{{ g.amount.toFixed(2) }}</td>
+                </tr>
+                @if (g.expanded) {
+                  @for (row of g.ledgers; track row.ledgerId) {
+                    <tr class="bg-surface-50/50">
+                      <td class="pl-9 pr-4 py-2 text-xs text-surface-600">{{ row.ledgerName }}</td>
+                      <td class="px-4 py-2 text-right font-mono text-red-600 text-xs">₹{{ row.amount.toFixed(2) }}</td>
+                    </tr>
+                  }
+                }
+              }
+              @if ((data.totalAssets || 0) > (data.totalLiabilities || 0)) {
+                <tr class="bg-surface-50"><td class="px-4 py-2.5 font-bold text-surface-500">Difference in Opening Balances</td><td class="px-4 py-2.5 text-right font-mono text-surface-700">₹{{ ((data.totalAssets || 0) - (data.totalLiabilities || 0)).toFixed(2) }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-auto flex justify-between items-center p-4 bg-surface-50 border-t-2 border-surface-300">
+          <div class="font-bold text-sm text-surface-800 uppercase">TOTAL</div>
+          <div class="font-extrabold text-base text-surface-900 font-mono">₹{{ Math.max(data.totalAssets || 0, data.totalLiabilities || 0).toFixed(2) }}</div>
+        </div>
+      </div>
+
+      <!-- ASSETS SIDE -->
+      <div class="flex-1 flex flex-col">
+        <div class="p-3.5 font-bold text-sm text-center border-b border-surface-200 bg-emerald-50 text-emerald-700 tracking-wider">
+          <i class="pi pi-building mr-2"></i> ASSETS
+        </div>
+        <div class="flex-1 overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+              <tr>
+                <th class="px-4 py-2.5">Particulars</th>
+                <th class="px-4 py-2.5 text-right w-36">Amount (₹)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-100">
+              @if (!groupedAssets || groupedAssets.length === 0) {
+                <tr><td colspan="2" class="p-8 text-center text-surface-400 italic">No asset entries found.</td></tr>
+              }
+              @for (g of groupedAssets; track g.groupId) {
+                <tr (click)="toggleGroup(g)" class="hover:bg-surface-50/75 cursor-pointer transition-colors">
+                  <td class="px-4 py-2.5 font-bold text-surface-900">
+                    <i [class]="g.expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" class="mr-2 text-xs text-surface-400"></i>
+                    {{ g.groupName }}
+                  </td>
+                  <td class="px-4 py-2.5 text-right font-mono text-emerald-600 font-bold">₹{{ g.amount.toFixed(2) }}</td>
+                </tr>
+                @if (g.expanded) {
+                  @for (row of g.ledgers; track row.ledgerId) {
+                    <tr class="bg-surface-50/50">
+                      <td class="pl-9 pr-4 py-2 text-xs text-surface-600">{{ row.ledgerName }}</td>
+                      <td class="px-4 py-2 text-right font-mono text-emerald-600 text-xs">₹{{ row.amount.toFixed(2) }}</td>
+                    </tr>
+                  }
+                }
+              }
+              @if ((data.totalLiabilities || 0) > (data.totalAssets || 0)) {
+                <tr class="bg-surface-50"><td class="px-4 py-2.5 font-bold text-surface-500">Difference in Opening Balances</td><td class="px-4 py-2.5 text-right font-mono text-surface-700">₹{{ ((data.totalLiabilities || 0) - (data.totalAssets || 0)).toFixed(2) }}</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-auto flex justify-between items-center p-4 bg-surface-50 border-t-2 border-surface-300">
+          <div class="font-bold text-sm text-surface-800 uppercase">TOTAL</div>
+          <div class="font-extrabold text-base text-surface-900 font-mono">₹{{ Math.max(data.totalAssets || 0, data.totalLiabilities || 0).toFixed(2) }}</div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

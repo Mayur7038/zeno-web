@@ -1,0 +1,23 @@
+<label
+  class="inline-flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-surface-700"
+  [class.opacity-60]="disabled"
+  [class.cursor-not-allowed]="disabled"
+>
+  <input
+    type="checkbox"
+    [checked]="checked"
+    [disabled]="disabled"
+    (change)="onToggle($event)"
+    class="sr-only peer"
+  />
+  <span class="w-[18px] h-[18px] border-1.5 border-surface-300 rounded-[4px] bg-surface-0 inline-flex items-center justify-center transition-all shrink-0 peer-checked:bg-primary-600 peer-checked:border-primary-600 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-400">
+    <i class="pi pi-check text-white text-[11px] font-extrabold opacity-0 scale-50 transition-all peer-checked:opacity-100 peer-checked:scale-100" [class.opacity-100]="checked" [class.scale-100]="checked"></i>
+  </span>
+  <span class="leading-tight">
+    @if (label) {
+      {{ label }}
+    } @else {
+      <ng-content></ng-content>
+    }
+  </span>
+</label>

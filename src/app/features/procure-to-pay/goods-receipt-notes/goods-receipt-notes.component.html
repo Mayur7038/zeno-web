@@ -1,0 +1,381 @@
+<div class="flex flex-col gap-5">
+  @if (viewMode === 'list') {
+    <!-- HEADER -->
+    <div class="flex items-center justify-between mb-1">
+      <h1 class="text-xl font-bold text-surface-900 m-0">Goods Receipt Notes</h1>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer" (click)="openCreateModal()">
+          <i class="pi pi-box"></i> Create GRN (Stock IN)
+        </button>
+      </div>
+    </div>
+
+    <!-- TOOLBAR & TABLE CARD -->
+    <div class="bg-surface-0 border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+      <div class="p-4 border-b border-surface-200 flex flex-wrap items-center justify-between gap-4 bg-surface-0">
+        <div class="relative flex-1 min-w-[240px] max-w-sm">
+          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
+          <input
+            type="text"
+            class="w-full pl-9 pr-3 py-2 bg-surface-0 border border-surface-200 rounded-lg text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+            [(ngModel)]="searchQuery"
+            (input)="loadGrns()"
+            placeholder="Search Goods Receipt Notes..."
+          />
+        </div>
+
+        <div class="flex items-center gap-3">
+          <select
+            class="px-3 py-2 bg-surface-0 border border-surface-200 rounded-lg text-sm text-surface-700 focus:outline-none focus:border-primary-600"
+            [(ngModel)]="selectedStatus"
+            (change)="filterStatus(selectedStatus)"
+          >
+            <option value="">All GRNs</option>
+            <option value="PENDING">Pending Invoicing</option>
+            <option value="PARTIALLY_CLEARED">Partially Invoiced</option>
+            <option value="CLEARED">Cleared</option>
+          </select>
+
+          <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-medium rounded-lg border border-surface-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" (click)="exportGrns()" [disabled]="grns.length === 0" title="Export to CSV">
+            <i class="pi pi-download"></i> Export
+          </button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+            <tr>
+              <th class="px-4 py-3">GRN No</th>
+              <th class="px-4 py-3">GRN Date</th>
+              <th class="px-4 py-3">Vendor</th>
+              <th class="px-4 py-3">Warehouse / Godown</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100">
+            @if (grns.length === 0) {
+              <tr>
+                <td colspan="6" class="px-4 py-10 text-center text-surface-500">
+                  No Goods Receipt Notes found. Receive items against pending POs to update stock.
+                </td>
+              </tr>
+            }
+            @for (grn of grns; track grn.id) {
+              <tr class="hover:bg-surface-50/50 transition-colors">
+                <td class="px-4 py-3 font-mono font-bold text-primary-700">{{ grn.voucherNo }}</td>
+                <td class="px-4 py-3 text-surface-700">{{ grn.grnDate }}</td>
+                <td class="px-4 py-3 font-bold text-surface-900">{{ grn.vendorLedger?.name }}</td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <i class="pi pi-warehouse"></i> {{ grn.godown?.name || 'Main Warehouse' }}
+                  </span>
+                </td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
+                    [ngClass]="{
+                      'bg-blue-50 text-blue-800 border border-blue-200': grn.status === 'PENDING',
+                      'bg-amber-50 text-amber-800 border border-amber-200': grn.status === 'PARTIALLY_CLEARED',
+                      'bg-emerald-50 text-emerald-800 border border-emerald-200': grn.status === 'CLEARED'
+                    }">
+                    {{ grn.status }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <button class="w-8 h-8 inline-flex items-center justify-center bg-surface-0 border border-surface-200 rounded-sm text-surface-600 hover:text-primary-600 hover:border-primary-300 transition-colors cursor-pointer" title="View GRN & Lines" (click)="viewGrn(grn.id)">
+                    <i class="pi pi-eye"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  } @else if (viewMode === 'create') {
+    <!-- CREATE GRN FULL PAGE VIEW -->
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-3">
+        <button class="w-[34px] h-[34px] inline-flex items-center justify-center bg-surface-100 hover:bg-surface-200 text-surface-700 rounded-sm border border-surface-300 transition-colors cursor-pointer" (click)="backToList()"><i class="pi pi-arrow-left"></i></button>
+        <h1 class="text-xl font-bold text-surface-900 m-0">Goods Receipt Note</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-semibold rounded-md border border-surface-200 transition-colors cursor-pointer" (click)="backToList()">Cancel</button>
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" (click)="submitCreateGRN()" [disabled]="submitting || form.items.length === 0">
+          @if (submitting) {
+            <i class="pi pi-spin pi-spinner"></i> Posting Stock IN...
+          } @else {
+            <i class="pi pi-check"></i> Post Goods Receipt
+          }
+        </button>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-5">
+      @if (createError) {
+        <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md flex items-center gap-2 text-sm">
+          <i class="pi pi-exclamation-circle text-red-600"></i>
+          <span>{{ createError }}</span>
+        </div>
+      }
+
+      <!-- TOP SECTION: VENDOR & METADATA -->
+      <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Vendor <span class="text-red-500">*</span></label>
+            <zeno-searchable-select
+              [options]="vendors"
+              labelKey="name"
+              valueKey="id"
+              secondaryKey="gstin"
+              placeholder="-- Select Vendor --"
+              [(ngModel)]="form.vendorLedgerId"
+              (selectChange)="onVendorChange()"
+            ></zeno-searchable-select>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Vendor Challan No.</label>
+            <input
+              type="text"
+              class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+              placeholder="e.g. CH-2026-001"
+              [(ngModel)]="form.vendorChallanNo"
+            />
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">GRN Date <span class="text-red-500">*</span></label>
+            <input type="date" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" [(ngModel)]="form.grnDate" required />
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Destination Godown / Warehouse <span class="text-red-500">*</span></label>
+            <select class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" [(ngModel)]="form.godownId" required>
+              @for (g of tenant.godowns(); track g.id) {
+                <option [value]="g.id">{{ g.name }} ({{ g.code }})</option>
+              }
+            </select>
+          </div>
+
+          @if (form.vendorLedgerId) {
+            <div class="col-span-full pt-1">
+              <button type="button" class="inline-flex items-center gap-2 px-3.5 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-semibold rounded-md border border-surface-300 transition-colors cursor-pointer" (click)="openPoModal()">
+                <i class="pi pi-link"></i> Select Pending POs ({{ pendingPos.length }})
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- LINE ITEMS EDITOR -->
+      <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs flex flex-col gap-4">
+        <zeno-item-fast-entry
+          [itemsList]="itemsList"
+          [showDiscount]="false"
+          [showGst]="false"
+          [editData]="editingItemData"
+          (itemAdded)="onFastItemAdded($event)"
+          (itemUpdated)="onFastItemUpdated($event)"
+        ></zeno-item-fast-entry>
+
+        <div class="overflow-x-auto border border-surface-200 rounded-lg bg-surface-0">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+              <tr>
+                <th class="w-9 px-3 py-3 text-center">#</th>
+                <th class="min-w-[200px] px-4 py-3">Item Description</th>
+                <th class="w-24 px-3 py-3 text-center">Ordered Qty</th>
+                <th class="w-28 px-3 py-3 text-center">Received Qty</th>
+                <th class="w-20 px-3 py-3 text-center">Unit</th>
+                <th class="w-28 px-4 py-3 text-right">Unit Rate (₹)</th>
+                <th class="w-32 px-4 py-3 text-right">Total (₹)</th>
+                <th class="w-18 px-3 py-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-100">
+              @if (form.items.length === 0) {
+                <tr>
+                  <td colspan="8" class="px-4 py-8 text-center text-surface-500">
+                    <i class="pi pi-inbox text-2xl block mb-1 text-surface-400"></i>
+                    No items added. Use the Fast Item Entry Bar above or click "Select Pending POs".
+                  </td>
+                </tr>
+              } @else {
+                @for (line of form.items; track $index) {
+                  <tr class="hover:bg-surface-50/50 transition-colors">
+                    <td class="px-3 py-2.5 text-center font-mono text-xs text-surface-400">{{ $index + 1 }}</td>
+                    <td class="px-4 py-2.5">
+                      <div class="flex items-center gap-2">
+                        <span class="font-bold text-surface-900">{{ line.itemName || 'Selected Item' }}</span>
+                        @if (line.poItemId) {
+                          <span class="inline-flex items-center gap-1 text-[0.6875rem] font-semibold text-sky-700 bg-sky-50 border border-sky-200 px-1.5 py-0.5 rounded"><i class="pi pi-file"></i> PO Line</span>
+                        }
+                      </div>
+                    </td>
+                    <td class="px-3 py-2.5 text-center font-mono text-surface-700">
+                      {{ line.orderedQty || 0 }}
+                    </td>
+                    <td class="px-3 py-2.5 text-center font-mono font-bold text-surface-900">
+                      {{ line.receivedQty }}
+                    </td>
+                    <td class="px-3 py-2.5 text-center">
+                      <span class="inline-block px-2 py-0.5 rounded bg-surface-100 text-surface-700 text-xs font-semibold">{{ line.unitCode || 'NOS' }}</span>
+                    </td>
+                    <td class="px-4 py-2.5 text-right font-mono text-surface-700">
+                      ₹{{ line.rate | number:'1.2-2' }}
+                    </td>
+                    <td class="px-4 py-2.5 text-right font-mono font-bold text-surface-900">
+                      ₹{{ line.totalAmount | number:'1.2-2' }}
+                    </td>
+                    <td class="px-3 py-2.5 text-center">
+                      <div class="flex items-center justify-center gap-1">
+                        <button type="button" class="w-7 h-7 inline-flex items-center justify-center text-primary-600 hover:bg-primary-50 rounded cursor-pointer transition-colors" (click)="editItemRow($index)" title="Edit line item">
+                          <i class="pi pi-pencil"></i>
+                        </button>
+                        <button type="button" class="w-7 h-7 inline-flex items-center justify-center text-red-600 hover:bg-red-50 rounded cursor-pointer transition-colors" (click)="removeLine($index)" title="Delete line item">
+                          <i class="pi pi-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SUMMARY & TOTALS FOOTER SECTION -->
+      <div class="flex flex-col md:flex-row justify-between items-start gap-6 mt-1">
+        <div class="w-full md:max-w-lg flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700 flex items-center gap-1.5"><i class="pi pi-align-left"></i> Delivery / Challan Notes</label>
+          <textarea
+            rows="3"
+            class="w-full p-2.5 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 resize-y"
+            placeholder="Enter delivery or challan notes..."
+            [(ngModel)]="form.notes"
+          ></textarea>
+        </div>
+
+        <div class="w-full md:w-80 bg-surface-50 border border-surface-200 rounded-lg p-4 flex flex-col gap-2.5 self-stretch md:self-auto">
+          <div class="flex justify-between items-center text-base font-bold text-surface-900 border-t border-surface-200 pt-2.5 mt-1">
+            <span>Total Received Value:</span>
+            <strong class="text-primary-700 text-lg">₹{{ grnTotalValue | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  } @else if (viewMode === 'view' && viewingGrn) {
+    <!-- VIEW GRN FULL PAGE VIEW -->
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-3">
+        <button class="w-[34px] h-[34px] inline-flex items-center justify-center bg-surface-100 hover:bg-surface-200 text-surface-700 rounded-sm border border-surface-300 transition-colors cursor-pointer" (click)="backToList()"><i class="pi pi-arrow-left"></i></button>
+        <h1 class="text-xl font-bold text-surface-900 m-0">Goods Receipt Note: {{ viewingGrn.voucherNo }}</h1>
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">Stock Posted IN</span>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-semibold rounded-md border border-surface-200 transition-colors cursor-pointer" (click)="backToList()">Back to List</button>
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer" onclick="window.print()">
+          <i class="pi pi-print"></i> Print GRN
+        </button>
+      </div>
+    </div>
+
+    <div class="bg-surface-0 border border-surface-200 rounded-xl p-6 shadow-xs">
+      <div class="flex justify-between items-start border-b-2 border-surface-200 pb-4 mb-5">
+        <div class="space-y-1">
+          <div class="font-bold text-lg text-surface-900">Vendor: {{ viewingGrn.vendorLedger?.name }}</div>
+          @if (viewingGrn.vendorChallanNo) {
+            <div class="text-sm text-surface-600">Vendor Challan No: <strong class="text-surface-900">{{ viewingGrn.vendorChallanNo }}</strong></div>
+          }
+          <div class="text-sm text-surface-600">GRN Date: <span class="font-medium text-surface-900">{{ viewingGrn.grnDate }}</span></div>
+        </div>
+        <div class="text-right space-y-1 text-sm text-surface-600">
+          <div>Godown: <strong class="text-surface-900">{{ viewingGrn.godown?.name }}</strong></div>
+          <div>Branch: <strong class="text-surface-900">{{ viewingGrn.branch?.branchName || 'Head Office' }}</strong></div>
+        </div>
+      </div>
+
+      <div class="font-bold text-base text-surface-900 mb-3">Received Line Items</div>
+      <div class="overflow-x-auto border border-surface-200 rounded-lg">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+            <tr>
+              <th class="px-4 py-3">Item</th>
+              <th class="px-4 py-3">Received Qty</th>
+              <th class="px-4 py-3">Rate</th>
+              <th class="px-4 py-3 text-right">Total Value</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100">
+            @for (item of viewingGrn.items; track item.id) {
+              <tr class="hover:bg-surface-50/50 transition-colors">
+                <td class="px-4 py-3 font-bold text-surface-900">{{ item.item?.name }}</td>
+                <td class="px-4 py-3 text-surface-700">{{ item.receivedQty }} {{ item.unit?.code }}</td>
+                <td class="px-4 py-3 font-mono text-surface-700">₹{{ item.rate }}</td>
+                <td class="px-4 py-3 text-right font-mono font-bold text-surface-900">₹{{ item.totalAmount }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- SELECT PENDING POS DIALOG -->
+@if (showPoModal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+    <div class="bg-surface-0 border border-surface-200 rounded-xl shadow-xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-surface-200 bg-surface-50">
+        <h3 class="text-base font-bold text-surface-900 m-0">Pending Purchase Orders for Selected Vendor</h3>
+        <button class="text-surface-400 hover:text-surface-700 text-xl font-bold cursor-pointer" (click)="showPoModal = false">&times;</button>
+      </div>
+      <div class="p-6 overflow-y-auto">
+        @if (pendingPos.length === 0) {
+          <div class="py-8 text-center text-surface-500">
+            No pending orders found for this vendor.
+          </div>
+        } @else {
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+              <tr>
+                <th class="px-4 py-3">Select</th>
+                <th class="px-4 py-3">PO Voucher</th>
+                <th class="px-4 py-3">Date</th>
+                <th class="px-4 py-3">Lines</th>
+                <th class="px-4 py-3">Grand Total</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-100">
+              @for (po of pendingPos; track po.id) {
+                <tr class="hover:bg-surface-50/50 transition-colors">
+                  <td class="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      class="rounded border-surface-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                      [checked]="selectedPoIds.includes(po.id)"
+                      (change)="togglePoSelect(po.id)"
+                    />
+                  </td>
+                  <td class="px-4 py-3 font-mono font-bold text-primary-700">{{ po.voucherNo }}</td>
+                  <td class="px-4 py-3 text-surface-700">{{ po.orderDate }}</td>
+                  <td class="px-4 py-3 text-surface-700">{{ po.items?.length }} Items</td>
+                  <td class="px-4 py-3 font-mono font-bold text-surface-900">₹{{ po.grandTotal }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+      <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-surface-200 bg-surface-50">
+        <button class="px-4 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-semibold rounded-md border border-surface-200 transition-colors cursor-pointer" (click)="showPoModal = false">Cancel</button>
+        <button class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" (click)="confirmPullPOs()" [disabled]="selectedPoIds.length === 0">
+          Pull Selected POs ({{ selectedPoIds.length }})
+        </button>
+      </div>
+    </div>
+  </div>
+}

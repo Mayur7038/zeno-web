@@ -1,0 +1,706 @@
+<div class="flex flex-col gap-5">
+  <!-- 1. LIST VIEW -->
+  @if (viewMode === 'list') {
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-surface-900">Products & Services</h1>
+        <p class="text-surface-500 text-sm mt-1">
+          Manage goods, services, inventory tracking rules, and variant SKU matrices.
+        </p>
+      </div>
+      <div class="flex gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-semibold shadow-xs transition-colors cursor-pointer" (click)="openCreateProduct()">
+          <i class="pi pi-plus"></i> Create New Product
+        </button>
+      </div>
+    </div>
+
+    <div class="bg-white border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+      <!-- FILTER TOOLBAR -->
+      <div class="p-4 flex justify-between items-center border-b border-surface-200 gap-4 flex-wrap">
+        <div class="relative flex-1 min-w-[260px] max-w-sm">
+          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
+          <input
+            type="text"
+            placeholder="Search products & SKUs..."
+            [(ngModel)]="searchQuery"
+            (input)="filterItems()"
+            class="w-full pl-9 pr-3 py-2 border border-surface-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+          />
+        </div>
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <select [(ngModel)]="typeFilter" (change)="filterItems()" class="px-3 py-2 border border-surface-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary-600">
+            <option value="ALL">All Product Types</option>
+            <option value="GOODS">Goods</option>
+            <option value="SERVICE">Services</option>
+          </select>
+
+          <select [(ngModel)]="trackingFilter" (change)="filterItems()" class="px-3 py-2 border border-surface-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary-600">
+            <option value="ALL">All Tracking</option>
+            <option value="ITEM_WISE">Item Wise</option>
+            <option value="BATCH_WISE">Batch Wise</option>
+            <option value="SERIAL_WISE">Serial Wise</option>
+            <option value="VARIANT_WISE">Variant Wise</option>
+          </select>
+
+          <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-surface-300 hover:bg-surface-50 text-surface-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50" (click)="exportItems()" [disabled]="filteredItems.length === 0" title="Export Products">
+            <i class="pi pi-download"></i> Export
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+            <tr>
+              <th class="px-4 py-3">Product Name</th>
+              <th class="px-4 py-3">SKU Code</th>
+              <th class="px-4 py-3">Group</th>
+              <th class="px-4 py-3">Category</th>
+              <th class="px-4 py-3">Unit</th>
+              <th class="px-4 py-3">GST Rate</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100">
+            @if (loading) {
+              <tr>
+                <td colspan="7" class="text-center py-10 text-surface-500">
+                  <i class="pi pi-spin pi-spinner mr-2"></i> Loading products...
+                </td>
+              </tr>
+            } @else if (filteredItems.length === 0) {
+              <tr>
+                <td colspan="7" class="text-center py-10 text-surface-500">
+                  No products found. Click "Create New Product" to get started.
+                </td>
+              </tr>
+            }
+            @for (item of filteredItems; track item.id) {
+              <tr class="hover:bg-surface-50/75 transition-colors">
+                <td class="px-4 py-3">
+                  <div class="flex flex-col">
+                    <span class="font-bold text-surface-900 hover:text-primary-600 cursor-pointer" (click)="openEditProduct(item)">{{ item.name }}</span>
+                    @if (item.inventoryTracking === 'VARIANT_WISE' && item.variants?.length) {
+                      <span class="inline-flex items-center gap-1 text-xs text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded w-fit mt-1 font-semibold">
+                        <i class="pi pi-sliders-v text-[10px]"></i> {{ item.variants.length }} SKU Variants
+                      </span>
+                    }
+                  </div>
+                </td>
+                <td class="px-4 py-3 font-mono text-surface-600">{{ item.sku || '—' }}</td>
+                <td class="px-4 py-3 text-xs text-surface-700">
+                  {{ item.itemGroup?.name || '—' }}
+                </td>
+                <td class="px-4 py-3 text-xs text-surface-700">
+                  {{ item.category?.name || '—' }}
+                </td>
+                <td class="px-4 py-3">
+                  <span class="inline-block px-2 py-0.5 rounded text-xs font-bold bg-surface-100 text-surface-700">{{ item.unit?.code || item.unit?.name || 'NOS' }}</span>
+                </td>
+                <td class="px-4 py-3">
+                  @if (item.isGstApplicable === false) {
+                    <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-surface-100 text-surface-600 border border-surface-200">Exempt / 0%</span>
+                  } @else {
+                    <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
+                      {{ getItemGstDisplayRate(item) }}% GST
+                      @if (gstActiveLevel !== 'ITEM') {
+                        <span class="text-[10px] opacity-85 ml-1">
+                          ({{ getItemGstLevelTag(item) }})
+                        </span>
+                      }
+                    </span>
+                  }
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button class="p-1.5 text-surface-500 hover:text-surface-900 hover:bg-surface-100 rounded transition-colors cursor-pointer" (click)="openEditProduct(item)" title="Edit Product">
+                      <i class="pi pi-pencil"></i>
+                    </button>
+                    <button class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors cursor-pointer" (click)="deleteItem(item)" title="Delete Product">
+                      <i class="pi pi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- 2. FULL VIEW PRODUCT CREATION / EDITING -->
+  @if (viewMode === 'create' || viewMode === 'edit') {
+    <div class="flex flex-col gap-4">
+      <!-- TOP HEADER -->
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-3">
+          <button class="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-surface-300 bg-white hover:bg-surface-50 text-surface-700 transition-colors cursor-pointer" (click)="backToList()" title="Back to Products List">
+            <i class="pi pi-arrow-left"></i>
+          </button>
+          <div>
+            <h2 class="text-xl font-bold text-surface-900">{{ viewMode === 'edit' ? 'Edit Product: ' + form.name : 'Create New Product' }}</h2>
+            <p class="text-xs text-surface-500 mt-0.5">
+              Configure product identity, GST compliance, inventory tracking, and SKU variant matrix.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+          <button type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 border border-surface-300 bg-white hover:bg-surface-50 text-surface-700 rounded-lg text-sm font-semibold transition-colors cursor-pointer" (click)="backToList()">
+            <i class="pi pi-times"></i> Cancel
+          </button>
+          <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-50" (click)="saveItem()" [disabled]="submitting || !form.name">
+            @if (submitting) {
+              <i class="pi pi-spin pi-spinner"></i> Saving...
+            } @else {
+              <i class="pi pi-check"></i> {{ viewMode === 'edit' ? 'Update Product' : 'Save Product' }}
+            }
+          </button>
+        </div>
+      </div>
+
+      <!-- FULL SCREEN FORM CARD -->
+      <div class="bg-white border border-surface-200 rounded-xl shadow-xs p-6 flex flex-col gap-6">
+        <!-- PERMANENT SECTION 1: BASIC INFORMATION (ALWAYS VISIBLE) -->
+        <div class="flex flex-col gap-4">
+          <div class="flex items-center gap-2 pb-2.5 border-b border-surface-200">
+            <i class="pi pi-box text-primary-600 font-bold"></i>
+            <h3 class="text-sm font-bold text-surface-900 uppercase tracking-wider m-0">
+              Basic Information & Identity
+            </h3>
+          </div>
+
+          <div class="max-w-6xl flex flex-col gap-5">
+            <!-- LINE 1: 3 Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-surface-700">Product Type <span class="text-red-500">*</span></label>
+                <select
+                  [(ngModel)]="form.productType"
+                  (change)="onProductTypeChanged()"
+                  class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white font-bold focus:outline-none focus:border-primary-600"
+                  required
+                >
+                  <option value="GOODS">Goods</option>
+                  <option value="SERVICE">Service</option>
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-surface-700">Product Name <span class="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  [(ngModel)]="form.name"
+                  (input)="onProductNameChanged()"
+                  class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white font-bold focus:outline-none focus:border-primary-600"
+                  required
+                />
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-surface-700">Product SKU / Base Code</label>
+                <input
+                  type="text"
+                  [(ngModel)]="form.sku"
+                  (input)="onBaseSkuChanged()"
+                  class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white font-mono focus:outline-none focus:border-primary-600"
+                />
+              </div>
+            </div>
+
+            <!-- LINE 2: 3 Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-surface-700">Product Group</label>
+                <select [(ngModel)]="form.itemGroupId" (change)="onGroupChanged()" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600">
+                  <option value="">-- None / Select Group --</option>
+                  @for (g of itemGroups; track g.id) {
+                    <option [value]="g.id">{{ g.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-surface-700">Product Category</label>
+                <select [(ngModel)]="form.itemCategoryId" (change)="onCategoryChanged()" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600">
+                  <option value="">-- None / Select Category --</option>
+                  @for (c of filteredCategories; track c.id) {
+                    <option [value]="c.id">{{ c.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-surface-700">Unit of Measure <span class="text-red-500">*</span></label>
+                <select [(ngModel)]="form.unitId" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600" required>
+                  @for (u of units; track u.id) {
+                    <option [value]="u.id">{{ u.name }} ({{ u.code }})</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <!-- LINE 3: 3 Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-surface-700">Inventory Tracking Rule <span class="text-red-500">*</span></label>
+                <select
+                  [(ngModel)]="form.inventoryTracking"
+                  (change)="onTrackingChanged()"
+                  class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white font-bold focus:outline-none focus:border-primary-600"
+                  [disabled]="form.productType === 'SERVICE'"
+                >
+                  <option value="ITEM_WISE">Item Wise (Standard stock)</option>
+                  <option value="BATCH_WISE">Batch Wise (Track batches & expiry)</option>
+                  <option value="SERIAL_WISE">Serial Wise (Track individual serials)</option>
+                  <option value="VARIANT_WISE">Variant Wise (Multi-attribute matrix)</option>
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-surface-700">GST Applicable? <span class="text-red-500">*</span></label>
+                <select
+                  [(ngModel)]="form.isGstApplicable"
+                  (change)="onGstToggleChanged()"
+                  class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white font-bold focus:outline-none focus:border-primary-600"
+                >
+                  <option [ngValue]="true">Yes</option>
+                  <option [ngValue]="false">No</option>
+                </select>
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-surface-700">
+                  GST Rate (%) <span *ngIf="form.isGstApplicable" class="text-red-500">*</span>
+                  @if (!isGstAtItemLevel) {
+                    <span class="text-[11px] text-indigo-700 ml-1">({{ getGstResolutionBadgeLabel() }})</span>
+                  }
+                </label>
+                @if (isGstAtItemLevel) {
+                  <select
+                    [(ngModel)]="form.gstRate"
+                    class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white font-bold focus:outline-none focus:border-primary-600"
+                    [disabled]="!form.isGstApplicable"
+                  >
+                    <option [value]="0">0% (Nil / Exempt)</option>
+                    <option [value]="5">5% GST</option>
+                    <option [value]="12">12% GST</option>
+                    <option [value]="18">18% Standard GST</option>
+                    <option [value]="28">28% Highest GST</option>
+                  </select>
+                } @else {
+                  <div class="flex items-center gap-2 p-2 bg-surface-50 border border-surface-200 rounded-md text-sm min-h-[38px]">
+                    <i class="pi" [ngClass]="getGstResolutionIcon()"></i>
+                    <span class="font-bold text-surface-900">{{ getResolvedItemFormGstRate() }}% GST</span>
+                    <span class="text-xs text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded font-semibold ml-auto">{{ getGstResolutionSourceText() }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- LINE 4: 3 Fields (HSN/SAC Code, Description, Image Upload) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-surface-700">HSN / SAC Code</label>
+                <input
+                  type="text"
+                  [(ngModel)]="form.hsnSac"
+                  class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white font-mono focus:outline-none focus:border-primary-600"
+                />
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-surface-700">Description</label>
+                <textarea
+                  [(ngModel)]="form.description"
+                  rows="3"
+                  class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600 min-h-[82px] resize-y"
+                ></textarea>
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs font-semibold text-surface-700">Product Image</label>
+                <input #imageFileInput type="file" accept="image/*" (change)="onImageFileSelected($event)" class="hidden" />
+                @if (!form.imageUrl) {
+                  <div class="flex flex-col items-center justify-center gap-1 p-3 border-2 border-dashed border-surface-300 rounded-md bg-surface-50 hover:bg-primary-50/50 hover:border-primary-400 cursor-pointer min-h-[82px] text-center transition-colors" (click)="imageFileInput.click()">
+                    <i class="pi pi-upload text-xl text-primary-600"></i>
+                    <span class="text-xs font-bold text-surface-800">Upload Image</span>
+                  </div>
+                } @else {
+                  <div class="flex items-center gap-3 p-2 border border-surface-200 rounded-md bg-white min-h-[82px]">
+                    <img [src]="form.imageUrl" alt="Product Image" (error)="onImageError($event)" class="w-14 h-14 object-cover rounded border border-surface-200 shrink-0 bg-surface-50" />
+                    <div class="flex flex-col gap-1 flex-1 min-w-0">
+                      <span class="text-xs font-semibold text-surface-800 truncate">{{ imageFileName || 'Product Image' }}</span>
+                      <div class="flex gap-1.5">
+                        <button type="button" class="bg-surface-100 hover:bg-surface-200 border border-surface-300 rounded px-2 py-0.5 text-[11px] font-semibold text-surface-700 inline-flex items-center gap-1 cursor-pointer transition-colors" (click)="imageFileInput.click()" title="Replace image">
+                          <i class="pi pi-pencil"></i> Change
+                        </button>
+                        <button type="button" class="bg-red-50 hover:bg-red-100 border border-red-200 rounded px-2 py-0.5 text-[11px] font-semibold text-red-600 inline-flex items-center gap-1 cursor-pointer transition-colors" (click)="removeImage()" title="Remove image">
+                          <i class="pi pi-trash"></i> Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: ADDITIONAL TABS (BELOW BASIC INFO) -->
+        <div class="border border-surface-200 rounded-xl overflow-hidden shadow-2xs">
+          <!-- TAB HEADER BELOW BASIC INFO -->
+          <div class="flex border-b border-surface-200 bg-surface-50 px-4 pt-2 gap-2 overflow-x-auto">
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-lg border-b-2 transition-colors cursor-pointer"
+              [class.border-primary-600]="activeTab === 'pricing'"
+              [class.text-primary-700]="activeTab === 'pricing'"
+              [class.bg-white]="activeTab === 'pricing'"
+              [class.border-transparent]="activeTab !== 'pricing'"
+              [class.text-surface-600]="activeTab !== 'pricing'"
+              (click)="activeTab = 'pricing'"
+            >
+              <i class="pi pi-dollar"></i> Pricing & Inventory
+            </button>
+
+            @if (form.inventoryTracking === 'VARIANT_WISE') {
+              <button
+                type="button"
+                class="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-bold rounded-t-lg border-b-2 transition-colors cursor-pointer text-indigo-700"
+                [class.border-indigo-600]="activeTab === 'variants'"
+                [class.bg-white]="activeTab === 'variants'"
+                [class.border-transparent]="activeTab !== 'variants'"
+                (click)="activeTab = 'variants'"
+              >
+                <i class="pi pi-sliders-v"></i> Variants & SKU Matrix
+                @if (skuRows.length > 0) {
+                  <span class="bg-indigo-600 text-white text-[11px] px-1.5 py-0.5 rounded-full font-bold">{{ skuRows.length }}</span>
+                }
+              </button>
+            }
+          </div>
+
+          <!-- TAB CONTENT BELOW -->
+          <div class="p-6 bg-white min-h-[300px]">
+
+          <!-- TAB 2: VARIANTS & SKU MATRIX -->
+          @if (activeTab === 'variants' && form.inventoryTracking === 'VARIANT_WISE') {
+            <div class="max-w-6xl flex flex-col gap-5">
+              <!-- STEP 1: VARIANT ATTRIBUTE SELECTOR -->
+              <div class="bg-white border border-surface-200 rounded-xl p-4 flex flex-col gap-4 shadow-xs">
+                <div class="flex justify-between items-center flex-wrap gap-3">
+                  <h4 class="text-base font-bold text-surface-900">
+                    Select Variants
+                  </h4>
+
+                  <!-- Dropdown to add variant dimension -->
+                  <div class="flex items-center gap-2">
+                    <select #variantPicker class="px-3 py-2 border border-surface-300 rounded-md text-sm bg-white min-w-[200px] focus:outline-none focus:border-primary-600">
+                      <option value="" disabled selected>Select Variant Dimension</option>
+                      @for (vd of availableVariantDefinitions; track vd.id) {
+                        <option [value]="vd.id">{{ vd.name }}</option>
+                      }
+                    </select>
+                    <button type="button" class="inline-flex items-center gap-1.5 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md text-sm font-semibold transition-colors cursor-pointer" (click)="addSelectedVariant(variantPicker.value); variantPicker.value = ''">
+                      <i class="pi pi-plus"></i> Add Dimension
+                    </button>
+                  </div>
+                </div>
+
+                <!-- LIST OF SELECTED VARIANTS -->
+                @if (selectedVariants.length === 0) {
+                  <div class="flex items-center justify-center gap-2.5 p-6 bg-surface-50 border border-dashed border-surface-300 rounded-lg text-surface-500 text-sm">
+                    <i class="pi pi-sliders-v text-xl text-surface-400"></i>
+                    <span>No variants added yet. Select a variant above.</span>
+                  </div>
+                } @else {
+                  <div class="border border-surface-200 rounded-lg overflow-hidden bg-white">
+                    <table class="w-full border-collapse text-sm text-left">
+                      <thead class="bg-surface-50 text-surface-700 font-bold border-b border-surface-200">
+                        <tr>
+                          <th class="p-3 w-44">Variant</th>
+                          <th class="p-3">Values (Select Multiple)</th>
+                          <th class="p-3 w-12 text-center"></th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-surface-100">
+                        @for (sv of selectedVariants; track sv.definitionId; let vIdx = $index) {
+                          <tr>
+                            <td class="p-3 font-bold text-surface-900">
+                              {{ sv.definitionName }}
+                            </td>
+                            <td class="p-3">
+                              <div class="flex flex-wrap items-center gap-2">
+                                @for (opt of sv.availableOptions; track opt) {
+                                  <label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border cursor-pointer select-none transition-colors" [class.bg-indigo-50]="sv.selectedValues.includes(opt)" [class.border-indigo-400]="sv.selectedValues.includes(opt)" [class.text-indigo-900]="sv.selectedValues.includes(opt)" [class.bg-surface-50]="!sv.selectedValues.includes(opt)" [class.border-surface-300]="!sv.selectedValues.includes(opt)" [class.text-surface-700]="!sv.selectedValues.includes(opt)">
+                                    <input
+                                      type="checkbox"
+                                      [checked]="sv.selectedValues.includes(opt)"
+                                      (change)="toggleVariantValue(sv, opt)"
+                                      class="accent-primary-600 rounded"
+                                    />
+                                    <span>{{ opt }}</span>
+                                  </label>
+                                }
+
+                                <div class="inline-flex items-center gap-1.5 ml-1">
+                                  <input
+                                    type="text"
+                                    placeholder="Add custom..."
+                                    [(ngModel)]="sv.customValueInput"
+                                    (keydown.enter)="$event.preventDefault(); addCustomValueToVariant(sv)"
+                                    class="w-32 px-2.5 py-1 border border-dashed border-surface-300 rounded text-xs focus:outline-none focus:border-primary-600 focus:border-solid"
+                                  />
+                                  <button type="button" class="px-2 py-1 bg-white hover:bg-primary-50 border border-primary-500 text-primary-600 rounded text-xs font-semibold cursor-pointer transition-colors" (click)="addCustomValueToVariant(sv)">
+                                    Add
+                                  </button>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="p-3 text-center">
+                              <button type="button" class="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded cursor-pointer transition-colors" (click)="removeSelectedVariant(vIdx)" title="Remove variant">
+                                <i class="pi pi-trash"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- GENERATE COMBINATIONS TRIGGER -->
+                  <div class="flex items-center pt-1">
+                    <button type="button" class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md text-sm font-semibold transition-colors cursor-pointer" (click)="generateSkuMatrix()">
+                      <i class="pi pi-bolt"></i> Generate SKU Combinations
+                    </button>
+                  </div>
+                }
+              </div>
+
+              <!-- STEP 2: SKU MATRIX TABLE & EXCEL IMPORT/EXPORT -->
+              <div class="bg-white border border-surface-200 rounded-xl p-4 flex flex-col gap-4 shadow-xs">
+                <div class="flex justify-between items-center flex-wrap gap-3">
+                  <h4 class="text-base font-bold text-surface-900">
+                    Generated SKU Matrix ({{ skuRows.length }})
+                  </h4>
+
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-surface-300 hover:bg-surface-50 text-surface-700 rounded-md text-xs font-semibold transition-colors cursor-pointer"
+                      (click)="downloadVariantTemplate()"
+                      title="Download pre-filled Excel/CSV template"
+                    >
+                      <i class="pi pi-download"></i> Download Template
+                    </button>
+
+                    <button
+                      type="button"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-surface-300 hover:bg-surface-50 text-surface-700 rounded-md text-xs font-semibold transition-colors cursor-pointer"
+                      (click)="fileInput.click()"
+                      title="Upload from filled Excel/CSV template"
+                    >
+                      <i class="pi pi-upload"></i> Upload from Excel
+                    </button>
+                    <input
+                      #fileInput
+                      type="file"
+                      accept=".csv"
+                      (change)="onCsvFileUploaded($event)"
+                      class="hidden"
+                    />
+                  </div>
+                </div>
+
+                @if (skuRows.length === 0) {
+                  <div class="p-8 text-center text-surface-500 text-sm bg-surface-50 rounded-lg flex flex-col items-center">
+                    <i class="pi pi-table text-2xl text-surface-400 mb-1.5"></i>
+                    <div>No SKU combinations generated yet.</div>
+                  </div>
+                } @else {
+                  <div class="border border-surface-200 rounded-lg overflow-x-auto max-h-[500px]">
+                    <table class="w-full text-left border-collapse text-sm">
+                      <thead class="sticky top-0 bg-surface-50 text-surface-700 font-bold border-b border-surface-200 z-1">
+                        <tr>
+                          <th class="p-2.5 min-w-[160px]">Variant Combination</th>
+                          <th class="p-2.5 min-w-[180px]">SKU Code <span class="text-red-500">*</span></th>
+                          <th class="p-2.5 min-w-[160px]">Barcode</th>
+                          <th class="p-2.5 w-32">Opening Qty</th>
+                          <th class="p-2.5 w-32">Unit Rate ₹</th>
+                          <th class="p-2.5 w-32">MRP ₹</th>
+                          <th class="p-2.5 w-32">Sale Rate ₹</th>
+                          <th class="p-2.5 w-14 text-center">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-surface-100">
+                        @for (row of skuRows; track $index; let rIdx = $index) {
+                          <tr class="hover:bg-surface-50/50">
+                            <td class="p-2.5">
+                              <span class="bg-surface-100 text-surface-800 font-semibold px-2 py-1 rounded text-xs whitespace-nowrap">{{ row.name }}</span>
+                            </td>
+                            <td class="p-2.5">
+                              <input
+                                type="text"
+                                [(ngModel)]="row.sku"
+                                class="w-full px-2.5 py-1.5 border border-surface-300 rounded text-sm font-mono font-bold focus:outline-none focus:border-primary-600"
+                                required
+                              />
+                            </td>
+                            <td class="p-2.5">
+                              <input
+                                type="text"
+                                [(ngModel)]="row.barcode"
+                                class="w-full px-2.5 py-1.5 border border-surface-300 rounded text-sm font-mono focus:outline-none focus:border-primary-600"
+                              />
+                            </td>
+                            <td class="p-2.5">
+                              <input
+                                type="number"
+                                [(ngModel)]="row.openingQty"
+                                min="0"
+                                class="w-full px-2.5 py-1.5 border border-surface-300 rounded text-sm text-right focus:outline-none focus:border-primary-600"
+                              />
+                            </td>
+                            <td class="p-2.5">
+                              <input
+                                type="number"
+                                [(ngModel)]="row.purchaseRate"
+                                min="0"
+                                class="w-full px-2.5 py-1.5 border border-surface-300 rounded text-sm text-right focus:outline-none focus:border-primary-600"
+                              />
+                            </td>
+                            <td class="p-2.5">
+                              <input
+                                type="number"
+                                [(ngModel)]="row.mrp"
+                                min="0"
+                                class="w-full px-2.5 py-1.5 border border-surface-300 rounded text-sm text-right focus:outline-none focus:border-primary-600"
+                              />
+                            </td>
+                            <td class="p-2.5">
+                              <input
+                                type="number"
+                                [(ngModel)]="row.saleRate"
+                                min="0"
+                                class="w-full px-2.5 py-1.5 border border-surface-300 rounded text-sm text-right font-bold focus:outline-none focus:border-primary-600"
+                              />
+                            </td>
+                            <td class="p-2.5 text-center">
+                              <button type="button" class="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded cursor-pointer transition-colors" (click)="removeSkuRow(rIdx)" title="Remove this SKU">
+                                <i class="pi pi-times"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- TAB 3: PRICING & INVENTORY -->
+          @if (activeTab === 'pricing') {
+            <div class="max-w-6xl flex flex-col gap-5">
+              <!-- Pricing Row 1: 3 Fields -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="flex flex-col gap-1.5">
+                  <label class="text-xs font-semibold text-surface-700">Default Purchase / Cost Rate (₹)</label>
+                  <input
+                    type="number"
+                    [(ngModel)]="form.purchaseRate"
+                    (input)="onDefaultRatesChanged()"
+                    min="0"
+                    class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600"
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                  <label class="text-xs font-semibold text-surface-700">Default Selling Rate (₹)</label>
+                  <input
+                    type="number"
+                    [(ngModel)]="form.saleRate"
+                    (input)="onDefaultRatesChanged()"
+                    min="0"
+                    class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white font-bold focus:outline-none focus:border-primary-600"
+                  />
+                </div>
+
+                <div class="flex flex-col gap-1.5">
+                  <label class="text-xs font-semibold text-surface-700">Maximum Retail Price (MRP ₹)</label>
+                  <input
+                    type="number"
+                    [(ngModel)]="form.mrp"
+                    (input)="onDefaultRatesChanged()"
+                    min="0"
+                    class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600"
+                  />
+                </div>
+              </div>
+
+              <!-- Pricing Row 2: 3 Fields -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="flex flex-col gap-1.5">
+                  <label class="text-xs font-semibold text-surface-700">Reorder Warning Level (Qty)</label>
+                  <input
+                    type="number"
+                    [(ngModel)]="form.reorderLevel"
+                    min="0"
+                    class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600"
+                  />
+                </div>
+
+                @if (form.inventoryTracking !== 'VARIANT_WISE') {
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-semibold text-surface-700">Opening Stock Quantity</label>
+                    <input
+                      type="number"
+                      [(ngModel)]="form.openingQty"
+                      min="0"
+                      class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600"
+                    />
+                  </div>
+
+                  <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-semibold text-surface-700">Opening Valuation Rate (₹)</label>
+                    <input
+                      type="number"
+                      [(ngModel)]="form.openingRate"
+                      min="0"
+                      class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-600"
+                    />
+                  </div>
+                } @else {
+                  <div class="md:col-span-2 bg-indigo-50 border border-dashed border-indigo-200 rounded-lg p-3 flex items-center">
+                    <span class="font-bold text-indigo-700 text-xs">
+                      <i class="pi pi-sliders-v mr-1"></i> Variant-wise opening stock configured in Variants & SKU Matrix tab
+                    </span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+          </div>
+        </div>
+
+        <!-- FOOTER BAR -->
+        <div class="px-6 py-4 border-t border-surface-200 flex justify-end gap-2.5 bg-surface-50">
+          <button type="button" class="px-4 py-2 border border-surface-300 bg-white hover:bg-surface-100 text-surface-700 rounded-md text-sm font-semibold transition-colors cursor-pointer" (click)="backToList()">
+            <i class="pi pi-times mr-1"></i> Cancel
+          </button>
+          <button type="button" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 inline-flex items-center gap-2" (click)="saveItem()" [disabled]="submitting || !form.name">
+            @if (submitting) {
+              <i class="pi pi-spin pi-spinner"></i> Saving...
+            } @else {
+              <i class="pi pi-check"></i> {{ viewMode === 'edit' ? 'Update Product' : 'Save Product Master' }}
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

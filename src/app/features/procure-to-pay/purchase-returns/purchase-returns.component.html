@@ -1,0 +1,382 @@
+<div class="flex flex-col gap-5">
+  @if (viewMode === 'list') {
+    <!-- PAGE HEADER -->
+    <div class="flex items-center justify-between mb-1">
+      <h1 class="text-xl font-bold text-surface-900 m-0">Purchase Returns</h1>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer" (click)="openCreateModal()">
+          <i class="pi pi-plus"></i> Create Purchase Return
+        </button>
+      </div>
+    </div>
+
+    <!-- TOOLBAR & TABLE CARD -->
+    <div class="bg-surface-0 border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+      <div class="p-4 border-b border-surface-200 flex flex-wrap items-center justify-between gap-4 bg-surface-0">
+        <div class="relative flex-1 min-w-[240px] max-w-sm">
+          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
+          <input
+            type="text"
+            class="w-full pl-9 pr-3 py-2 bg-surface-0 border border-surface-200 rounded-lg text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+            [(ngModel)]="searchQuery"
+            placeholder="Search debit notes / purchase returns..."
+          />
+        </div>
+
+        <div class="flex items-center gap-3">
+          <select class="px-3 py-2 bg-surface-0 border border-surface-200 rounded-lg text-sm text-surface-700 focus:outline-none focus:border-primary-600" [(ngModel)]="selectedVendor">
+            <option value="">All Vendors</option>
+            @for (v of vendors; track v.id) {
+              <option [value]="v.id">{{ v.name }}</option>
+            }
+          </select>
+
+          <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-medium rounded-lg border border-surface-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" (click)="exportReturns()" [disabled]="filteredReturns.length === 0" title="Export to CSV">
+            <i class="pi pi-download"></i> Export
+          </button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+            <tr>
+              <th class="px-4 py-3">Voucher No</th>
+              <th class="px-4 py-3">Return Date</th>
+              <th class="px-4 py-3">Vendor (Creditor)</th>
+              <th class="px-4 py-3">Against Invoice</th>
+              <th class="px-4 py-3">Godown</th>
+              <th class="px-4 py-3">Reason</th>
+              <th class="px-4 py-3">Taxable</th>
+              <th class="px-4 py-3">Tax Reversed</th>
+              <th class="px-4 py-3">Grand Total</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100">
+            @if (filteredReturns.length === 0) {
+              <tr>
+                <td colspan="10" class="px-4 py-10 text-center text-surface-500">
+                  No purchase returns recorded yet. Click "Create Purchase Return" to issue a debit note.
+                </td>
+              </tr>
+            }
+            @for (pr of filteredReturns; track pr.id) {
+              <tr (click)="viewReturn(pr)" class="hover:bg-surface-50/50 transition-colors cursor-pointer">
+                <td class="px-4 py-3 font-mono font-bold text-red-800">{{ pr.voucherNo }}</td>
+                <td class="px-4 py-3 text-surface-700">{{ pr.returnDate }}</td>
+                <td class="px-4 py-3 font-bold text-surface-900">{{ pr.vendorLedger?.name }}</td>
+                <td class="px-4 py-3">
+                  @if (pr.purchaseInvoice) {
+                    <span class="inline-block px-2 py-0.5 rounded font-mono text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">{{ pr.purchaseInvoice?.voucherNo }}</span>
+                  } @else {
+                    <span class="text-xs text-surface-400">Direct Return</span>
+                  }
+                </td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <i class="pi pi-warehouse"></i> {{ pr.godown?.name || 'Main Warehouse' }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-surface-700">{{ pr.reason || 'Damaged' }}</td>
+                <td class="px-4 py-3 font-mono text-surface-700">₹{{ (+pr.subtotal).toFixed(2) }}</td>
+                <td class="px-4 py-3 font-mono text-amber-600">₹{{ (+pr.taxTotal).toFixed(2) }}</td>
+                <td class="px-4 py-3 font-mono font-bold text-red-600">₹{{ (+pr.grandTotal).toFixed(2) }}</td>
+                <td class="px-4 py-3 text-right">
+                  <div class="flex items-center justify-end gap-1.5" (click)="$event.stopPropagation()">
+                    <button class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-primary-50 text-primary-700 border border-primary-200 hover:bg-primary-100 transition-colors cursor-pointer" title="View Debit Note Voucher" (click)="viewReturn(pr)">
+                      <i class="pi pi-eye"></i> View
+                    </button>
+                    <button class="w-8 h-8 inline-flex items-center justify-center bg-surface-0 border border-surface-200 rounded-sm text-surface-600 hover:text-primary-600 hover:border-primary-300 transition-colors cursor-pointer" title="Print Debit Note" (click)="viewReturn(pr)">
+                      <i class="pi pi-print"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  } @else if (viewMode === 'create') {
+    <!-- CREATE PURCHASE RETURN FULL PAGE VIEW -->
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-3">
+        <button class="w-[34px] h-[34px] inline-flex items-center justify-center bg-surface-100 hover:bg-surface-200 text-surface-700 rounded-sm border border-surface-300 transition-colors cursor-pointer" (click)="backToList()"><i class="pi pi-arrow-left"></i></button>
+        <h1 class="text-xl font-bold text-surface-900 m-0">Purchase Return</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-semibold rounded-md border border-surface-200 transition-colors cursor-pointer" (click)="backToList()">Cancel</button>
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" (click)="submitCreateReturn()" [disabled]="submitting || returnForm.items.length === 0">
+          @if (submitting) {
+            <i class="pi pi-spin pi-spinner"></i> Posting Debit Note...
+          } @else {
+            <i class="pi pi-check"></i> Post Purchase Return
+          }
+        </button>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-5">
+      @if (createError) {
+        <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md flex items-center gap-2 text-sm">
+          <i class="pi pi-exclamation-circle text-red-600"></i>
+          <span>{{ createError }}</span>
+        </div>
+      }
+
+      <!-- TOP SECTION: VENDOR & METADATA -->
+      <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Vendor (Sundry Creditor) <span class="text-red-500">*</span></label>
+            <zeno-searchable-select
+              [options]="vendors"
+              labelKey="name"
+              valueKey="id"
+              secondaryKey="gstin"
+              placeholder="-- Select Vendor --"
+              [(ngModel)]="returnForm.vendorLedgerId"
+              (selectChange)="onVendorChange()"
+            ></zeno-searchable-select>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Return Date <span class="text-red-500">*</span></label>
+            <input type="date" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" [(ngModel)]="returnForm.returnDate" required />
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Dispatch Godown (Warehouse) <span class="text-red-500">*</span></label>
+            <select class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" [(ngModel)]="returnForm.godownId" required>
+              @for (g of tenant.godowns(); track g.id) {
+                <option [value]="g.id">{{ g.name }} ({{ g.code || 'Main' }})</option>
+              }
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Reason for Return</label>
+            <select class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" [(ngModel)]="returnForm.reason">
+              <option value="Damaged Goods / Packaging Defect">Damaged Goods / Packaging Defect</option>
+              <option value="Quality Specifications Mismatch">Quality Specifications Mismatch</option>
+              <option value="Excess Quantity Supplied">Excess Quantity Supplied</option>
+              <option value="Rate or Discount Discrepancy">Rate or Discount Discrepancy</option>
+              <option value="Expired / Past Shelf Life">Expired / Past Shelf Life</option>
+              <option value="Other / Commercial Terms">Other / Commercial Terms</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- LINE ITEMS EDITOR -->
+      <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs flex flex-col gap-4">
+        <zeno-item-fast-entry
+          [itemsList]="itemsList"
+          [showDiscount]="false"
+          [showGst]="false"
+          [editData]="editingItemData"
+          (itemAdded)="onFastItemAdded($event)"
+          (itemUpdated)="onFastItemUpdated($event)"
+        ></zeno-item-fast-entry>
+
+        <div class="overflow-x-auto border border-surface-200 rounded-lg bg-surface-0">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+              <tr>
+                <th class="w-9 px-3 py-3 text-center">#</th>
+                <th class="min-w-[200px] px-4 py-3">Item / Product</th>
+                <th class="w-24 px-3 py-3 text-center">Return Qty</th>
+                <th class="w-20 px-3 py-3 text-center">Unit</th>
+                <th class="w-28 px-4 py-3 text-right">Rate (₹)</th>
+                <th class="w-20 px-3 py-3 text-center">GST %</th>
+                <th class="w-32 px-4 py-3 text-right">Total Debit (₹)</th>
+                <th class="w-18 px-3 py-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-100">
+              @if (returnForm.items.length === 0 || (returnForm.items.length === 1 && !returnForm.items[0].itemId)) {
+                <tr>
+                  <td colspan="8" class="px-4 py-8 text-center text-surface-500">
+                    <i class="pi pi-inbox text-2xl block mb-1 text-surface-400"></i>
+                    No items added to return. Use the Fast Item Entry Bar above to add items.
+                  </td>
+                </tr>
+              } @else {
+                @for (line of returnForm.items; track $index) {
+                  @if (line.itemId) {
+                    <tr class="hover:bg-surface-50/50 transition-colors">
+                      <td class="px-3 py-2.5 text-center font-mono text-xs text-surface-400">{{ $index + 1 }}</td>
+                      <td class="px-4 py-2.5 font-bold text-surface-900">
+                        {{ getItemName(line.itemId) }}
+                      </td>
+                      <td class="px-3 py-2.5 text-center font-mono font-bold text-surface-900">
+                        {{ line.returnedQty }}
+                      </td>
+                      <td class="px-3 py-2.5 text-center">
+                        <span class="inline-block px-2 py-0.5 rounded bg-surface-100 text-surface-700 text-xs font-semibold">{{ line.unitCode || 'NOS' }}</span>
+                      </td>
+                      <td class="px-4 py-2.5 text-right font-mono text-surface-700">
+                        ₹{{ line.rate | number:'1.2-2' }}
+                      </td>
+                      <td class="px-3 py-2.5 text-center font-mono text-surface-900">
+                        {{ line.gstRate }}%
+                      </td>
+                      <td class="px-4 py-2.5 text-right font-mono font-bold text-surface-900">
+                        ₹{{ line.totalAmount | number:'1.2-2' }}
+                      </td>
+                      <td class="px-3 py-2.5 text-center">
+                        <div class="flex items-center justify-center gap-1">
+                          <button type="button" class="w-7 h-7 inline-flex items-center justify-center text-primary-600 hover:bg-primary-50 rounded cursor-pointer transition-colors" (click)="editItemRow($index)" title="Edit line item">
+                            <i class="pi pi-pencil"></i>
+                          </button>
+                          <button type="button" class="w-7 h-7 inline-flex items-center justify-center text-red-600 hover:bg-red-50 rounded cursor-pointer transition-colors" (click)="removeLine($index)" title="Delete line item">
+                            <i class="pi pi-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SUMMARY & TOTALS FOOTER SECTION -->
+      <div class="flex flex-col md:flex-row justify-between items-start gap-6 mt-1">
+        <div class="w-full md:max-w-lg flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-surface-700 flex items-center gap-1.5"><i class="pi pi-align-left"></i> Remarks / Narration</label>
+          <textarea
+            rows="3"
+            class="w-full p-2.5 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 resize-y"
+            placeholder="Enter return remarks or reason..."
+            [(ngModel)]="returnForm.remarks"
+          ></textarea>
+        </div>
+
+        <div class="w-full md:w-80 bg-surface-50 border border-surface-200 rounded-lg p-4 flex flex-col gap-2.5 self-stretch md:self-auto">
+          <div class="flex justify-between items-center text-sm text-surface-700">
+            <span>Taxable Return Value:</span>
+            <strong class="font-mono text-surface-900">₹{{ returnSubtotal | number:'1.2-2' }}</strong>
+          </div>
+          <div class="flex justify-between items-center text-sm text-surface-700">
+            <span>Reversed GST Tax:</span>
+            <span class="font-mono text-surface-900">₹{{ returnTaxTotal | number:'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between items-center text-base font-bold text-surface-900 border-t border-surface-200 pt-2.5 mt-1">
+            <span>Total Debit Note Amount:</span>
+            <strong class="text-red-700 text-lg">₹{{ returnGrandTotal | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  } @else if (viewMode === 'view' && viewingReturn) {
+    <!-- VIEW PURCHASE RETURN FULL PAGE VIEW -->
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-3">
+        <button class="w-[34px] h-[34px] inline-flex items-center justify-center bg-surface-100 hover:bg-surface-200 text-surface-700 rounded-sm border border-surface-300 transition-colors cursor-pointer" (click)="backToList()"><i class="pi pi-arrow-left"></i></button>
+        <h1 class="text-xl font-bold text-surface-900 m-0">Debit Note: {{ viewingReturn.voucherNo }}</h1>
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
+          <i class="pi pi-replay"></i> RETURN POSTED
+        </span>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-semibold rounded-md border border-surface-200 transition-colors cursor-pointer" (click)="backToList()">Back to List</button>
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer" onclick="window.print()">
+          <i class="pi pi-print"></i> Print Debit Note
+        </button>
+      </div>
+    </div>
+
+    <div class="bg-surface-0 border border-surface-200 rounded-xl p-6 shadow-xs">
+      <div class="p-4 sm:p-6 bg-surface-0 border border-surface-200 rounded-lg">
+        <!-- REVERSAL BANNER -->
+        <div class="mb-5 p-3.5 rounded-lg bg-red-50 border border-red-200 text-red-800 flex items-center gap-3 text-sm">
+          <i class="pi pi-check-circle text-lg text-red-600"></i>
+          <div>
+            <strong>Debit Note Posted:</strong>
+            Inventory stock was deducted from warehouse, and accounts payable to {{ viewingReturn.vendorLedger?.name }} was reduced by ₹{{ (+viewingReturn.grandTotal).toFixed(2) }}.
+          </div>
+        </div>
+
+        <div class="flex justify-between items-start border-b-2 border-surface-200 pb-4 mb-5">
+          <div class="space-y-1">
+            <h2 class="text-xl font-bold text-red-800 m-0">DEBIT NOTE</h2>
+            <div class="font-mono text-sm"><strong>Debit Note #: </strong>{{ viewingReturn.voucherNo }}</div>
+            <div class="text-sm"><strong>Date: </strong>{{ viewingReturn.returnDate }}</div>
+            <div class="text-sm"><strong>Reference Invoice: </strong>{{ viewingReturn.purchaseInvoice?.voucherNo || 'Direct Return' }}</div>
+            <div class="text-sm"><strong>Reason / Remarks: </strong>{{ viewingReturn.reason || 'Goods Return' }}</div>
+          </div>
+          <div class="text-right space-y-1 text-sm text-surface-600">
+            <h3 class="font-bold text-base text-surface-900 m-0">{{ tenant.currentCompany()?.legalName }}</h3>
+            <div>{{ tenant.currentCompany()?.tradeName }}</div>
+            <div>GSTIN: <span class="font-mono text-surface-900">{{ tenant.currentCompany()?.gstin || 'N/A' }}</span></div>
+            <div>Branch: {{ viewingReturn.branch?.branchName || 'Main HO' }}</div>
+          </div>
+        </div>
+
+        <div class="bg-surface-50 border border-surface-200 rounded-lg p-4 mb-5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div>
+              <span class="text-xs font-semibold uppercase text-surface-500 tracking-wider">Issued To (Vendor)</span>
+              <div class="font-bold text-base text-surface-900 mt-1">{{ viewingReturn.vendorLedger?.name }}</div>
+              <div class="text-surface-600">GSTIN: <span class="font-mono text-surface-900">{{ viewingReturn.vendorLedger?.gstin || 'Unregistered' }}</span></div>
+            </div>
+            <div class="sm:text-right">
+              <span class="text-xs font-semibold uppercase text-surface-500 tracking-wider">Tax & Accounting Reversal</span>
+              <div class="text-surface-600 mt-1">Tax Subtotal: <span class="font-mono text-surface-900">₹{{ (+viewingReturn.subtotal).toFixed(2) }}</span></div>
+              <div class="text-surface-600">Reversed Tax: <span class="font-mono text-surface-900">₹{{ (+viewingReturn.taxTotal).toFixed(2) }}</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ITEMS TABLE -->
+        <div class="font-bold text-sm text-surface-800 mb-2">
+          Returned Items Specification
+        </div>
+        <div class="overflow-x-auto border border-surface-200 rounded-lg mb-5">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+              <tr>
+                <th class="px-3 py-2.5">#</th>
+                <th class="px-4 py-2.5">Item Description</th>
+                <th class="px-3 py-2.5 text-right">Returned Qty</th>
+                <th class="px-3 py-2.5 text-right">Unit Rate</th>
+                <th class="px-3 py-2.5 text-right">Taxable</th>
+                <th class="px-3 py-2.5 text-right">GST Total</th>
+                <th class="px-4 py-2.5 text-right">Total Debit Amount</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-100">
+              @for (it of viewingReturn.items; track it.id; let idx = $index) {
+                <tr class="hover:bg-surface-50/50">
+                  <td class="px-3 py-2.5 text-xs text-surface-400">{{ idx + 1 }}</td>
+                  <td class="px-4 py-2.5">
+                    <div class="font-bold text-surface-900">{{ it.item?.name }}</div>
+                    <div class="text-xs text-surface-500">SKU: {{ it.item?.sku || 'N/A' }}</div>
+                  </td>
+                  <td class="px-3 py-2.5 text-right font-mono font-bold text-red-600">{{ it.returnedQty }}</td>
+                  <td class="px-3 py-2.5 text-right font-mono text-surface-700">₹{{ (+it.rate).toFixed(2) }}</td>
+                  <td class="px-3 py-2.5 text-right font-mono text-surface-700">₹{{ (+it.taxableAmount).toFixed(2) }}</td>
+                  <td class="px-3 py-2.5 text-right font-mono text-amber-600">
+                    ₹{{ ((+it.cgstAmount || 0) + (+it.sgstAmount || 0) + (+it.igstAmount || 0)).toFixed(2) }}
+                  </td>
+                  <td class="px-4 py-2.5 text-right font-mono font-bold text-red-600">₹{{ (+it.totalAmount).toFixed(2) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="ml-auto w-full sm:w-80 flex flex-col gap-1.5 text-sm text-surface-700 pb-2">
+          <div class="flex justify-between"><strong>Taxable Subtotal: </strong><span class="font-mono">₹{{ (+viewingReturn.subtotal).toFixed(2) }}</span></div>
+          <div class="flex justify-between"><strong>Reversed GST Tax: </strong><span class="font-mono">₹{{ (+viewingReturn.taxTotal).toFixed(2) }}</span></div>
+          <div class="flex justify-between text-base font-bold text-red-800 border-t border-surface-200 pt-2 mt-1">
+            <strong>Debit Note Total: </strong><span class="font-mono text-lg">₹{{ (+viewingReturn.grandTotal).toFixed(2) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

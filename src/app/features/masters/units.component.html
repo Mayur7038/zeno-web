@@ -1,0 +1,113 @@
+<div class="flex flex-col gap-5">
+  <zeno-page-header title="Unit of Measure" subtitle="Define primary and compound units of measurement (PCS, KG, MTR, BOX).">
+    <div actions>
+      <zeno-button variant="primary" icon="pi pi-plus" (btnClick)="openCreateModal()">
+        New Unit
+      </zeno-button>
+    </div>
+  </zeno-page-header>
+
+  <!-- TABLE & LIST CONTAINER -->
+  <zeno-table
+    [loading]="loading"
+    [empty]="filteredUnits.length === 0"
+    loadingMessage="Loading measurement units..."
+    emptyMessage="No units found. Click 'New Unit' to create one."
+  >
+    <div toolbar-left>
+      <zeno-search
+        [(ngModel)]="searchQuery"
+        (searchChange)="filterUnits()"
+      ></zeno-search>
+    </div>
+    <div toolbar-right>
+      <zeno-button
+        variant="secondary"
+        icon="pi pi-download"
+        [disabled]="filteredUnits.length === 0"
+        (btnClick)="exportUnits()"
+        title="Export to CSV"
+      >
+        Export
+      </zeno-button>
+    </div>
+
+    <table class="w-full text-left border-collapse text-sm">
+      <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+        <tr>
+          <th class="px-4 py-3">Unit Name</th>
+          <th class="px-4 py-3">Symbol / Code</th>
+          <th class="px-4 py-3">Status</th>
+          <th class="px-4 py-3 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-surface-100">
+        @for (u of filteredUnits; track u.id) {
+          <tr class="hover:bg-surface-50/50 transition-colors">
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2.5">
+                <i class="pi pi-compass text-primary-600"></i>
+                <strong class="text-surface-900">{{ u.name }}</strong>
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="inline-block px-2 py-0.5 rounded font-mono text-xs font-bold bg-slate-100 text-slate-700">{{ u.code }}</span>
+            </td>
+            <td class="px-4 py-3">
+              @if (u.isActive) {
+                <zeno-badge type="success" icon="pi pi-check">Active</zeno-badge>
+              } @else {
+                <zeno-badge type="danger">Inactive</zeno-badge>
+              }
+            </td>
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <zeno-button variant="icon" icon="pi pi-pencil" title="Edit Unit" (btnClick)="openEditModal(u)"></zeno-button>
+                <zeno-button variant="icon" icon="pi pi-trash" title="Delete Unit" (btnClick)="deleteUnit(u)" class="text-red-600"></zeno-button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </zeno-table>
+
+  <!-- CREATE / EDIT MODAL -->
+  <zeno-modal
+    [isOpen]="showModal"
+    [title]="editingUnit ? 'Edit Unit of Measure' : 'New Unit of Measure'"
+    size="md"
+    (close)="closeModal()"
+  >
+    @if (errorMessage) {
+      <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md flex items-center gap-2 text-sm mb-4">
+        <i class="pi pi-exclamation-circle text-red-600"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <zeno-form-group label="Unit Name" [required]="true" [span]="2">
+        <zeno-input [(ngModel)]="formData.name"></zeno-input>
+      </zeno-form-group>
+
+      <zeno-form-group label="Unit Code / Symbol" [required]="true">
+        <zeno-input [(ngModel)]="formData.code" [uppercase]="true"></zeno-input>
+      </zeno-form-group>
+
+      <zeno-form-group label="Allowed Decimal Places" [required]="true">
+        <zeno-select
+          [(ngModel)]="formData.decimalPlaces"
+          [options]="decimalOptions"
+        ></zeno-select>
+      </zeno-form-group>
+    </div>
+
+    <div footer class="flex items-center justify-end gap-2.5">
+      <zeno-button variant="secondary" (btnClick)="closeModal()">Cancel</zeno-button>
+      <zeno-button variant="primary" icon="pi pi-check" [loading]="saving" (btnClick)="saveUnit()">
+        {{ editingUnit ? 'Update Unit' : 'Create Unit' }}
+      </zeno-button>
+    </div>
+  </zeno-modal>
+</div>

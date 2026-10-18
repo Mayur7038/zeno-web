@@ -1,0 +1,60 @@
+<div class="max-w-4xl mx-auto py-2.5 pb-10">
+  <div class="bg-gradient-to-b from-white to-surface-50 border border-surface-200 rounded-2xl shadow-xs flex flex-col items-center text-center p-8 sm:p-12">
+    <div class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold px-3.5 py-1.5 rounded-full mb-5">
+      <i class="pi pi-compass"></i> PHASE 2 & 3 ROADMAP
+    </div>
+    
+    <div class="w-18 h-18 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white text-3xl mb-5 shadow-lg shadow-primary-500/25">
+      <i [class]="moduleInfo.icon"></i>
+    </div>
+
+    <h1 class="text-3xl font-extrabold text-surface-900 tracking-tight mb-2">{{ moduleInfo.title }}</h1>
+    <p class="text-sm sm:text-base text-surface-600 max-w-xl leading-relaxed mb-9">{{ moduleInfo.description }}</p>
+
+    <div class="w-full bg-white border border-surface-200 rounded-xl p-6 mb-7 shadow-xs">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-surface-500 mb-5">Planned End-to-End Workflow Architecture</h3>
+      <div class="flex flex-col md:flex-row items-center justify-center gap-3 flex-wrap">
+        @for (step of moduleInfo.steps; track step.title; let idx = $index) {
+          <div class="flex items-center gap-3 bg-surface-50 border border-surface-200 rounded-lg p-3 text-left min-w-[200px]">
+            <div class="w-7 h-7 rounded-full bg-primary-100 text-primary-700 font-bold text-xs flex items-center justify-center shrink-0">{{ idx + 1 }}</div>
+            <div>
+              <div class="text-xs font-bold text-surface-900">{{ step.title }}</div>
+              <div class="text-[11px] text-surface-500">{{ step.desc }}</div>
+            </div>
+          </div>
+          @if (idx < moduleInfo.steps.length - 1) {
+            <div class="text-surface-400 rotate-90 md:rotate-0">
+              <i class="pi pi-arrow-right"></i>
+            </div>
+          }
+        }
+      </div>
+    </div>
+
+    <div class="w-full bg-white border border-surface-200 rounded-xl p-6 mb-8 text-left shadow-xs">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-surface-500 mb-5 text-center">Key Enterprise Features In Development</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        @for (h of moduleInfo.highlights; track h.title) {
+          <div class="flex items-start gap-3 p-2.5 rounded-lg hover:bg-surface-50 transition-colors">
+            <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs shrink-0 mt-0.5">
+              <i class="pi pi-check"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-surface-900">{{ h.title }}</div>
+              <div class="text-xs text-surface-600 mt-0.5 leading-normal">{{ h.desc }}</div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-center gap-3.5">
+      <a routerLink="/procure-to-pay/purchase-orders" class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-semibold shadow-xs transition-colors no-underline">
+        <i class="pi pi-shopping-cart"></i> Explore Procure-to-Pay Cycle (Live)
+      </a>
+      <a routerLink="/dashboard" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-surface-50 border border-surface-300 text-surface-700 rounded-lg text-sm font-semibold transition-colors no-underline">
+        <i class="pi pi-th-large"></i> Return to Dashboard
+      </a>
+    </div>
+  </div>
+</div>

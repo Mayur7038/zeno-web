@@ -1,0 +1,195 @@
+<div class="flex flex-col gap-5">
+  <div class="flex items-center justify-between mb-1">
+    <div>
+      <h1 class="text-xl font-bold text-surface-900 m-0">Update Opening Stock Balance</h1>
+    </div>
+    <div class="flex items-center gap-2.5">
+      <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" (click)="saveOpeningBalances()" [disabled]="submitting || loading">
+        <i class="pi pi-check"></i> {{ submitting ? 'Updating...' : 'Save Opening Balances' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- FILTER & SETTINGS BAR -->
+  <div class="bg-surface-0 border border-surface-200 rounded-xl p-5 shadow-xs">
+    <div class="flex flex-wrap items-end gap-5">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-semibold text-surface-700">Select Warehouse / Godown <span class="text-red-500">*</span></label>
+        <select [(ngModel)]="selectedGodownId" (change)="loadOpeningBalances()" class="w-full min-w-[250px] px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600">
+          <option value="">-- Choose Warehouse --</option>
+          @for (g of godowns; track g.id) {
+            <option [value]="g.id">{{ g.name }} ({{ g.code }})</option>
+          }
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-semibold text-surface-700">Effective Date (As On) <span class="text-red-500">*</span></label>
+        <input
+          type="date"
+          [(ngModel)]="effectiveDate"
+          class="w-44 px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+        />
+      </div>
+
+      <div class="ml-auto flex items-center gap-3">
+        <div class="flex flex-col items-end px-3 py-1 bg-surface-50 border border-surface-200 rounded-lg">
+          <span class="text-[0.6875rem] uppercase font-semibold text-surface-500">Configured Items</span>
+          <span class="text-lg font-bold text-surface-900">{{ configuredCount }} / {{ items.length }}</span>
+        </div>
+        <div class="flex flex-col items-end px-3 py-1 bg-surface-50 border border-surface-200 rounded-lg">
+          <span class="text-[0.6875rem] uppercase font-semibold text-surface-500">Total Opening Qty</span>
+          <span class="text-lg font-bold text-surface-900">{{ totalQty | number:'1.0-3' }}</span>
+        </div>
+        <div class="flex flex-col items-end px-3 py-1 bg-blue-50 border border-blue-200 rounded-lg">
+          <span class="text-[0.6875rem] uppercase font-semibold text-blue-700">Opening Valuation</span>
+          <span class="text-lg font-bold text-primary-700">₹{{ totalValuation | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (saveSuccessMessage) {
+    <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-md flex items-center gap-2.5 text-sm">
+      <i class="pi pi-check-circle text-emerald-600"></i>
+      <span>{{ saveSuccessMessage }}</span>
+    </div>
+  }
+
+  @if (errorMessage) {
+    <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md flex items-center gap-2.5 text-sm">
+      <i class="pi pi-exclamation-triangle text-red-600"></i>
+      <span>{{ errorMessage }}</span>
+    </div>
+  }
+
+  <!-- INVENTORY GRID -->
+  <div class="bg-surface-0 border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+    <div class="p-4 border-b border-surface-200 flex flex-wrap items-center justify-between gap-4 bg-surface-0">
+      <div class="relative flex-1 min-w-[240px] max-w-md">
+        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
+        <input
+          type="text"
+          class="w-full pl-9 pr-3 py-2 bg-surface-0 border border-surface-200 rounded-lg text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+          [(ngModel)]="searchQuery"
+          (input)="filterItems()"
+          placeholder="Search items by name or SKU..."
+        />
+      </div>
+      <div class="flex items-center gap-2.5">
+        <select [(ngModel)]="groupFilter" (change)="filterItems()" class="min-w-[170px] px-3 py-2 bg-surface-0 border border-surface-200 rounded-lg text-sm text-surface-700 focus:outline-none focus:border-primary-600">
+          <option value="ALL">All Stock Groups</option>
+          @for (grp of stockGroups; track grp) {
+            <option [value]="grp">{{ grp }}</option>
+          }
+        </select>
+        <select [(ngModel)]="configuredOnly" (change)="filterItems()" class="min-w-[160px] px-3 py-2 bg-surface-0 border border-surface-200 rounded-md text-sm text-surface-700 focus:outline-none focus:border-primary-600">
+          <option value="ALL">All Products</option>
+          <option value="WITH_STOCK">With Opening Stock</option>
+          <option value="ZERO_STOCK">Zero Opening Stock</option>
+        </select>
+        <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-medium rounded-md border border-surface-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" (click)="exportOpeningBalances()" [disabled]="filteredItems.length === 0" title="Export to CSV">
+          <i class="pi pi-download"></i> Export
+        </button>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-sm">
+        <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+          <tr>
+            <th class="w-10 px-4 py-3">#</th>
+            <th class="px-4 py-3">Product / SKU</th>
+            <th class="w-44 px-4 py-3">Stock Group</th>
+            <th class="w-20 px-4 py-3">Unit</th>
+            <th class="w-44 px-4 py-3 text-right">Opening Quantity</th>
+            <th class="w-44 px-4 py-3 text-right">Valuation Rate (₹)</th>
+            <th class="w-52 px-4 py-3 text-right">Total Opening Value (₹)</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-surface-100">
+          @if (loading) {
+            <tr>
+              <td colspan="7" class="px-4 py-12 text-center text-surface-500">
+                <i class="pi pi-spin pi-spinner text-2xl text-primary-600"></i>
+                <p class="mt-2 text-surface-500">Loading opening stock balances...</p>
+              </td>
+            </tr>
+          } @else if (!selectedGodownId) {
+            <tr>
+              <td colspan="7" class="px-4 py-12 text-center text-surface-500">
+                <i class="pi pi-warehouse text-3xl text-surface-400"></i>
+                <p class="mt-2">Please select a warehouse from above to view and update opening stock.</p>
+              </td>
+            </tr>
+          } @else if (filteredItems.length === 0) {
+            <tr>
+              <td colspan="7" class="px-4 py-12 text-center text-surface-500">
+                <i class="pi pi-folder-open text-3xl text-surface-400"></i>
+                <p class="mt-2">No matching items found for the selected filter.</p>
+              </td>
+            </tr>
+          } @else {
+            @for (item of filteredItems; track item.itemId; let idx = $index) {
+              <tr [class.bg-yellow-50]="item.isModified" class="hover:bg-surface-50/50 transition-colors">
+                <td class="px-4 py-2.5 text-xs text-surface-400">{{ idx + 1 }}</td>
+                <td class="px-4 py-2.5">
+                  <div class="flex flex-col">
+                    <span class="font-semibold text-surface-900">{{ item.itemName }}</span>
+                    <span class="text-xs text-surface-500 font-mono">{{ item.sku || 'No SKU' }}</span>
+                  </div>
+                </td>
+                <td class="px-4 py-2.5">
+                  <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-700">{{ item.itemGroupName }}</span>
+                </td>
+                <td class="px-4 py-2.5">
+                  <span class="inline-block px-1.5 py-0.5 rounded text-[0.6875rem] font-bold bg-slate-50 text-slate-600 border border-slate-200">{{ item.unitCode }}</span>
+                </td>
+                <td class="px-4 py-2.5 text-right">
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    [(ngModel)]="item.openingQty"
+                    (input)="onLineChange(item)"
+                    class="w-32 px-2.5 py-1.5 border border-surface-300 rounded text-right text-sm font-mono text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 ml-auto"
+                  />
+                </td>
+                <td class="px-4 py-2.5 text-right">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    [(ngModel)]="item.unitRate"
+                    (input)="onLineChange(item)"
+                    class="w-32 px-2.5 py-1.5 border border-surface-300 rounded text-right text-sm font-mono text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 ml-auto"
+                  />
+                </td>
+                <td class="px-4 py-2.5 text-right font-mono font-bold" [class.text-primary-700]="item.totalValue > 0" [class.text-surface-700]="item.totalValue === 0">
+                  ₹{{ item.totalValue | number:'1.2-2' }}
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FOOTER SUMMARY -->
+    <div class="p-4 border-t border-surface-200 flex flex-wrap justify-between items-center gap-4 bg-surface-50">
+      <div class="text-xs text-surface-500">
+        <span>Showing <strong>{{ filteredItems.length }}</strong> of <strong>{{ items.length }}</strong> items</span>
+      </div>
+      <div class="flex items-center gap-6 ml-auto">
+        <div class="flex flex-col items-end">
+          <span class="text-xs font-semibold text-surface-500">Total Opening Units:</span>
+          <span class="text-base font-bold text-surface-800 font-mono">{{ totalQty | number:'1.0-3' }}</span>
+        </div>
+        <div class="flex flex-col items-end">
+          <span class="text-xs font-semibold text-surface-500">Total Opening Value:</span>
+          <span class="text-lg font-bold text-primary-700 font-mono">₹{{ totalValuation | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

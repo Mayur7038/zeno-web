@@ -1,0 +1,124 @@
+<div class="w-full mb-4">
+  <div class="flex flex-wrap items-end gap-2.5 w-full">
+    <!-- ITEM SELECT -->
+    <div class="flex flex-col gap-1 flex-1 min-w-[200px]">
+      <label class="text-xs font-semibold text-surface-700 uppercase tracking-wider">Item / Product *</label>
+      <zeno-searchable-select
+        [options]="itemsList"
+        labelKey="name"
+        valueKey="id"
+        secondaryKey="sku"
+        placeholder="Search Item (Name or SKU)..."
+        [(ngModel)]="newItem.itemId"
+        (optionSelected)="onItemSelect($event)"
+      ></zeno-searchable-select>
+    </div>
+
+    <!-- UNIT -->
+    <div class="flex flex-col gap-1 w-[70px] shrink-0">
+      <label class="text-xs font-semibold text-surface-700 uppercase tracking-wider">Unit</label>
+      <input type="text" class="h-[38px] px-2.5 border border-surface-300 rounded-sm text-[0.85rem] font-semibold text-center text-surface-600 bg-surface-100 outline-none w-full" [value]="getUnitDisplay()" readonly />
+    </div>
+
+    <!-- QTY -->
+    <div class="flex flex-col gap-1 w-[90px] shrink-0">
+      <label class="text-xs font-semibold text-surface-700 uppercase tracking-wider">Qty *</label>
+      <input
+        type="number"
+        min="1"
+        class="h-[38px] px-2.5 border border-surface-300 rounded-sm text-[0.85rem] font-medium text-surface-900 bg-surface-0 outline-none w-full focus:border-primary-600 focus:ring-2 focus:ring-primary-100 transition-all"
+        [(ngModel)]="newItem.qty"
+        (keydown.enter)="addItem()"
+      />
+    </div>
+
+    <!-- RATE -->
+    <div class="flex flex-col gap-1 w-[110px] shrink-0">
+      <label class="text-xs font-semibold text-surface-700 uppercase tracking-wider">Rate (₹) *</label>
+      <input
+        type="number"
+        step="any"
+        class="h-[38px] px-2.5 border border-surface-300 rounded-sm text-[0.85rem] font-medium text-surface-900 bg-surface-0 outline-none w-full focus:border-primary-600 focus:ring-2 focus:ring-primary-100 transition-all font-mono"
+        [(ngModel)]="newItem.rate"
+        (keydown.enter)="addItem()"
+      />
+    </div>
+
+    <!-- DISCOUNT -->
+    @if (showDiscount) {
+      <div class="flex flex-col gap-1 w-[100px] shrink-0">
+        <label class="text-xs font-semibold text-surface-700 uppercase tracking-wider">Disc (₹)</label>
+        <input
+          type="number"
+          step="any"
+          class="h-[38px] px-2.5 border border-surface-300 rounded-sm text-[0.85rem] font-medium text-surface-900 bg-surface-0 outline-none w-full focus:border-primary-600 focus:ring-2 focus:ring-primary-100 transition-all font-mono"
+          [(ngModel)]="newItem.discount"
+          (keydown.enter)="addItem()"
+        />
+      </div>
+    }
+
+    <!-- FREE QTY (IF APPLICABLE) -->
+    @if (showFreeQty) {
+      <div class="flex flex-col gap-1 w-[85px] shrink-0">
+        <label class="text-xs font-semibold text-surface-700 uppercase tracking-wider">Free Qty</label>
+        <input
+          type="number"
+          min="0"
+          class="h-[38px] px-2.5 border border-surface-300 rounded-sm text-[0.85rem] font-medium text-surface-900 bg-surface-0 outline-none w-full focus:border-primary-600 focus:ring-2 focus:ring-primary-100 transition-all"
+          [(ngModel)]="newItem.freeQty"
+          (keydown.enter)="addItem()"
+        />
+      </div>
+    }
+
+    <!-- GST % -->
+    @if (showGst) {
+      <div class="flex flex-col gap-1 w-[90px] shrink-0">
+        <label class="text-xs font-semibold text-surface-700 uppercase tracking-wider">GST %</label>
+        <select class="h-[38px] px-2.5 border border-surface-300 rounded-sm text-[0.85rem] font-medium text-surface-900 bg-surface-0 outline-none w-full cursor-pointer focus:border-primary-600 focus:ring-2 focus:ring-primary-100 transition-all" [(ngModel)]="newItem.gstRate">
+          <option [value]="0">0%</option>
+          <option [value]="5">5%</option>
+          <option [value]="12">12%</option>
+          <option [value]="18">18%</option>
+          <option [value]="28">28%</option>
+        </select>
+      </div>
+    }
+
+    <!-- AMOUNT PREVIEW -->
+    <div class="flex flex-col gap-1 w-[125px] shrink-0">
+      <label class="text-xs font-semibold text-surface-700 uppercase tracking-wider">Amount (₹)</label>
+      <div class="h-[38px] flex items-center justify-end px-3 bg-surface-100 border border-surface-300 rounded-sm text-[0.9rem] font-bold text-primary-700 font-mono">
+        ₹{{ getCalculatedAmount() | number:'1.2-2' }}
+      </div>
+    </div>
+
+    <!-- ADD / UPDATE BUTTON -->
+    <div class="flex gap-1.5 shrink-0">
+      <button
+        type="button"
+        class="h-[38px] px-4 rounded-sm text-[0.85rem] font-semibold flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-colors text-white disabled:opacity-50 disabled:cursor-not-allowed"
+        [ngClass]="editIndex !== null ? 'bg-emerald-600 hover:not-disabled:bg-emerald-700' : 'bg-primary-600 hover:not-disabled:bg-primary-700'"
+        [disabled]="!newItem.itemId || newItem.qty <= 0"
+        (click)="addItem()"
+      >
+        @if (editIndex !== null) {
+          <i class="pi pi-check"></i> Update
+        } @else {
+          <i class="pi pi-plus"></i> Add Item
+        }
+      </button>
+      @if (editIndex !== null) {
+        <button
+          type="button"
+          class="h-[38px] w-[38px] bg-surface-200 hover:bg-surface-300 text-surface-700 border-0 rounded-sm flex items-center justify-center cursor-pointer transition-colors"
+          (click)="cancelEdit()"
+          title="Cancel editing"
+        >
+          <i class="pi pi-times"></i>
+        </button>
+      }
+    </div>
+  </div>
+</div>

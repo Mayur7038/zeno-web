@@ -1,0 +1,107 @@
+<div class="flex flex-col gap-5">
+  <zeno-page-header title="Stock Group" subtitle="Manage item categories, HSN/SAC codes, and default GST tax classifications.">
+    <div actions>
+      <zeno-button variant="primary" icon="pi pi-plus" (btnClick)="openCreateModal()">
+        New Stock Group
+      </zeno-button>
+    </div>
+  </zeno-page-header>
+
+  <!-- TABLE & LIST CONTAINER -->
+  <zeno-table
+    [loading]="loading"
+    [empty]="filteredGroups.length === 0"
+    loadingMessage="Loading stock groups..."
+    emptyMessage="No stock groups found. Click 'New Stock Group' to create one."
+  >
+    <div toolbar-left>
+      <zeno-search
+        [(ngModel)]="searchQuery"
+        (searchChange)="filterGroups()"
+      ></zeno-search>
+    </div>
+
+    <table class="w-full text-left border-collapse text-sm">
+      <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+        <tr>
+          <th class="px-4 py-3">Group Name</th>
+          <th class="px-4 py-3">Group Code</th>
+          @if (isGstAtGroupLevel) {
+            <th class="px-4 py-3">HSN / SAC</th>
+            <th class="px-4 py-3 text-right">GST Rate</th>
+          }
+          <th class="px-4 py-3 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-surface-100">
+        @for (g of filteredGroups; track g.id) {
+          <tr class="hover:bg-surface-50/50 transition-colors">
+            <td class="px-4 py-3">
+              <div class="flex items-center gap-2.5">
+                <i class="pi pi-folder text-primary-600"></i>
+                <strong class="text-surface-900">{{ g.name }}</strong>
+              </div>
+            </td>
+            <td class="px-4 py-3 font-mono text-surface-600">{{ g.code || '—' }}</td>
+            @if (isGstAtGroupLevel) {
+              <td class="px-4 py-3 font-mono text-surface-700">{{ g.hsnSac || '—' }}</td>
+              <td class="px-4 py-3 text-right font-mono font-bold" [class.text-blue-700]="g.gstRate > 0" [class.text-slate-500]="g.gstRate === 0">
+                {{ getGroupGstDisplay(g) }}
+              </td>
+            }
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <zeno-button variant="icon" icon="pi pi-pencil" title="Edit Stock Group" (btnClick)="openEditModal(g)"></zeno-button>
+                <zeno-button variant="icon" icon="pi pi-trash" title="Delete Stock Group" (btnClick)="deleteGroup(g)" class="text-red-600"></zeno-button>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </zeno-table>
+
+  <!-- CREATE / EDIT MODAL -->
+  <zeno-modal
+    [isOpen]="showModal"
+    [title]="editingGroup ? 'Edit Stock Group' : 'New Stock Group'"
+    size="md"
+    (close)="closeModal()"
+  >
+    @if (errorMessage) {
+      <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md flex items-center gap-2 text-sm mb-4">
+        <i class="pi pi-exclamation-circle text-red-600"></i> {{ errorMessage }}
+      </div>
+    }
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <zeno-form-group label="Group Name" [required]="true">
+        <zeno-input [(ngModel)]="formData.name" placeholder="e.g. Raw Materials"></zeno-input>
+      </zeno-form-group>
+
+      <zeno-form-group label="Group Code">
+        <zeno-input [(ngModel)]="formData.code" placeholder="e.g. GRP-001"></zeno-input>
+      </zeno-form-group>
+
+      @if (isGstAtGroupLevel) {
+        <zeno-form-group label="HSN / SAC Code">
+          <zeno-input [(ngModel)]="formData.hsnSac" placeholder="e.g. 8471"></zeno-input>
+        </zeno-form-group>
+
+        <zeno-form-group label="Group GST Rate (%)" [required]="true">
+          <zeno-select
+            [(ngModel)]="formData.gstRate"
+            [options]="gstRateOptions"
+          ></zeno-select>
+        </zeno-form-group>
+      }
+    </div>
+
+    <div footer class="flex items-center justify-end gap-2.5">
+      <zeno-button variant="secondary" (btnClick)="closeModal()">Cancel</zeno-button>
+      <zeno-button variant="primary" icon="pi pi-check" [loading]="saving" (btnClick)="saveGroup()">
+        {{ editingGroup ? 'Update Group' : 'Create Group' }}
+      </zeno-button>
+    </div>
+  </zeno-modal>
+</div>

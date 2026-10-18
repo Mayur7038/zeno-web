@@ -1,0 +1,31 @@
+<div
+  class="flex flex-col gap-1.5 mb-4 w-full"
+  [class.flex-row]="layout === 'horizontal'"
+  [class.items-center]="layout === 'horizontal'"
+  [class.gap-4]="layout === 'horizontal'"
+  [class.col-span-2]="span === 2"
+  [class.col-span-full]="span === 3"
+>
+  @if (label) {
+    <label class="text-[0.8125rem] font-semibold text-surface-700 select-none flex items-center gap-1" [class.min-w-[140px]]="layout === 'horizontal'">
+      {{ label }}
+      @if (required) {
+        <span class="text-red-500 font-bold">*</span>
+      }
+    </label>
+  }
+
+  <div class="flex flex-col gap-1 w-full" [class.flex-1]="layout === 'horizontal'">
+    <ng-content></ng-content>
+
+    @if (hint && !error) {
+      <span class="text-xs text-surface-500 leading-snug">{{ hint }}</span>
+    }
+
+    @if (error) {
+      <span class="text-xs text-red-500 inline-flex items-center gap-1 font-medium">
+        <i class="pi pi-exclamation-circle"></i> {{ error }}
+      </span>
+    }
+  </div>
+</div>

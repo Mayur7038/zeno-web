@@ -1,0 +1,332 @@
+<div class="flex flex-col gap-5">
+  @if (viewMode === 'list') {
+    <div class="flex items-center justify-between mb-1">
+      <div>
+        <h1 class="text-xl font-bold text-surface-900 m-0">Stock Transfer</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer" (click)="openCreatePage()">
+          <i class="pi pi-plus"></i> New Stock Transfer
+        </button>
+      </div>
+    </div>
+
+    <!-- TOOLBAR & FILTERS -->
+    <div class="bg-surface-0 border border-surface-200 rounded-xl shadow-xs overflow-hidden">
+      <div class="p-4 border-b border-surface-200 flex flex-wrap items-center justify-between gap-4 bg-surface-0">
+        <div class="relative flex-1 min-w-[240px] max-w-sm">
+          <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
+          <input
+            type="text"
+            class="w-full pl-9 pr-3 py-2 bg-surface-0 border border-surface-200 rounded-lg text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+            [(ngModel)]="searchQuery"
+            (input)="filterTransfers()"
+            placeholder="Search stock transfers..."
+          />
+        </div>
+        <div class="flex items-center gap-2.5">
+          <select [(ngModel)]="statusFilter" (change)="filterTransfers()" class="px-3 py-2 bg-surface-0 border border-surface-200 rounded-lg text-sm text-surface-700 focus:outline-none focus:border-primary-600">
+            <option value="ALL">All Statuses</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+          <button class="inline-flex items-center gap-1.5 px-3 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-medium rounded-lg border border-surface-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" (click)="exportTransfers()" [disabled]="filteredTransfers.length === 0" title="Export to CSV">
+            <i class="pi pi-download"></i> Export
+          </button>
+        </div>
+      </div>
+
+      <!-- TRANSFERS TABLE -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+            <tr>
+              <th class="px-4 py-3">Voucher No</th>
+              <th class="px-4 py-3">Date</th>
+              <th class="px-4 py-3">Source Warehouse</th>
+              <th class="px-4 py-3">Destination Warehouse</th>
+              <th class="px-4 py-3 text-right">Items Count</th>
+              <th class="px-4 py-3 text-right">Total Qty</th>
+              <th class="px-4 py-3 text-right">Total Value</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-surface-100">
+            @if (loading) {
+              <tr>
+                <td colspan="9" class="px-4 py-12 text-center text-surface-500">
+                  <i class="pi pi-spin pi-spinner text-2xl text-primary-600"></i>
+                  <p class="mt-2 text-surface-500">Loading stock transfers...</p>
+                </td>
+              </tr>
+            } @else if (filteredTransfers.length === 0) {
+              <tr>
+                <td colspan="9" class="px-4 py-12 text-center text-surface-500">
+                  <i class="pi pi-folder-open text-3xl text-surface-400"></i>
+                  <p class="mt-2">No stock transfers found. Click <strong>New Stock Transfer</strong> to create one.</p>
+                </td>
+              </tr>
+            } @else {
+              @for (t of filteredTransfers; track t.id) {
+                <tr class="hover:bg-surface-50/50 transition-colors">
+                  <td class="px-4 py-3 font-mono font-bold text-primary-700">
+                    <span class="cursor-pointer hover:underline" (click)="viewDetails(t)">{{ t.voucherNo }}</span>
+                  </td>
+                  <td class="px-4 py-3 text-surface-700">{{ t.transferDate }}</td>
+                  <td class="px-4 py-3">
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                      <i class="pi pi-sign-out"></i>
+                      <span>{{ t.sourceGodown?.name || 'Main Warehouse' }}</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      <i class="pi pi-sign-in"></i>
+                      <span>{{ t.destinationGodown?.name || 'Target Warehouse' }}</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-right font-medium text-surface-900">{{ t.items?.length || 0 }}</td>
+                  <td class="px-4 py-3 text-right font-mono font-semibold text-surface-900">{{ t.totalQty | number:'1.0-3' }}</td>
+                  <td class="px-4 py-3 text-right font-mono font-semibold text-primary-700">₹{{ t.totalAmount | number:'1.2-2' }}</td>
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
+                      [ngClass]="{
+                        'bg-emerald-50 text-emerald-800 border border-emerald-200': t.status === 'COMPLETED',
+                        'bg-red-50 text-red-800 border border-red-200': t.status === 'CANCELLED'
+                      }">
+                      {{ t.status }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <div class="flex items-center justify-end gap-1">
+                      <button class="w-8 h-8 inline-flex items-center justify-center bg-surface-0 border border-surface-200 rounded-sm text-surface-600 hover:text-primary-600 hover:border-primary-300 transition-colors cursor-pointer" (click)="viewDetails(t)" title="View Details">
+                        <i class="pi pi-eye"></i>
+                      </button>
+                      @if (t.status === 'COMPLETED') {
+                        <button class="w-8 h-8 inline-flex items-center justify-center bg-surface-0 border border-red-200 rounded-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer" (click)="cancelTransfer(t)" title="Cancel & Revert Stock">
+                          <i class="pi pi-times-circle"></i>
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  } @else {
+    <!-- CREATE TRANSFER PAGE -->
+    <div class="flex items-center justify-between mb-1">
+      <div class="flex items-center gap-3">
+        <button class="w-[34px] h-[34px] inline-flex items-center justify-center bg-surface-100 hover:bg-surface-200 text-surface-700 rounded-sm border border-surface-300 transition-colors cursor-pointer" (click)="viewMode = 'list'">
+          <i class="pi pi-arrow-left"></i>
+        </button>
+        <h1 class="text-xl font-bold text-surface-900 m-0">New Stock Transfer</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-semibold rounded-md border border-surface-200 transition-colors cursor-pointer" (click)="viewMode = 'list'">Cancel</button>
+        <button class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-md shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" (click)="saveTransfer()" [disabled]="submitting">
+          <i class="pi pi-check"></i> {{ submitting ? 'Transferring...' : 'Post Stock Transfer' }}
+        </button>
+      </div>
+    </div>
+
+    @if (errorMessage) {
+      <div class="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md flex items-center gap-2.5 text-sm mb-4">
+        <i class="pi pi-exclamation-triangle text-red-600"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
+
+    <div class="flex flex-col gap-5">
+      <!-- TRANSFER HEADER CARD -->
+      <div class="bg-surface-0 border border-surface-200 rounded-xl p-6 shadow-xs">
+        <h3 class="text-base font-bold text-surface-900 mb-4 mt-0">Transfer Header</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Transfer Date <span class="text-red-500">*</span></label>
+            <input type="date" [(ngModel)]="formData.transferDate" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" />
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Source Warehouse (From) <span class="text-red-500">*</span></label>
+            <select [(ngModel)]="formData.sourceGodownId" (change)="onSourceGodownChange()" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600">
+              <option value="">Select Source Warehouse</option>
+              @for (g of godowns; track g.id) {
+                <option [value]="g.id">{{ g.name }} ({{ g.code }})</option>
+              }
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Destination Warehouse (To) <span class="text-red-500">*</span></label>
+            <select [(ngModel)]="formData.destinationGodownId" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600">
+              <option value="">Select Destination Warehouse</option>
+              @for (g of godowns; track g.id) {
+                <option [value]="g.id" [disabled]="g.id === formData.sourceGodownId">{{ g.name }} ({{ g.code }})</option>
+              }
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <label class="text-xs font-semibold text-surface-700">Voucher / Reference No (Optional)</label>
+            <input type="text" [(ngModel)]="formData.voucherNo" class="w-full px-3 py-2 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600" />
+          </div>
+
+          <div class="flex flex-col gap-1.5 col-span-full">
+            <label class="text-xs font-semibold text-surface-700">Transfer Remarks / Vehicle / Narration</label>
+            <textarea [(ngModel)]="formData.notes" rows="2" class="w-full p-2.5 border border-surface-300 rounded-md text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 resize-y"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- LINE ITEMS CARD -->
+      <div class="bg-surface-0 border border-surface-200 rounded-xl p-6 shadow-xs flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-bold text-surface-900 m-0">Items to Transfer</h3>
+          <button class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-100 hover:bg-surface-200 text-surface-700 text-xs font-semibold rounded-md border border-surface-200 transition-colors cursor-pointer" (click)="addLineItem()">
+            <i class="pi pi-plus"></i> Add Item
+          </button>
+        </div>
+
+        <div class="overflow-x-auto border border-surface-200 rounded-lg">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+              <tr>
+                <th class="w-10 px-3 py-2.5 text-center">#</th>
+                <th class="min-w-[300px] px-3 py-2.5">Product / Item <span class="text-red-500">*</span></th>
+                <th class="w-36 px-3 py-2.5 text-center">Available Stock</th>
+                <th class="w-32 px-3 py-2.5 text-right">Transfer Qty <span class="text-red-500">*</span></th>
+                <th class="w-32 px-3 py-2.5 text-right">Unit Rate (₹)</th>
+                <th class="w-36 px-3 py-2.5 text-right">Amount (₹)</th>
+                <th class="w-12 px-3 py-2.5 text-center"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-surface-100">
+              @for (line of formData.items; track $index) {
+                <tr class="hover:bg-surface-50/50 transition-colors">
+                  <td class="px-3 py-2 text-center text-xs text-surface-400">{{ $index + 1 }}</td>
+                  <td class="px-3 py-2">
+                    <select [(ngModel)]="line.itemId" (change)="onItemSelect(line)" class="w-full px-2.5 py-1.5 border border-surface-300 rounded text-sm text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600">
+                      <option value="">-- Choose Product --</option>
+                      @for (it of itemsList; track it.id) {
+                        <option [value]="it.id">{{ it.name }} ({{ it.sku || 'No SKU' }})</option>
+                      }
+                    </select>
+                  </td>
+                  <td class="px-3 py-2 text-center font-mono">
+                    <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold"
+                      [class.text-red-600]="(line.availableStock || 0) < line.transferQty"
+                      [class.bg-red-50]="(line.availableStock || 0) < line.transferQty"
+                      [class.bg-slate-100]="!((line.availableStock || 0) < line.transferQty)"
+                      [class.text-slate-700]="!((line.availableStock || 0) < line.transferQty)">
+                      {{ (line.availableStock || 0) | number:'1.0-3' }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-2 text-right">
+                    <input
+                      type="number"
+                      min="0.001"
+                      step="1"
+                      [(ngModel)]="line.transferQty"
+                      (input)="recalcLine(line)"
+                      class="w-24 px-2 py-1.5 border border-surface-300 rounded text-right text-sm font-mono text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 ml-auto"
+                    />
+                  </td>
+                  <td class="px-3 py-2 text-right">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      [(ngModel)]="line.unitRate"
+                      (input)="recalcLine(line)"
+                      class="w-24 px-2 py-1.5 border border-surface-300 rounded text-right text-sm font-mono text-surface-900 bg-surface-0 focus:outline-none focus:border-primary-600 ml-auto"
+                    />
+                  </td>
+                  <td class="px-3 py-2 text-right font-mono font-semibold text-surface-900">
+                    ₹{{ line.totalAmount | number:'1.2-2' }}
+                  </td>
+                  <td class="px-3 py-2 text-center">
+                    <button class="w-7 h-7 inline-flex items-center justify-center text-red-600 hover:bg-red-50 rounded cursor-pointer transition-colors" (click)="removeLineItem($index)" title="Remove Line">
+                      <i class="pi pi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- SUMMARY BAR -->
+        <div class="p-4 border-t border-surface-200 flex flex-wrap justify-between items-center gap-4 bg-surface-50 rounded-lg">
+          <div class="text-xs text-surface-500">
+            <span>Total Items: <strong>{{ formData.items.length }}</strong></span>
+          </div>
+          <div class="flex items-center gap-6 ml-auto">
+            <div class="flex flex-col items-end">
+              <span class="text-xs font-semibold text-surface-500">Total Quantity:</span>
+              <span class="text-base font-bold text-surface-800 font-mono">{{ calculateTotalQty() | number:'1.0-3' }}</span>
+            </div>
+            <div class="flex flex-col items-end">
+              <span class="text-xs font-semibold text-surface-500">Total Valuation:</span>
+              <span class="text-lg font-bold text-primary-700 font-mono">₹{{ calculateTotalAmount() | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- DETAIL MODAL -->
+  @if (selectedTransfer) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+      <div class="bg-surface-0 border border-surface-200 rounded-xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-surface-200 bg-surface-50">
+          <h3 class="text-base font-bold text-surface-900 m-0">Stock Transfer Details - {{ selectedTransfer.voucherNo }}</h3>
+          <button class="text-surface-400 hover:text-surface-700 text-xl font-bold cursor-pointer" (click)="selectedTransfer = null">&times;</button>
+        </div>
+        <div class="p-6 overflow-y-auto space-y-4">
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div><span class="text-surface-500">Transfer Date:</span> <strong class="text-surface-900 ml-1">{{ selectedTransfer.transferDate }}</strong></div>
+            <div><span class="text-surface-500">Status:</span> <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold ml-1" [class.bg-emerald-50]="selectedTransfer.status === 'COMPLETED'" [class.text-emerald-800]="selectedTransfer.status === 'COMPLETED'">{{ selectedTransfer.status }}</span></div>
+            <div><span class="text-surface-500">Source:</span> <strong class="text-surface-900 ml-1">{{ selectedTransfer.sourceGodown?.name }}</strong></div>
+            <div><span class="text-surface-500">Destination:</span> <strong class="text-surface-900 ml-1">{{ selectedTransfer.destinationGodown?.name }}</strong></div>
+            @if (selectedTransfer.notes) {
+              <div class="col-span-2"><span class="text-surface-500">Remarks:</span> <span class="text-surface-700 ml-1">{{ selectedTransfer.notes }}</span></div>
+            }
+          </div>
+
+          <h4 class="mt-4 mb-2 font-semibold text-sm text-surface-900">Transferred Items</h4>
+          <div class="overflow-x-auto border border-surface-200 rounded-lg">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead class="bg-surface-50 text-surface-600 uppercase text-xs font-semibold tracking-wider border-b border-surface-200">
+                <tr>
+                  <th class="px-3 py-2.5">Item</th>
+                  <th class="px-3 py-2.5 text-right">Quantity</th>
+                  <th class="px-3 py-2.5 text-right">Rate</th>
+                  <th class="px-3 py-2.5 text-right">Total Amount</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-surface-100">
+                @for (it of selectedTransfer.items; track it.id) {
+                  <tr class="hover:bg-surface-50/50">
+                    <td class="px-3 py-2 font-medium text-surface-900">{{ it.item?.name }} ({{ it.item?.sku }})</td>
+                    <td class="px-3 py-2 text-right font-mono font-medium text-surface-900">{{ it.transferQty | number:'1.0-3' }} {{ it.item?.unit?.code }}</td>
+                    <td class="px-3 py-2 text-right font-mono text-surface-700">₹{{ it.unitRate | number:'1.2-4' }}</td>
+                    <td class="px-3 py-2 text-right font-mono font-semibold text-primary-700">₹{{ it.totalAmount | number:'1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="flex items-center justify-end px-6 py-4 border-t border-surface-200 bg-surface-50">
+          <button class="px-4 py-2 bg-surface-100 hover:bg-surface-200 text-surface-700 text-sm font-semibold rounded-md border border-surface-200 transition-colors cursor-pointer" (click)="selectedTransfer = null">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

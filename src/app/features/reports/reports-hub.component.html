@@ -1,0 +1,192 @@
+<div class="flex flex-col gap-5">
+  <!-- HEADER -->
+  <div class="flex justify-between items-center flex-wrap gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-surface-900">Reports</h1>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="relative w-80">
+        <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm"></i>
+        <input
+          type="text"
+          placeholder="Search all reports..."
+          [(ngModel)]="searchQuery"
+          class="w-full pl-9 pr-3 py-2 border border-surface-300 rounded-lg text-sm bg-white focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORY PILLS BAR -->
+  <div class="flex gap-2 flex-wrap bg-white p-2.5 border border-surface-200 rounded-xl shadow-xs">
+    <button
+      class="px-3.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer border"
+      [class.bg-primary-600]="selectedCategory === 'ALL'"
+      [class.text-white]="selectedCategory === 'ALL'"
+      [class.border-primary-600]="selectedCategory === 'ALL'"
+      [class.shadow-xs]="selectedCategory === 'ALL'"
+      [class.bg-surface-50]="selectedCategory !== 'ALL'"
+      [class.text-surface-700]="selectedCategory !== 'ALL'"
+      [class.border-surface-200]="selectedCategory !== 'ALL'"
+      [class.hover:bg-surface-100]="selectedCategory !== 'ALL'"
+      (click)="selectedCategory = 'ALL'"
+    >
+      All ({{ reports.length }})
+    </button>
+    <button
+      class="px-3.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer border"
+      [class.bg-primary-600]="selectedCategory === 'financial'"
+      [class.text-white]="selectedCategory === 'financial'"
+      [class.border-primary-600]="selectedCategory === 'financial'"
+      [class.shadow-xs]="selectedCategory === 'financial'"
+      [class.bg-surface-50]="selectedCategory !== 'financial'"
+      [class.text-surface-700]="selectedCategory !== 'financial'"
+      [class.border-surface-200]="selectedCategory !== 'financial'"
+      [class.hover:bg-surface-100]="selectedCategory !== 'financial'"
+      (click)="selectedCategory = 'financial'"
+    >
+      <i class="pi pi-dollar"></i> Financial
+    </button>
+    <button
+      class="px-3.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer border"
+      [class.bg-primary-600]="selectedCategory === 'inventory'"
+      [class.text-white]="selectedCategory === 'inventory'"
+      [class.border-primary-600]="selectedCategory === 'inventory'"
+      [class.shadow-xs]="selectedCategory === 'inventory'"
+      [class.bg-surface-50]="selectedCategory !== 'inventory'"
+      [class.text-surface-700]="selectedCategory !== 'inventory'"
+      [class.border-surface-200]="selectedCategory !== 'inventory'"
+      [class.hover:bg-surface-100]="selectedCategory !== 'inventory'"
+      (click)="selectedCategory = 'inventory'"
+    >
+      <i class="pi pi-box"></i> Inventory
+    </button>
+    <button
+      class="px-3.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer border"
+      [class.bg-primary-600]="selectedCategory === 'purchase'"
+      [class.text-white]="selectedCategory === 'purchase'"
+      [class.border-primary-600]="selectedCategory === 'purchase'"
+      [class.shadow-xs]="selectedCategory === 'purchase'"
+      [class.bg-surface-50]="selectedCategory !== 'purchase'"
+      [class.text-surface-700]="selectedCategory !== 'purchase'"
+      [class.border-surface-200]="selectedCategory !== 'purchase'"
+      [class.hover:bg-surface-100]="selectedCategory !== 'purchase'"
+      (click)="selectedCategory = 'purchase'"
+    >
+      <i class="pi pi-shopping-cart"></i> Purchases
+    </button>
+    <button
+      class="px-3.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer border"
+      [class.bg-primary-600]="selectedCategory === 'sales'"
+      [class.text-white]="selectedCategory === 'sales'"
+      [class.border-primary-600]="selectedCategory === 'sales'"
+      [class.shadow-xs]="selectedCategory === 'sales'"
+      [class.bg-surface-50]="selectedCategory !== 'sales'"
+      [class.text-surface-700]="selectedCategory !== 'sales'"
+      [class.border-surface-200]="selectedCategory !== 'sales'"
+      [class.hover:bg-surface-100]="selectedCategory !== 'sales'"
+      (click)="selectedCategory = 'sales'"
+    >
+      <i class="pi pi-shopping-bag"></i> Sales
+    </button>
+    <button
+      class="px-3.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer border"
+      [class.bg-primary-600]="selectedCategory === 'tax'"
+      [class.text-white]="selectedCategory === 'tax'"
+      [class.border-primary-600]="selectedCategory === 'tax'"
+      [class.shadow-xs]="selectedCategory === 'tax'"
+      [class.bg-surface-50]="selectedCategory !== 'tax'"
+      [class.text-surface-700]="selectedCategory !== 'tax'"
+      [class.border-surface-200]="selectedCategory !== 'tax'"
+      [class.hover:bg-surface-100]="selectedCategory !== 'tax'"
+      (click)="selectedCategory = 'tax'"
+    >
+      <i class="pi pi-percentage"></i> Tax & GST
+    </button>
+    <button
+      class="px-3.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer border"
+      [class.bg-primary-600]="selectedCategory === 'manufacturing'"
+      [class.text-white]="selectedCategory === 'manufacturing'"
+      [class.border-primary-600]="selectedCategory === 'manufacturing'"
+      [class.shadow-xs]="selectedCategory === 'manufacturing'"
+      [class.bg-surface-50]="selectedCategory !== 'manufacturing'"
+      [class.text-surface-700]="selectedCategory !== 'manufacturing'"
+      [class.border-surface-200]="selectedCategory !== 'manufacturing'"
+      [class.hover:bg-surface-100]="selectedCategory !== 'manufacturing'"
+      (click)="selectedCategory = 'manufacturing'"
+    >
+      <i class="pi pi-cog"></i> Manufacturing
+    </button>
+  </div>
+
+  <!-- REPORTS GRID -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    @if (filteredReports.length === 0) {
+      <div class="col-span-full bg-white border border-surface-200 rounded-xl p-12 text-center text-surface-500 shadow-xs">
+        <i class="pi pi-search text-3xl text-surface-400 mb-2 block"></i>
+        <p>No reports matched your search keyword.</p>
+      </div>
+    }
+    @for (rep of filteredReports; track rep.id) {
+      @if (rep.route) {
+        <a
+          class="group bg-white border border-surface-200 hover:border-primary-400 rounded-xl p-5 flex flex-col no-underline text-inherit cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md shadow-xs"
+          [routerLink]="rep.route"
+        >
+          <h3 class="text-base font-bold text-surface-900 group-hover:text-primary-600 mb-1.5 transition-colors">{{ rep.title }}</h3>
+          <p class="text-xs text-surface-600 leading-relaxed m-0">{{ rep.description }}</p>
+        </a>
+      } @else {
+        <div
+          class="group bg-white border border-surface-200 hover:border-primary-400 rounded-xl p-5 flex flex-col cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md shadow-xs"
+          (click)="openQuickModal(rep)"
+        >
+          <h3 class="text-base font-bold text-surface-900 group-hover:text-primary-600 mb-1.5 transition-colors">{{ rep.title }}</h3>
+          <p class="text-xs text-surface-600 leading-relaxed m-0">{{ rep.description }}</p>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- QUICK PREVIEW MODAL FOR MODAL-BASED REPORTS -->
+  @if (activeReportModal) {
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4" (click)="activeReportModal = null">
+      <div class="bg-white rounded-xl w-full max-w-xl max-h-[90vh] overflow-y-auto flex flex-col shadow-xl" (click)="$event.stopPropagation()">
+        <div class="px-6 py-4.5 border-b border-surface-200 flex justify-between items-center">
+          <h2 class="text-lg font-bold text-surface-900 m-0">{{ activeReportModal.title }}</h2>
+          <button class="text-surface-400 hover:text-surface-700 text-xl leading-none cursor-pointer p-1" (click)="activeReportModal = null"><i class="pi pi-times"></i></button>
+        </div>
+        <div class="p-6 flex-1 flex flex-col gap-4">
+          <div class="flex items-center gap-3.5 p-3.5 bg-surface-50 border border-surface-200 rounded-lg">
+            <i [class]="activeReportModal.icon" class="text-2xl text-primary-600"></i>
+            <div>
+              <strong class="text-sm text-surface-900">{{ activeReportModal.category }}</strong>
+              <p class="text-xs text-surface-600 mt-1 m-0">{{ activeReportModal.description }}</p>
+            </div>
+          </div>
+
+          <div class="border border-surface-200 rounded-lg p-5 bg-surface-50/50 flex flex-col gap-4">
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-white p-3 border border-surface-200 rounded-md">
+                <span class="text-[11px] uppercase font-bold text-surface-500 block mb-1">Date Range</span>
+                <strong class="text-xs text-surface-900">Current Fiscal Year (2026-27)</strong>
+              </div>
+              <div class="bg-white p-3 border border-surface-200 rounded-md">
+                <span class="text-[11px] uppercase font-bold text-surface-500 block mb-1">Status</span>
+                <strong class="text-xs text-emerald-600 flex items-center gap-1"><i class="pi pi-check"></i> Reconciled & Audited</strong>
+              </div>
+            </div>
+            <div class="text-center py-6 text-surface-500 text-xs">
+              <i class="pi pi-chart-line text-3xl text-surface-400 mb-2 block"></i>
+              This detailed statement is generated dynamically from double-entry GL ledgers.
+            </div>
+          </div>
+        </div>
+        <div class="px-6 py-4 border-t border-surface-200 flex justify-end gap-2.5 bg-surface-50">
+          <button class="px-4 py-2 border border-surface-300 bg-white hover:bg-surface-100 text-surface-700 rounded-md text-sm font-semibold transition-colors cursor-pointer" (click)="activeReportModal = null">Close</button>
+          <button class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md text-sm font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer" onclick="window.print()"><i class="pi pi-print"></i> Print Report</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,28 @@
+<label
+  class="inline-flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-surface-700"
+  [class.opacity-60]="disabled"
+  [class.cursor-not-allowed]="disabled"
+>
+  <input
+    type="radio"
+    [name]="name"
+    [checked]="modelValue === value"
+    [disabled]="disabled"
+    (change)="onSelect()"
+    class="sr-only peer"
+  />
+  <span class="w-[18px] h-[18px] border-1.5 border-surface-300 rounded-full bg-surface-0 inline-flex items-center justify-center transition-all shrink-0 peer-checked:border-primary-600 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-400">
+    <span
+      class="w-2 h-2 rounded-full bg-primary-600 transition-all scale-0 opacity-0"
+      [class.scale-100]="modelValue === value"
+      [class.opacity-100]="modelValue === value"
+    ></span>
+  </span>
+  <span class="leading-tight">
+    @if (label) {
+      {{ label }}
+    } @else {
+      <ng-content></ng-content>
+    }
+  </span>
+</label>
